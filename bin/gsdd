@@ -24,13 +24,17 @@ function checkBranch() {
 }
 
 function init() {
-  const configDir = '.planning';
-  if (!fs.existsSync(configDir)) {
-    fs.mkdirSync(configDir);
+  // 1. Create .planning directory (private scratchpad)
+  const planningDir = '.planning';
+  if (!fs.existsSync(planningDir)) {
+    fs.mkdirSync(planningDir);
   }
-  const configPath = path.join(configDir, 'config.json');
+
+  // 2. Create gsdd.json (versioned config)
+  const configPath = 'gsdd.json';
   if (!fs.existsSync(configPath)) {
     const config = {
+      version: "1.0",
       commit_docs: false,
       workflow: {
         research: true,
@@ -39,13 +43,13 @@ function init() {
       }
     };
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log('\x1b[32mInitialized GSD Distilled config at .planning/config.json\x1b[0m');
+    console.log('\x1b[32mInitialized GSD Distilled config at gsdd.json\x1b[0m');
     console.log('Governance: commit_docs set to false (no planning artifacts in repo).');
   } else {
-    console.log('Config already exists at .planning/config.json');
+    console.log('Config already exists at gsdd.json');
   }
 
-  // Update .gitignore
+  // 3. Update .gitignore (ensure .planning/ is ignored)
   if (fs.existsSync('.gitignore')) {
     const gitignore = fs.readFileSync('.gitignore', 'utf8');
     if (!gitignore.includes('.planning/')) {
@@ -75,23 +79,43 @@ function printInstruction(prompt) {
     console.log('\n\x1b[36m==============================================\x1b[0m\n');
 }
 
-function spec(goalArgs) {
+function spec(args) {
     checkBranch();
     init(); // Ensure config exists
 
+    // Parse args
+    const isClaude = args.includes('--claude');
+    const goalArgs = args.filter(a => a !== '--claude');
     const goal = goalArgs.join(' ');
+
     if (!goal) {
         console.error('Error: Please provide a goal.');
-        console.error('Usage: gsdd spec "Add user login"');
+        console.error('Usage: gsdd spec "Add user login" [--claude]');
         process.exit(1);
     }
 
-    const workflow = getWorkflowPath('spec.md');
-    const prompt = `Execute workflow ${workflow}\n\nGOAL: ${goal}`;
-    printInstruction(prompt);
+    if (isClaude) {
+        const workflow = getWorkflowPath('spec.md');
+        const prompt = `Execute workflow ${workflow}\n\nGOAL: ${goal}`;
+        printInstruction(prompt);
+    } else {
+        // Agent-agnostic work order
+        const prompt = `
+Please create a specification for the following goal:
+"${goal}"
+
+Instructions:
+1. (Optional) Research the goal if needed to understand requirements and tech stack.
+2. Create a file named \`.planning/SPEC.md\`.
+3. In \`.planning/SPEC.md\`, create a checklist of atomic tasks to achieve the goal.
+4. Include a "Must Haves" section listing verification criteria.
+5. Format tasks as Markdown checkboxes (e.g., - [ ] Task description).
+`;
+        printInstruction(prompt);
+    }
 }
 
-function execute() {
+function execute(args) {
     checkBranch();
     // Check if SPEC.md exists
     if (!fs.existsSync('.planning/SPEC.md')) {
@@ -99,17 +123,93 @@ function execute() {
         process.exit(1);
     }
 
-    const workflow = getWorkflowPath('execute.md');
-    const prompt = `Execute workflow ${workflow}`;
-    printInstruction(prompt);
+    const isClaude = args.includes('--claude');
+
+    if (isClaude) {
+        const workflow = getWorkflowPath('execute.md');
+        const prompt = `Execute workflow ${workflow}`;
+        printInstruction(prompt);
+    } else {
+        // Agent-agnostic work order
+        const prompt = `
+Please execute the plan in \`.planning/SPEC.md\`.
+
+Instructions:
+1. Read \`.planning/SPEC.md\`.
+2. Execute each task in the checklist.
+3. Mark tasks as completed in \`.planning/SPEC.md\` (change [ ] to [x]) as you finish them.
+4. Commit each task atomically (one commit per task).
+5. Create a file \`.planning/SUMMARY.md\` summarizing what was done.
+`;
+        printInstruction(prompt);
+    }
 }
 
-function verify() {
+function verify(args) {
     checkBranch();
 
-    const workflow = getWorkflowPath('verify.md');
-    const prompt = `Execute workflow ${workflow}`;
-    printInstruction(prompt);
+    const isClaude = args.includes('--claude');
+
+    if (isClaude) {
+        const workflow = getWorkflowPath('verify.md');
+        const prompt = `Execute workflow ${workflow}`;
+        printInstruction(prompt);
+    } else {
+        // Agent-agnostic work order
+        const prompt = `
+Please verify the implementation against \`.planning/SPEC.md\`.
+
+Instructions:
+1. Read the "Must Haves" section in \`.planning/SPEC.md\`.
+2. Verify that each requirement is met.
+3. Run any relevant automated tests.
+4. Create a report in \`.planning/VERIFICATION.md\`.
+`;
+        printInstruction(prompt);
+    }
+}
+
+function doCommand(args) {
+    checkBranch();
+    init();
+
+    const isClaude = args.includes('--claude');
+    const goalArgs = args.filter(a => a !== '--claude');
+    const goal = goalArgs.join(' ');
+
+    if (!goal) {
+        console.error('Error: Please provide a goal.');
+        console.error('Usage: gsdd do "Add user login" [--claude]');
+        process.exit(1);
+    }
+
+    if (isClaude) {
+        // Claude-specific chained instructions
+        const specWf = getWorkflowPath('spec.md');
+        const execWf = getWorkflowPath('execute.md');
+        const verifyWf = getWorkflowPath('verify.md');
+
+        const prompt = `
+Goal: ${goal}
+
+1. Execute workflow ${specWf} with GOAL: ${goal}
+2. Once complete, execute workflow ${execWf}
+3. Once complete, execute workflow ${verifyWf}
+`;
+        printInstruction(prompt);
+    } else {
+        // Agent-agnostic happy path
+        const prompt = `
+Goal: "${goal}"
+
+Please complete this goal using the following process:
+
+1. **Spec**: Create \`.planning/SPEC.md\` with a checklist of tasks and verification criteria ("Must Haves").
+2. **Execute**: Implement the tasks, marking them done in SPEC.md and committing atomically. create \`.planning/SUMMARY.md\`.
+3. **Verify**: Check the implementation against criteria and write \`.planning/VERIFICATION.md\`.
+`;
+        printInstruction(prompt);
+    }
 }
 
 function help() {
@@ -121,10 +221,14 @@ Usage:
 
 Commands:
   init      Initialize project (config, gitignore).
-  spec      Create a specification/plan for a goal.
-  execute   Execute the specification.
-  verify    Verify the implementation.
+  spec      Generate instructions to Spec/Plan a goal.
+  execute   Generate instructions to Execute the plan.
+  verify    Generate instructions to Verify the work.
+  do        Generate instructions to do it all in one go.
   help      Show this help.
+
+Options:
+  --claude  Output Claude-specific workflow instructions (uses GSD engine).
 
 Workflow:
   1. gsdd spec "My Goal"  -> prompts agent to Research & Plan
@@ -141,10 +245,13 @@ switch (command) {
         spec(args.slice(1));
         break;
     case 'execute':
-        execute();
+        execute(args.slice(1));
         break;
     case 'verify':
-        verify();
+        verify(args.slice(1));
+        break;
+    case 'do':
+        doCommand(args.slice(1));
         break;
     case 'help':
     case '--help':
