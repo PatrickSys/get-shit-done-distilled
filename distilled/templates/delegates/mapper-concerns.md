@@ -1,13 +1,8 @@
-**Security: Before exploring, read and follow the `<forbidden_files>` section from `.agents/skills/gsdd-map-codebase/SKILL.md`.** Never read or quote contents from files matching those patterns. Note existence only.
-
-**Output quality:** File paths are critical for downstream agents. Use backtick-formatted paths (`src/...`). Show patterns, not lists. Be prescriptive ("Use X"), not descriptive ("Some use X").
+**Role contract:** Read `.planning/templates/roles/mapper.md` before starting. Follow its algorithm, quality guarantees, and anti-patterns.
 
 Map the technical debt, security concerns, and risks in this codebase.
 
-**Security check first (hard stop):** Before writing anything, grep for these patterns:
-`API_KEY`, `SECRET`, `PASSWORD`, `PRIVATE_KEY`, `-----BEGIN`, `Authorization:`
-
-If any hardcoded secrets are found: STOP immediately and report to the Orchestrator. Do NOT write CONCERNS.md. This is a hard stop.
+**Security check first (hard stop):** Follow the Hard stop directive in `.planning/templates/roles/mapper.md` — grep for secrets before writing anything. If found: STOP and report to Orchestrator immediately.
 
 If no secrets found, write CONCERNS.md to `.planning/codebase/` using the template at `.planning/templates/codebase/concerns.md`.
 

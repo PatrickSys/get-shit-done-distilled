@@ -1,3 +1,5 @@
+**Role contract:** Read `.planning/templates/roles/synthesizer.md` before starting. Follow its algorithm, quality guarantees, and anti-patterns.
+
 Synthesize the 4 research files into a single actionable SUMMARY.md.
 
 Read these files (all should exist):
