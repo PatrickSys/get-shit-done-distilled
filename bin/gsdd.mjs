@@ -81,6 +81,26 @@ async function cmdInit(...initArgs) {
     console.log('  - .planning/templates/ already exists');
   }
 
+  // 2b) Copy canonical role contracts into .planning/templates/roles/
+  const localRolesDir = join(PLANNING_DIR, 'templates', 'roles');
+  const agentsDir = join(__dirname, '..', 'agents');
+  if (!existsSync(localRolesDir)) {
+    if (existsSync(agentsDir)) {
+      mkdirSync(localRolesDir, { recursive: true });
+      const roleFiles = readdirSync(agentsDir).filter(
+        f => f.endsWith('.md') && f !== 'README.md'
+      );
+      for (const f of roleFiles) {
+        cpSync(join(agentsDir, f), join(localRolesDir, f));
+      }
+      console.log('  - copied role contracts to .planning/templates/roles/');
+    } else {
+      console.log('  - WARN: missing agents/; cannot copy role contracts');
+    }
+  } else {
+    console.log('  - .planning/templates/roles/ already exists');
+  }
+
   // 3) Create config.json via interactive CLI (only if missing)
   const configFile = join(PLANNING_DIR, 'config.json');
   if (!existsSync(configFile)) {

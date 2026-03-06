@@ -67,8 +67,47 @@ describe('gsdd init and update', () => {
       path.join(tmpDir, '.planning', 'templates', 'delegates', 'mapper-tech.md'),
       'utf-8'
     );
-    assert.match(mapperTechTemplate, /\.agents\/skills\/gsdd-map-codebase\/SKILL\.md/);
+    assert.match(mapperTechTemplate, /\.planning\/templates\/roles\/mapper\.md/);
     assert.doesNotMatch(mapperTechTemplate, /active platform skill\/adapter/);
+
+    assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'roles', 'mapper.md')));
+    assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'roles', 'researcher.md')));
+    assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'roles', 'synthesizer.md')));
+  });
+
+  test('delegates reference canonical role contracts', async () => {
+    const restoreStdin = setNonInteractiveStdin();
+    try {
+      const gsdd = await loadGsdd(tmpDir);
+      await gsdd.cmdInit();
+    } finally {
+      restoreStdin();
+    }
+
+    const mapperTech = fs.readFileSync(
+      path.join(tmpDir, '.planning', 'templates', 'delegates', 'mapper-tech.md'),
+      'utf-8'
+    );
+    assert.match(mapperTech, /\.planning\/templates\/roles\/mapper\.md/);
+
+    const researcherStack = fs.readFileSync(
+      path.join(tmpDir, '.planning', 'templates', 'delegates', 'researcher-stack.md'),
+      'utf-8'
+    );
+    assert.match(researcherStack, /\.planning\/templates\/roles\/researcher\.md/);
+
+    const synthDelegate = fs.readFileSync(
+      path.join(tmpDir, '.planning', 'templates', 'delegates', 'researcher-synthesizer.md'),
+      'utf-8'
+    );
+    assert.match(synthDelegate, /\.planning\/templates\/roles\/synthesizer\.md/);
+
+    const mapperRole = fs.readFileSync(
+      path.join(tmpDir, '.planning', 'templates', 'roles', 'mapper.md'),
+      'utf-8'
+    );
+    assert.match(mapperRole, /\.env/);
+    assert.match(mapperRole, /Hard stop/);
   });
 
   test('init with explicit tools generates requested adapters', async () => {

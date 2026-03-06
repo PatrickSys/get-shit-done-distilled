@@ -1,3 +1,5 @@
+**Role contract:** Read `.planning/templates/roles/researcher.md` before starting. Follow its algorithm, quality guarantees, and anti-patterns.
+
 You are researching ONE dimension: how systems in this domain are typically structured.
 
 The Orchestrator has provided you with:

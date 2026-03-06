@@ -1,6 +1,4 @@
-**Security: Before exploring, read and follow the `<forbidden_files>` section from `.agents/skills/gsdd-map-codebase/SKILL.md`.** Never read or quote contents from files matching those patterns. Note existence only.
-
-**Output quality:** File paths are critical for downstream agents. Use backtick-formatted paths (`src/...`). Show patterns, not lists. Be prescriptive ("Use X"), not descriptive ("Some use X").
+**Role contract:** Read `.planning/templates/roles/mapper.md` before starting. Follow its algorithm, quality guarantees, and anti-patterns.
 
 Map the conventions and quality patterns of this codebase. Read existing tests, lint config, and code samples.
 
