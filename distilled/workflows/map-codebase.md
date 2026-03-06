@@ -65,7 +65,7 @@ Wait for user response.
 - `config/secrets/*`, `.secrets/*`, `secrets/` -- Secret directories
 - `*.keystore`, `*.truststore` -- Java keystores
 - `serviceAccountKey.json`, `*-credentials.json` -- Cloud service credentials
-- `docker-compose*.yml` sections with passwords -- May contain inline secrets
+- `docker-compose*.yml` -- If the file may contain inline passwords, tokens, or other credentials, skip the whole file and note only that it exists
 - Any file in `.gitignore` that appears to contain secrets
 - `node_modules/`, `vendor/`, `.git/` -- Generated/vendored content (skip for performance)
 - Binary files, database files, media files -- Not analyzable as text

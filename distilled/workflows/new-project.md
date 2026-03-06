@@ -59,7 +59,7 @@ Check whether `.planning/codebase/STACK.md`, `.planning/codebase/ARCHITECTURE.md
 
 Inform the user: "No codebase maps found. Running codebase mapping before continuing."
 
-Read and follow `distilled/workflows/map-codebase.md` now. Execute its full flow (check existing, spawn mappers, validate, secrets scan). When map-codebase completes, return here and continue from Brownfield Validated Requirements Inference below.
+Read and follow `.agents/skills/gsdd-map-codebase/SKILL.md` now. Execute its full flow (check existing, spawn mappers, validate, secrets scan). When map-codebase completes, return here and continue from Brownfield Validated Requirements Inference below.
 
 ### Brownfield Validated Requirements Inference
 
