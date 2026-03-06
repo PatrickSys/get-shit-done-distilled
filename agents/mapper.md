@@ -75,7 +75,7 @@ This means: file paths are critical (planner needs to navigate directly), patter
 - `config/secrets/*`, `.secrets/*`, `secrets/` — Secret directories
 - `*.keystore`, `*.truststore` — Java keystores
 - `serviceAccountKey.json`, `*-credentials.json` — Cloud service credentials
-- `docker-compose*.yml` — Skip whole file if inline credentials may exist
+- `docker-compose*.yml` — Read for architecture; flag any inline `password:`, `token:`, or `secret:` values under the Hard stop rule rather than skipping the file entirely
 - Any file in `.gitignore` that appears to contain secrets
 - `node_modules/`, `vendor/`, `.git/` — Generated/vendored content (skip for performance)
 - Binary files, database files, media files — Not analyzable as text

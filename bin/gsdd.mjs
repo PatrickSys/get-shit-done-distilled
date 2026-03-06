@@ -85,14 +85,18 @@ async function cmdInit(...initArgs) {
   const localRolesDir = join(PLANNING_DIR, 'templates', 'roles');
   const agentsDir = join(__dirname, '..', 'agents');
   if (!existsSync(localRolesDir)) {
-    mkdirSync(localRolesDir, { recursive: true });
-    const roleFiles = readdirSync(agentsDir).filter(
-      f => f.endsWith('.md') && f !== 'README.md'
-    );
-    for (const f of roleFiles) {
-      cpSync(join(agentsDir, f), join(localRolesDir, f));
+    if (existsSync(agentsDir)) {
+      mkdirSync(localRolesDir, { recursive: true });
+      const roleFiles = readdirSync(agentsDir).filter(
+        f => f.endsWith('.md') && f !== 'README.md'
+      );
+      for (const f of roleFiles) {
+        cpSync(join(agentsDir, f), join(localRolesDir, f));
+      }
+      console.log('  - copied role contracts to .planning/templates/roles/');
+    } else {
+      console.log('  - WARN: missing agents/; cannot copy role contracts');
     }
-    console.log('  - copied role contracts to .planning/templates/roles/');
   } else {
     console.log('  - .planning/templates/roles/ already exists');
   }
