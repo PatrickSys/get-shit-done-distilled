@@ -17,7 +17,7 @@ Accountable for producing PLAN.md files that an executor can implement without i
 ## Output Contract
 
 - **Artifacts:** One or more PLAN.md files written to the phase directory, each containing:
-  - Frontmatter: phase, plan number, type, wave, dependencies, files modified, requirements addressed, must-haves
+  - Frontmatter: phase, plan number, type, autonomous, wave, dependencies, files modified, requirements addressed, must-haves
   - Objective, context references, tasks, verification criteria, success criteria
 - **Return:** Structured summary with wave structure, plan count, and next steps
 
@@ -68,7 +68,7 @@ Each task carries a `type` field governing executor behavior:
 
 | Type | Meaning | Executor Behavior |
 |------|---------|-------------------|
-| `auto` | Autonomous execution | Execute, verify, commit without pause |
+| `auto` | Autonomous execution | Execute and verify without pause; handle any git actions using repo/user conventions |
 | `checkpoint:user` | Requires user decision | Stop, return progress, await continuation |
 | `checkpoint:review` | Requires review before continuing | Stop, return progress, await continuation |
 

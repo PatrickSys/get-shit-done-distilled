@@ -1,10 +1,10 @@
 # Executor
 
-> Implements plan tasks atomically, handling deviations and producing per-task commits.
+> Implements plan tasks faithfully, handling deviations and reporting any git actions without hardcoding repo-specific naming rules.
 
 ## Responsibility
 
-Accountable for executing PLAN.md files faithfully: implementing each task, committing per task, handling deviations according to strict rules, and producing a SUMMARY.md that accurately documents what was built.
+Accountable for executing PLAN.md files faithfully: implementing each task, handling deviations according to strict rules, and producing a SUMMARY.md that accurately documents what was built. Git actions, if any, must follow the repo's actual conventions rather than a built-in phase/plan naming scheme.
 
 ## Input Contract
 
@@ -16,15 +16,15 @@ Accountable for executing PLAN.md files faithfully: implementing each task, comm
 ## Output Contract
 
 - **Artifacts:**
-  - Per-task atomic commits (one commit per completed task)
+  - Implemented plan tasks and any related git actions recorded in SUMMARY.md
   - SUMMARY.md documenting what was built, deviations, and decisions
-- **Return:** Structured completion message with task count, commit hashes, and duration
+- **Return:** Structured completion message with task count, any relevant git actions, and duration
 
 ## Core Algorithm
 
 1. **Load plan.** Parse frontmatter (phase, plan, type, autonomous, dependencies), objective, context references, and tasks.
 2. **For each task:**
-   a. If `type="auto"`: Execute the task, apply deviation rules as needed, run verification, confirm done criteria, commit.
+   a. If `type="auto"`: Execute the task, apply deviation rules as needed, run verification, confirm done criteria, and handle any git actions using repo/user conventions.
    b. If `type="checkpoint:*"`: STOP immediately. Return structured checkpoint message with all progress so far. A fresh agent will continue.
 3. **After all tasks:** Run overall verification, confirm success criteria, create SUMMARY.md.
 4. **Update state** (project position, progress, decisions, metrics).
@@ -50,28 +50,29 @@ While executing, deviations from the plan WILL occur. Apply these rules automati
 
 For tasks marked as TDD:
 
-1. **RED:** Write failing test describing expected behavior. Run test -- MUST fail. Commit.
-2. **GREEN:** Write minimal code to pass. Run test -- MUST pass. Commit.
-3. **REFACTOR (if needed):** Clean up. Run tests -- MUST still pass. Commit only if changes made.
+1. **RED:** Write failing test describing expected behavior. Run test -- MUST fail. Record the failing proof.
+2. **GREEN:** Write minimal code to pass. Run test -- MUST pass. Handle any git actions only if the repo or user workflow expects them here.
+3. **REFACTOR (if needed):** Clean up. Run tests -- MUST still pass. Handle any git actions only if changes were made and the workflow expects them.
 
-## Commit Protocol
+## Git Guidance
 
 After each task (verification passed, done criteria met):
 
 1. Stage task-related files individually (never `git add .` or `git add -A`).
-2. Commit with conventional format: `{type}({phase}-{plan}): {description}` where type is `feat`, `fix`, `test`, `refactor`, or `chore`.
-3. Record commit hash for SUMMARY.md.
+2. If the repo or user expects a commit here, use the existing project convention.
+3. Do not mention phase, plan, or task IDs in commit or PR names unless explicitly requested.
+4. Record any relevant commit hash for SUMMARY.md when a commit is made.
 
 ## Quality Guarantees
 
-- **Atomic commits.** Each task is one commit. No mixing tasks in a single commit.
-- **Deviation transparency.** Every auto-fix is documented in SUMMARY.md with rule number, description, and commit hash.
+- **Git stays repo-native.** The executor does not invent branch names, PR timing, or phase-scoped commit formats.
+- **Deviation transparency.** Every auto-fix is documented in SUMMARY.md with rule number, description, and any relevant git reference(e.g. commit hash).
 - **Faithful execution.** The plan is executed as written. Improvements beyond the plan scope are not made.
-- **Self-check.** After writing SUMMARY.md, verify that all claimed files exist and all claimed commits exist before proceeding.
+- **Self-check.** After writing SUMMARY.md, verify that all claimed files exist and any claimed git actions actually happened before proceeding.
 
 ## Anti-Patterns
 
-- Mixing multiple tasks in one commit.
+- Inventing a commit format the repo did not ask for.
 - "Improving" code beyond what the plan specifies.
 - Continuing past architectural decisions without user input (Rule 4 violations).
 - Using `git add .` or `git add -A` (risks committing secrets or unrelated files).
