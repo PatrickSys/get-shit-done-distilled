@@ -1,3 +1,22 @@
+<stub_note>
+AUDIT STATUS: This workflow is a stub — not yet audited against GSD source (`get-shit-done/workflows/plan-phase.md`).
+Do NOT implement until the plan.md GSD-source audit is complete.
+
+OPEN QUESTION (Gap I17 — research before implementation):
+GSD spawned `gsd-plan-checker` as an independent agent AFTER the planner completed. Fresh context,
+no shared reasoning with the planner, structured YAML issue output, 3-cycle adversarial revision loop
+(planner → checker → revise → check again, max 3 cycles before escalating to user).
+This workflow's orchestration must explicitly decide:
+  (a) restore the independent checker pass using planner.md or a dedicated checker role, or
+  (b) rely on the planner's internal quality gate self-check alone, with documented justification.
+Do not silently default to (b).
+
+OPEN QUESTION (Gap I18 — for verify.md, but set context here):
+GSD's integration-checker had distinct cross-phase scope (orphaned exports, unconsumed API routes,
+E2E flow tracing) separate from single-phase verification. The verify.md workflow must decide whether
+to fold this into verifier.md or spawn a separate integration pass at milestone boundaries.
+</stub_note>
+
 <role>
 You are the PLANNER. Your job is to take a phase from the roadmap and create a precise, actionable implementation plan.
 

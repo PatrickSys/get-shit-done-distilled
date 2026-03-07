@@ -55,9 +55,16 @@
 
 | Canonical role | Absorbs from GSD | Merger criteria |
 |---------------|-------------------|-----------------|
-| `researcher.md` | `gsd-project-researcher.md` + `gsd-phase-researcher.md` | Same algorithm, different scope. Scope is an input parameter, not a role distinction. |
-| `planner.md` | `gsd-planner.md` + `gsd-plan-checker.md` | Plan creation and plan verification are sequential steps of one role. Splitting them adds a coordination hop with no quality benefit. |
-| `verifier.md` | `gsd-verifier.md` + `gsd-integration-checker.md` | Phase verification and cross-phase integration checks use the same goal-backward analysis. Merging removes the artificial boundary. |
+| `researcher.md` | `gsd-project-researcher.md` + `gsd-phase-researcher.md` | Same algorithm, different scope. Scope is an input parameter, not a role distinction. Clean merger. |
+| `planner.md` | `gsd-planner.md` + `gsd-plan-checker.md` | Reduces coordination overhead. **Tradeoff:** GSD's plan-checker was a fresh-context adversarial pass with a 3-cycle revision loop (planner → checker → revise × 3 max). GSDD's internal quality gate covers the same 7 dimensions but with reduced independence — self-review bias applies. See Gap I17. |
+| `verifier.md` | `gsd-verifier.md` + `gsd-integration-checker.md` | Both use goal-backward analysis on post-execution artifacts. **Tradeoff:** `gsd-integration-checker.md` had an explicitly distinct scope (cross-phase wiring: exports/imports, API consumers, E2E flows) with structured output for a milestone auditor. Merging collapses that boundary. See Gap I18. |
+
+**Known tradeoffs in mergers:**
+
+The researcher merger is clean — scope is genuinely a parameter. The planner and verifier mergers each carry a real cost:
+
+- **Planner:** External verification by a fresh-context agent catches blind spots the author cannot catch in self-review. GSD's 3-cycle revision loop is currently absent from the architecture. When `plan.md` workflow is implemented, the orchestrator must explicitly decide whether to restore an independent verification pass.
+- **Verifier:** The integration-checker's cross-phase wiring scope (orphaned exports, unconsumed API routes, broken E2E flows) is structurally different from single-phase goal-backward verification. Without an explicit integration-check section or separate pass, this coverage may be silently dropped when `verify.md` is implemented.
 
 **Unchanged roles (1:1):**
 
