@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-function renderNativePlanChecker(delegateContent) {
+function renderClaudePlanChecker(delegateContent) {
   return `---
 name: gsdd-plan-checker
 description: Fresh-context plan checker for GSDD plan drafts. Review-only; never edits plans directly.
@@ -119,7 +119,7 @@ function createClaudeAdapter({ cwd, workflows, renderSkillContent, getDelegateCo
       mkdirSync(agentsDir, { recursive: true });
       writeFileSync(
         join(agentsDir, 'gsdd-plan-checker.md'),
-        renderNativePlanChecker(getDelegateContent('plan-checker.md'))
+        renderClaudePlanChecker(getDelegateContent('plan-checker.md'))
       );
     },
     summary(action) {

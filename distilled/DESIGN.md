@@ -103,7 +103,7 @@ The researcher merger is clean — scope is genuinely a parameter. The planner a
 
 **Delegate thinness principle:** Delegates carry ONLY task-specific content (output path, focus area, return format, quality checklist). They do NOT contain algorithms, verification protocols, security rules, or anti-patterns -- those live in the role contract.
 
-**Current delegates (9):**
+**Current delegates (10):**
 
 | Delegate | Role | Output | Workflow |
 |----------|------|--------|----------|
@@ -116,6 +116,7 @@ The researcher merger is clean — scope is genuinely a parameter. The planner a
 | `researcher-architecture.md` | researcher | `.planning/research/ARCHITECTURE.md` | new-project |
 | `researcher-pitfalls.md` | researcher | `.planning/research/PITFALLS.md` | new-project |
 | `researcher-synthesizer.md` | synthesizer | `.planning/research/SUMMARY.md` | new-project |
+| `plan-checker.md` | planner | JSON checker report | plan (native adapters) |
 
 **Distribution model:** `gsdd init` copies role contracts from `agents/` to `.planning/templates/roles/` in consumer projects. Delegates in `.planning/templates/delegates/` reference the local role copy (`Read .planning/templates/roles/<role>.md`). Consumer projects are self-contained at runtime -- no dependency on the framework repo.
 
@@ -123,7 +124,7 @@ The researcher merger is clean — scope is genuinely a parameter. The planner a
 - `agents/README.md` (Two-Layer Architecture and Runtime Distribution sections)
 - `bin/gsdd.mjs` lines 84-102 (role copy step with existsSync guard)
 - `tests/gsdd.init.test.cjs` (validates role file existence and delegate-role references)
-- All 9 delegate files (each starts with a role contract reference on line 1)
+- All 10 delegate files (each starts with a role contract reference on line 1)
 
 ---
 

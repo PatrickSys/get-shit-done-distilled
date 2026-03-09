@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-function renderNativePlanChecker(delegateContent) {
+function renderOpenCodePlanChecker(delegateContent) {
   return `---
 description: Fresh-context plan checker for GSDD plan drafts. Review-only; never edits plans directly.
 mode: subagent
@@ -104,7 +104,7 @@ function createOpenCodeAdapter({ cwd, workflows, renderOpenCodeCommandContent, g
       mkdirSync(agentsDir, { recursive: true });
       writeFileSync(
         join(agentsDir, 'gsdd-plan-checker.md'),
-        renderNativePlanChecker(getDelegateContent('plan-checker.md'))
+        renderOpenCodePlanChecker(getDelegateContent('plan-checker.md'))
       );
     },
     summary(action) {
