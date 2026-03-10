@@ -15,6 +15,24 @@ const {
   setNonInteractiveStdin,
 } = require('./gsdd.helpers.cjs');
 
+function extractSection(content, startMarker, endMarker) {
+  const start = content.indexOf(startMarker);
+  const end = content.indexOf(endMarker, start);
+  assert.notStrictEqual(start, -1, `Missing section start: ${startMarker}`);
+  assert.notStrictEqual(end, -1, `Missing section end: ${endMarker}`);
+  return content.slice(start, end);
+}
+
+function extractExampleTask(content) {
+  const match = content.match(/<task id="N-01">[\s\S]*?<\/task>/);
+  assert.ok(match, 'Missing canonical example task');
+  return match[0];
+}
+
+function collectTestPaths(content) {
+  return [...content.matchAll(/tests\/[\w.-]+\.test\.[\w]+/g)].map((match) => match[0]);
+}
+
 describe('gsdd init and update', () => {
   let tmpDir;
 
@@ -79,15 +97,42 @@ describe('gsdd init and update', () => {
       path.join(tmpDir, '.agents', 'skills', 'gsdd-plan', 'SKILL.md'),
       'utf-8'
     );
-    assert.match(planSkill, /AUDIT STATUS: This workflow is a stub/);
-    assert.doesNotMatch(planSkill, /<plan_check_loop>/);
+    assert.doesNotMatch(planSkill, /AUDIT STATUS: This workflow is a stub/);
+    assert.match(planSkill, /How Plan Checking Works/);
+    assert.match(planSkill, /independent checker may review it in fresh context/i);
+    assert.match(planSkill, /at least one runnable command/i);
+    assert.ok((planSkill.match(/- Run `[^`]+`/g) || []).length >= 3);
+
+    const exampleTask = extractExampleTask(planSkill);
+    const exampleFilePaths = collectTestPaths(exampleTask.match(/<files>[\s\S]*?<\/files>/)?.[0] || '');
+    const exampleVerifyPaths = collectTestPaths(exampleTask.match(/<verify>[\s\S]*?<\/verify>/)?.[0] || '');
+    for (const testPath of exampleVerifyPaths) {
+      assert.ok(
+        exampleFilePaths.includes(testPath),
+        `Example verify path must appear in <files>: ${testPath}`
+      );
+    }
+
+    const specificitySection = extractSection(planSkill, '### Specificity Rules', '</task_format>');
+    const specificityRows = specificitySection
+      .split('\n')
+      .filter((line) => line.startsWith('| "') && line.endsWith('|'));
+    assert.ok(specificityRows.length >= 4, 'Expected specificity examples to remain present');
+    for (const row of specificityRows) {
+      const cells = row.split('|').map((cell) => cell.trim());
+      const justRight = cells[2];
+      assert.match(justRight, /run `[^`]+`/i, `Specificity example must include a runnable command: ${row}`);
+    }
 
     const planCheckerTemplate = fs.readFileSync(
       path.join(tmpDir, '.planning', 'templates', 'delegates', 'plan-checker.md'),
       'utf-8'
     );
     assert.match(planCheckerTemplate, /Return JSON only/);
-    assert.match(planCheckerTemplate, /"status": "passed \| issues_found"/);
+    assert.match(planCheckerTemplate, /"status": "passed"/);
+    assert.match(planCheckerTemplate, /Status must be either `"passed"` or `"issues_found"`\./);
+    assert.match(planCheckerTemplate, /Use `"status": "passed"` only when no blockers remain/);
+    assert.match(planCheckerTemplate, /Use `"status": "issues_found"`/);
   });
 
   test('delegates reference canonical role contracts', async () => {
@@ -148,7 +193,7 @@ describe('gsdd init and update', () => {
     );
     assert.match(claudePlanChecker, /^name: gsdd-plan-checker/m);
     assert.match(claudePlanChecker, /^tools: Read, Grep, Glob/m);
-    assert.match(claudePlanChecker, /DRAFT PAYLOAD ONLY/);
+    assert.doesNotMatch(claudePlanChecker, /DRAFT PAYLOAD ONLY/);
     assert.match(claudePlanChecker, /Return JSON only/);
 
     const claudePlanCommand = fs.readFileSync(
@@ -169,7 +214,7 @@ describe('gsdd init and update', () => {
     assert.match(opencodePlanChecker, /^\s+write: false/m);
     assert.match(opencodePlanChecker, /^\s+edit: false/m);
     assert.match(opencodePlanChecker, /^\s+bash: false/m);
-    assert.match(opencodePlanChecker, /DRAFT PAYLOAD ONLY/);
+    assert.doesNotMatch(opencodePlanChecker, /DRAFT PAYLOAD ONLY/);
   });
 
   test('init is idempotent and upserts the bounded AGENTS block without duplicating it', async () => {

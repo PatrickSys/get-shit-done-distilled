@@ -43,9 +43,9 @@ Execution flow:
    - relevant locked decisions / deferred items from \`.planning/SPEC.md\`
    - relevant phase research file(s)
    - produced \`.planning/phases/*-PLAN.md\` file(s)
-7. Require the checker to return JSON only using this schema:
+7. Require the checker to return a single JSON object with this shape:
    {
-     "status": "passed" | "issues_found",
+     "status": "passed",
      "summary": "One sentence overall assessment",
      "issues": [
        {
@@ -58,6 +58,7 @@ Execution flow:
        }
      ]
    }
+   Status must be either "passed" or "issues_found".
 8. If the checker returns \`passed\`, finish and summarize.
 9. If the checker returns \`issues_found\`, revise the existing plan files only where needed, then run the checker again.
 10. Maximum 3 checker cycles total. If blockers remain after cycle 3, stop and escalate to the user instead of pretending the plan is ready.

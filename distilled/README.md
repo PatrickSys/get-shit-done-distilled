@@ -46,18 +46,18 @@ gsdd init           -> bootstrap (create .planning/, copy templates, generate sk
 /gsdd:milestone     -> new ROADMAP.md for next milestone
 ```
 
-## Current Status (updated 2026-03-08)
+## Current Status (updated 2026-03-10)
 
 | Workflow | Status | Notes |
 |----------|--------|-------|
 | `new-project.md` | [OK] Defined, source-audited | Covers greenfield + brownfield + milestone context |
-| `plan.md` | [WARN] Stub - not audited | Portable workflow remains a stub; Claude now has a skill-primary native `/gsdd-plan` surface plus checker agent and OpenCode now has a specialized `/gsdd-plan` command, but I17 stays open because Claude only has partial live validation and OpenCode runtime parity is not yet proven |
+| `plan.md` | [OK] Defined, source-audited | Portable workflow defines the planner contract and supports independent plan checking through generated native adapters |
 | `execute.md` | [WARN] Stub - not audited | Audit against `get-shit-done/workflows/execute-phase.md` |
 | `verify.md` | [WARN] Stub - not audited | Audit against `get-shit-done/workflows/verify-phase.md` |
 
 Standalone codebase remapping is planned for a later PR. For the current init surface, refresh stale codebase maps by deleting `.planning/codebase/*.md` and rerunning `/gsdd:new-project`.
 
-Architecture note: `bin/gsdd.mjs` remains the thin generator entrypoint, while vendor-specific rendering now lives in adapter modules. This cleanup does not change the current I17 status.
+Architecture note: `bin/gsdd.mjs` remains the thin generator entrypoint, while vendor-specific rendering lives in adapter modules.
 
 ## Init Workflow Agent Count (by config)
 
@@ -88,13 +88,13 @@ Note: `parallelization: false` keeps the same mapper/researcher set but runs the
   gsdd-execute/SKILL.md
   gsdd-verify/SKILL.md
 .claude/agents/
-  gsdd-plan-checker.md      # native-capable draft checker payload source for future I17 wiring
+  gsdd-plan-checker.md      # native-capable checker agent generated from the active plan-checker contract
 .claude/commands/
   gsdd-plan.md              # compatibility alias to the Claude skill-primary plan entry
 .claude/skills/
   gsdd-plan/SKILL.md        # Claude-native skill-primary planner -> checker surface
 .opencode/agents/
-  gsdd-plan-checker.md      # native-capable draft checker payload source for future I17 wiring
+  gsdd-plan-checker.md      # native-capable checker agent generated from the active plan-checker contract
 .opencode/commands/
   gsdd-plan.md              # OpenCode-native specialized planner -> checker command surface
 ```
