@@ -51,8 +51,8 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(claudePlanSkill, /Do NOT fork this skill into a subagent/);
     assert.match(claudePlanSkill, /not as a stop signal for this Claude-native adapter path/);
     assert.match(claudePlanSkill, /Maximum 3 checker cycles total/);
-    assert.match(claudePlanSkill, /"status": "issues_found"/);
-    assert.match(claudePlanSkill, /Allowed status values: "passed" or "issues_found"\./);
+    assert.match(claudePlanSkill, /"status": "passed"/);
+    assert.match(claudePlanSkill, /Status must be either "passed" or "issues_found"\./);
     assert.doesNotMatch(claudePlanSkill, /^context: fork$/m);
     assert.doesNotMatch(claudePlanSkill, /^agent:/m);
 
@@ -91,8 +91,8 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(opencodePlanCommand, /hidden `gsdd-plan-checker` subagent/);
     assert.match(opencodePlanCommand, /not as a stop signal for this OpenCode-native adapter path/);
     assert.match(opencodePlanCommand, /Maximum 3 checker cycles total/);
-    assert.match(opencodePlanCommand, /"status": "issues_found"/);
-    assert.match(opencodePlanCommand, /Allowed status values: "passed" or "issues_found"\./);
+    assert.match(opencodePlanCommand, /"status": "passed"/);
+    assert.match(opencodePlanCommand, /Status must be either "passed" or "issues_found"\./);
 
     assert.doesNotMatch(opencodeExecuteCommand, /^subtask: false$/m);
 

@@ -129,7 +129,8 @@ describe('gsdd init and update', () => {
       'utf-8'
     );
     assert.match(planCheckerTemplate, /Return JSON only/);
-    assert.match(planCheckerTemplate, /"status": "issues_found"/);
+    assert.match(planCheckerTemplate, /"status": "passed"/);
+    assert.match(planCheckerTemplate, /Status must be either `"passed"` or `"issues_found"`\./);
     assert.match(planCheckerTemplate, /Use `"status": "passed"` only when no blockers remain/);
     assert.match(planCheckerTemplate, /Use `"status": "issues_found"`/);
   });

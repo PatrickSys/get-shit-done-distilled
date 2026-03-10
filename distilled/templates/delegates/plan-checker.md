@@ -22,16 +22,16 @@ Verify these dimensions:
 - `must_have_quality`: success criteria and must-haves are specific, observable, and reflected in tasks
 - `context_compliance`: locked decisions are honored and deferred ideas stay out of scope
 
-Return JSON only, using this schema:
+Return JSON only as a single object with this shape:
 
 ```json
 {
-  "status": "issues_found",
+  "status": "passed",
   "summary": "One sentence overall assessment",
   "issues": [
     {
       "dimension": "requirement_coverage",
-      "severity": "blocker | warning",
+      "severity": "blocker",
       "description": "What is wrong",
       "plan": "01-PLAN",
       "task": "1-02",
@@ -42,6 +42,7 @@ Return JSON only, using this schema:
 ```
 
 Rules:
+- Status must be either `"passed"` or `"issues_found"`.
 - Use `"status": "passed"` only when no blockers remain. Warnings may still be listed.
 - Use `"status": "issues_found"` when any blocker exists or when warnings should be surfaced for revision.
 - Keep `fix_hint` targeted. The planner should patch the existing plan, not replan from scratch, unless the issue is fundamental.
