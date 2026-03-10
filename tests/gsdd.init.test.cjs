@@ -79,15 +79,20 @@ describe('gsdd init and update', () => {
       path.join(tmpDir, '.agents', 'skills', 'gsdd-plan', 'SKILL.md'),
       'utf-8'
     );
-    assert.match(planSkill, /AUDIT STATUS: This workflow is a stub/);
-    assert.doesNotMatch(planSkill, /<plan_check_loop>/);
+    assert.doesNotMatch(planSkill, /AUDIT STATUS: This workflow is a stub/);
+    assert.match(planSkill, /How Plan Checking Works/);
+    assert.match(planSkill, /independent checker may review it in fresh context/i);
+    assert.match(planSkill, /at least one runnable command/i);
+    assert.ok((planSkill.match(/- Run `[^`]+`/g) || []).length >= 3);
 
     const planCheckerTemplate = fs.readFileSync(
       path.join(tmpDir, '.planning', 'templates', 'delegates', 'plan-checker.md'),
       'utf-8'
     );
     assert.match(planCheckerTemplate, /Return JSON only/);
-    assert.match(planCheckerTemplate, /"status": "passed \| issues_found"/);
+    assert.match(planCheckerTemplate, /"status": "issues_found"/);
+    assert.match(planCheckerTemplate, /Use `"status": "passed"` only when no blockers remain/);
+    assert.match(planCheckerTemplate, /Use `"status": "issues_found"`/);
   });
 
   test('delegates reference canonical role contracts', async () => {
@@ -148,7 +153,7 @@ describe('gsdd init and update', () => {
     );
     assert.match(claudePlanChecker, /^name: gsdd-plan-checker/m);
     assert.match(claudePlanChecker, /^tools: Read, Grep, Glob/m);
-    assert.match(claudePlanChecker, /DRAFT PAYLOAD ONLY/);
+    assert.doesNotMatch(claudePlanChecker, /DRAFT PAYLOAD ONLY/);
     assert.match(claudePlanChecker, /Return JSON only/);
 
     const claudePlanCommand = fs.readFileSync(
@@ -169,7 +174,7 @@ describe('gsdd init and update', () => {
     assert.match(opencodePlanChecker, /^\s+write: false/m);
     assert.match(opencodePlanChecker, /^\s+edit: false/m);
     assert.match(opencodePlanChecker, /^\s+bash: false/m);
-    assert.match(opencodePlanChecker, /DRAFT PAYLOAD ONLY/);
+    assert.doesNotMatch(opencodePlanChecker, /DRAFT PAYLOAD ONLY/);
   });
 
   test('init is idempotent and upserts the bounded AGENTS block without duplicating it', async () => {

@@ -32,7 +32,7 @@ Accountable for producing PLAN.md files that an executor can implement without i
 4. **Build dependency graph.** Map needs/creates relationships. Identify parallelization opportunities.
 5. **Assign waves.** No dependencies = Wave 1. Depends only on Wave 1 = Wave 2. And so on.
 6. **Group into plans.** Rules:
-   - 2-3 tasks per plan (target ~50% context budget)
+   - 2-5 tasks per plan; prefer 2-3 and only use 4-5 when that is the smallest clean slice that still preserves requirement coverage
    - Same-wave tasks with no file conflicts -> parallel plans
    - Shared files -> same plan or sequential plans
    - Prefer vertical slices (full feature) over horizontal layers (all models, then all APIs)
@@ -90,10 +90,10 @@ Plans also carry an `autonomous` frontmatter field (`true`/`false`). A plan with
 Before returning, self-check the plan against the plan-checker dimensions:
 
 1. **Requirement coverage:** Every phase requirement has task(s) addressing it.
-2. **Task completeness:** Every task has files + action + verify + done.
+2. **Task completeness:** Every task has files + action + verify + done. At least one verify step per task must be a runnable command (shell command, test runner, curl request). Observational-only verification ("it looks correct") is incomplete. If a verify step references a test file, ensure a prior task creates that file.
 3. **Dependency correctness:** No cycles, no missing references, waves consistent.
 4. **Key links planned:** Artifacts are wired together, not just created in isolation.
-5. **Scope sanity:** 2-3 tasks per plan, not 5+. Split if over budget.
+5. **Scope sanity:** 2-5 tasks per plan, prefer 2-3. Split if over budget.
 6. **Must-haves derivation:** Truths are user-observable (not "bcrypt installed" but "passwords are secure").
 7. **Context compliance:** Locked decisions implemented, deferred ideas excluded.
 
@@ -101,14 +101,14 @@ Before returning, self-check the plan against the plan-checker dimensions:
 
 - **Plans are prompts.** A different agent can execute the plan without asking clarifying questions.
 - **100% requirement coverage.** Every phase requirement appears in at least one plan's requirements field.
-- **Context-safe sizing.** 2-3 tasks per plan, targeting ~50% context budget. Quality over compression.
+- **Context-safe sizing.** 2-5 tasks per plan, targeting 2-3 when possible. Quality over compression.
 - **Goal-backward must-haves.** Every plan includes derived truths, artifacts, and key links that trace back to the phase goal.
 
 ## Anti-Patterns
 
 - Vague tasks ("implement auth" instead of specific endpoint + library + verification).
 - Horizontal layers (all models in one plan, all APIs in another) instead of vertical slices.
-- Plans with 5+ tasks (quality degrades past ~50% context).
+- Plans with 6+ tasks (quality degrades past ~50% context).
 - Imposing arbitrary structure ("every project needs Setup -> Core -> Features -> Polish").
 - Enterprise ceremony (team structures, sprint planning, RACI matrices, time estimates in human hours).
 - Skipping dependency analysis (causes execution failures).
@@ -117,4 +117,4 @@ Before returning, self-check the plan against the plan-checker dimensions:
 
 - **Tools required:** File read, file write, content search, glob
 - **Parallelizable:** No -- planning is inherently sequential (depends on roadmap, research, and prior plans)
-- **Context budget:** High -- plans are the most context-intensive artifacts to produce. Keep 2-3 tasks per plan to stay within ~50% context.
+- **Context budget:** High -- plans are the most context-intensive artifacts to produce. Keep plans in the 2-5 task range and prefer 2-3 to stay within ~50% context.
