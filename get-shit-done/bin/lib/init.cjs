@@ -35,7 +35,7 @@ function cmdInitExecutePhase(cwd, phase, raw) {
 
     // Phase info
     phase_found: !!phaseInfo,
-    phase_dir: phaseInfo?.directory || null,
+    phase_dir: phaseInfo?.directory ? portableRelativePath(phaseInfo.directory) : null,
     phase_number: phaseInfo?.phase_number || null,
     phase_name: phaseInfo?.phase_name || null,
     phase_slug: phaseInfo?.phase_slug || null,
@@ -98,7 +98,7 @@ function cmdInitPlanPhase(cwd, phase, raw) {
 
     // Phase info
     phase_found: !!phaseInfo,
-    phase_dir: phaseInfo?.directory || null,
+    phase_dir: phaseInfo?.directory ? portableRelativePath(phaseInfo.directory) : null,
     phase_number: phaseInfo?.phase_number || null,
     phase_name: phaseInfo?.phase_name || null,
     phase_slug: phaseInfo?.phase_slug || null,
@@ -338,7 +338,7 @@ function cmdInitVerifyWork(cwd, phase, raw) {
 
     // Phase info
     phase_found: !!phaseInfo,
-    phase_dir: phaseInfo?.directory || null,
+    phase_dir: phaseInfo?.directory ? portableRelativePath(phaseInfo.directory) : null,
     phase_number: phaseInfo?.phase_number || null,
     phase_name: phaseInfo?.phase_name || null,
 
@@ -381,7 +381,7 @@ function cmdInitPhaseOp(cwd, phase, raw) {
 
     // Phase info
     phase_found: !!phaseInfo,
-    phase_dir: phaseInfo?.directory || null,
+    phase_dir: phaseInfo?.directory ? portableRelativePath(phaseInfo.directory) : null,
     phase_number: phaseInfo?.phase_number || null,
     phase_name: phaseInfo?.phase_name || null,
     phase_slug: phaseInfo?.phase_slug || null,
@@ -457,7 +457,7 @@ function cmdInitTodos(cwd, area, raw) {
           created: createdMatch ? createdMatch[1].trim() : 'unknown',
           title: titleMatch ? titleMatch[1].trim() : 'Untitled',
           area: todoArea,
-          path: path.join('.planning', 'todos', 'pending', file),
+          path: portableRelativePath('.planning', 'todos', 'pending', file),
         });
       } catch {}
     }
@@ -617,7 +617,7 @@ function cmdInitProgress(cwd, raw) {
       const phaseInfo = {
         number: phaseNumber,
         name: phaseName,
-        directory: path.join('.planning', 'phases', dir),
+        directory: portableRelativePath('.planning', 'phases', dir),
         status,
         plan_count: plans.length,
         summary_count: summaries.length,
