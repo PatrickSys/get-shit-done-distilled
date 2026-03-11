@@ -247,8 +247,9 @@ async function cmdInit(...initArgs) {
   console.log('  - Codex CLI uses these skills directly; no Codex-specific adapter file is generated');
 
   // 5) Generate requested/detected adapters
-  const requestedTools = normalizeRequestedTools(parseToolsFlag(initArgs));
-  const platforms = requestedTools.length > 0 ? requestedTools : detectPlatforms();
+  const parsedTools = parseToolsFlag(initArgs);
+  const requestedTools = normalizeRequestedTools(parsedTools);
+  const platforms = parsedTools.length > 0 ? requestedTools : detectPlatforms();
 
   for (const adapter of resolveAdapters(platforms)) {
     adapter.generate();
@@ -264,8 +265,9 @@ async function cmdInit(...initArgs) {
 function cmdUpdate(...updateArgs) {
   console.log('gsdd update - regenerating adapter files\n');
 
-  const requestedTools = normalizeRequestedTools(parseToolsFlag(updateArgs));
-  const platforms = requestedTools.length > 0 ? requestedTools : detectPlatforms();
+  const parsedTools = parseToolsFlag(updateArgs);
+  const requestedTools = normalizeRequestedTools(parsedTools);
+  const platforms = parsedTools.length > 0 ? requestedTools : detectPlatforms();
 
   let updated = false;
 
