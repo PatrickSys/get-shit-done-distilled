@@ -31,12 +31,12 @@ For each phase directory in `.planning/phases/`, read the VERIFICATION.md.
 
 From each VERIFICATION.md, extract:
 - **Status:** passed | gaps_found | human_needed
-- **Critical gaps:** (if any — these are blockers)
+- **Critical gaps:** (if any - these are blockers)
 - **Non-critical gaps:** tech debt, deferred items, warnings
 - **Anti-patterns found:** TODOs, stubs, placeholders
 - **Requirements coverage:** which requirements satisfied/blocked
 
-If a phase has no VERIFICATION.md, flag it as an unverified phase — this is a blocker.
+If a phase has no VERIFICATION.md, flag it as an unverified phase - this is a blocker.
 
 ## 3. Spawn Integration Checker
 
@@ -52,14 +52,14 @@ With phase context collected, delegate cross-phase integration checking:
 - API routes and endpoints created
 - Milestone requirement IDs with descriptions and assigned phases
 
-**Task:** Verify cross-phase wiring and E2E user flows. Return structured integration report with wiring summary, API coverage, E2E flow status, and Requirements Integration Map.
+**Task:** Verify cross-phase wiring, API coverage, auth protection, and E2E user flows. Return structured integration report with wiring summary, API coverage, auth protection, E2E flow status, and Requirements Integration Map.
 
-**Return:** Structured integration report (wiring, APIs, flows, requirements map).
+**Return:** Structured integration report (wiring, APIs, auth protection, flows, requirements map).
 </delegate>
 
 If the runtime supports spawning a subagent: spawn the integration checker as a separate read-only context for independent verification.
 
-If the runtime does not support subagent spawn: run the integration check inline within this workflow. Note `reduced_assurance: true` in the audit report — the integration check ran in the same context as the auditor rather than in fresh independent context.
+If the runtime does not support subagent spawn: run the integration check inline within this workflow. Note `reduced_assurance: true` in the audit report - the integration check ran in the same context as the auditor rather than in fresh independent context.
 
 Either way, the integration check happens. The quality level is documented.
 
@@ -67,7 +67,7 @@ Either way, the integration check happens. The quality level is documented.
 
 Combine:
 - Phase-level gaps and tech debt (from step 2)
-- Integration checker's report (wiring gaps, broken flows, requirements integration map)
+- Integration checker's report (wiring gaps, auth gaps, broken flows, requirements integration map)
 
 ## 5. 3-Source Cross-Reference
 
@@ -111,7 +111,7 @@ For each requirement, determine status using all available sources:
 
 **FAIL gate:** Any `unsatisfied` requirement forces `gaps_found` status on the milestone audit. No exceptions.
 
-**Orphan detection:** Requirements in `.planning/SPEC.md` that are mapped to phases in `.planning/ROADMAP.md` but absent from ALL phase VERIFICATION.md files are orphaned. Orphaned requirements are treated as `unsatisfied` — they were assigned but never verified by any phase.
+**Orphan detection:** Requirements in `.planning/SPEC.md` that are mapped to phases in `.planning/ROADMAP.md` but absent from ALL phase VERIFICATION.md files are orphaned. Orphaned requirements are treated as `unsatisfied` - they were assigned but never verified by any phase.
 
 ## 6. Write Milestone Audit Report
 
@@ -127,6 +127,7 @@ scores:
   requirements: N/M
   phases: N/M
   integration: N/M
+  auth: N/M
   flows: N/M
 gaps:
   requirements:
@@ -138,6 +139,10 @@ gaps:
       verification_status: "passed | gaps_found | missing | orphaned"
       evidence: "specific evidence or lack thereof"
   integration: [...]
+  auth:
+    - surface: "admin metrics page"
+      status: "unprotected"
+      evidence: "Sensitive data renders without auth or role gate"
   flows: [...]
 tech_debt:
   - phase: 01-auth
@@ -146,23 +151,23 @@ tech_debt:
 ---
 ```
 
-Plus full markdown report body with tables for requirements, phases, integration findings, and tech debt.
+Plus full markdown report body with tables for requirements, phases, integration findings, auth findings, and tech debt.
 
 **Status values:**
-- `passed` — all requirements met, no critical gaps, integration verified
-- `gaps_found` — critical blockers exist (unsatisfied requirements, broken flows, or missing verifications)
-- `tech_debt` — no blockers but accumulated deferred items need review
+- `passed` - all requirements met, no critical gaps, integration and auth protection verified
+- `gaps_found` - critical blockers exist (unsatisfied requirements, unprotected sensitive flows, broken flows, or missing verifications)
+- `tech_debt` - no blockers but accumulated deferred items need review
 
 ## 7. Present Results
 
 Route by audit status:
 
 ### If passed:
-- Report: all requirements covered, cross-phase integration verified, E2E flows complete
+- Report: all requirements covered, cross-phase integration verified, auth protection verified, E2E flows complete
 - Next step: complete the milestone (archive and tag)
 
 ### If gaps_found:
-- Report: list unsatisfied requirements, cross-phase issues, broken flows
+- Report: list unsatisfied requirements, auth or cross-phase issues, broken flows
 - Next step: plan gap closure phases to complete the milestone
 
 ### If tech_debt:
@@ -182,7 +187,8 @@ Audit is complete when all of these are true:
 - [ ] Integration checker ran (subagent or inline with reduced_assurance noted)
 - [ ] 3-source cross-reference completed (VERIFICATION + SUMMARY + SPEC.md)
 - [ ] Orphaned requirements detected (mapped in ROADMAP but absent from all VERIFICATIONs)
-- [ ] FAIL gate enforced — any unsatisfied requirement forces gaps_found status
+- [ ] Auth-protection findings aggregated for sensitive milestone surfaces
+- [ ] FAIL gate enforced - any unsatisfied requirement forces gaps_found status
 - [ ] Tech debt and deferred gaps aggregated by phase
 - [ ] MILESTONE-AUDIT.md created with structured requirement gap objects
 - [ ] Results presented with actionable next steps based on status

@@ -54,7 +54,7 @@ gsdd init           -> bootstrap (create .planning/, copy templates, generate sk
 | `plan.md` | [OK] Defined, source-audited | Portable workflow defines the planner contract and supports independent plan checking through generated native adapters |
 | `execute.md` | [WARN] Contract-aligned, full audit pending | Portable workflow now matches the current plan/roadmap/task schema, but the deeper GSD execute audit is still pending |
 | `verify.md` | [OK] Defined, phase-verification only | Structured `VERIFICATION.md`, re-verification, and human-needed handling are defined; milestone integration audit remains separate |
-| `audit-milestone.md` | [OK] Defined, source-audited | Aggregates phase verification, cross-phase integration audit, requirement reconciliation, and orphan detection into `MILESTONE-AUDIT.md` |
+| `audit-milestone.md` | [OK] Defined, source-audited | Aggregates phase verification, cross-phase integration audit, auth protection checks, requirement reconciliation, and orphan detection into `MILESTONE-AUDIT.md` |
 
 `map-codebase.md` is already available as a standalone refresh workflow. For the current init surface, refresh stale codebase maps with `/gsdd:map-codebase`.
 
