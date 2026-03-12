@@ -79,7 +79,7 @@ The first extraction of `integration-checker.md` preserved the milestone scope a
 
 **Systemic role-contract hardening follow-up (2026-03-12):**
 
-The same over-distillation pattern had also flattened `roadmapper.md`, `synthesizer.md`, `verifier.md`, and `planner.md`. The first recovery pass restored visible structure, but the follow-up audit found that structure alone was not enough. The current hardening pass restores the stricter mechanics that materially improve compliance while continuing to strip vendor/tool specifics. Status should stay conservative until the branch is integrated.
+The same over-distillation pattern had also flattened `roadmapper.md`, `synthesizer.md`, `verifier.md`, and `planner.md`. The first recovery pass restored visible structure, but the follow-up audit found that structure alone was not enough. The current hardening pass restores the stricter mechanics that materially improve compliance while continuing to strip vendor/tool specifics.
 
 - **Roadmapper kept from GSD:** mandatory initial-read discipline, bounded section structure, explicit coverage validation, parse-critical artifact contract, structured return modes, and checklist-driven completion.
 - **Roadmapper intentionally stripped:** template-path references, commit steps, and vendor-specific file conventions.
@@ -91,7 +91,7 @@ The same over-distillation pattern had also flattened `roadmapper.md`, `synthesi
 
 - **Verifier kept from GSD:** mandatory initial-read discipline, explicit must-have derivation steps, named L1/L2/L3 checks, truth-level status taxonomy, explicit key-link categories, typed report example, machine-usable structured gaps, structured return, and completion checklist.
 - **Verifier intentionally stripped:** GSD tool invocations, literal grep/bash procedures, and commit steps.
-- **Verifier gained in GSDD:** a portable verification-basis discovery protocol, grouped-gap guidance, and a stricter frontmatter-only machine-readable findings contract that now lines up directly with the current normalized `VERIFICATION.md` schema and the separate milestone-audit boundary.
+- **Verifier gained in GSDD:** a portable verification-basis discovery protocol, grouped-gap guidance, a dedicated `<structured_returns>` contract for orchestrator handoff, and a stricter frontmatter-only machine-readable findings contract that now lines up directly with the current normalized `VERIFICATION.md` schema and the separate milestone-audit boundary.
 
 - **Planner kept from GSD:** mandatory initial-read discipline, bounded section structure, context-fidelity rules, TDD detection heuristic, automated-verify discipline, test-scaffold-first rule when verification is missing, explicit output block, structured planning return, and completion checklist.
 - **Planner intentionally stripped:** `user_setup`, vendor runtime/tool instructions, commit steps, and GSD-specific validation commands.

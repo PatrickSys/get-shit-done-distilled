@@ -24,8 +24,8 @@ function extractSection(content, startMarker, endMarker) {
 }
 
 function extractExampleTask(content) {
-  const match = content.match(/<task id="(?:N-01|01-01)" type="auto">[\s\S]*?<\/task>/);
-  assert.ok(match, 'Missing canonical example task');
+  const match = content.match(/<task id="[^"]+" type="auto">[\s\S]*?<\/task>/);
+  assert.ok(match, 'Missing canonical example task with an auto task id');
   return match[0];
 }
 
@@ -220,6 +220,9 @@ describe('gsdd init and update', () => {
     assert.match(verifierRole, /## Requirement Coverage/);
     assert.match(verifierRole, /^re_verification:$/m);
     assert.match(verifierRole, /^gaps:$/m);
+    assert.match(verifierRole, /<structured_returns>/);
+    assert.match(verifierRole, /Return a concise machine-usable summary to the orchestrator/i);
+    assert.match(verifierRole, /^report: "\.planning\/phases\/01-foundation\/01-VERIFICATION\.md"$/m);
     assert.doesNotMatch(verifierRole, /~\/\.claude\//i);
     assert.doesNotMatch(verifierRole, /grep -E/i);
     assert.doesNotMatch(verifierRole, /node ~\/\.claude\/get-shit-done/i);

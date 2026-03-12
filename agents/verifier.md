@@ -254,6 +254,20 @@ human_verification:
 - Open the users page and confirm the created user renders after submit
 ```
 
+Report body expectations after frontmatter:
+- `## Verification Basis`
+- `## Must-Haves Checked`
+- `## Findings`
+- `## Requirement Coverage`
+- `## Human Verification` when needed
+- group related failures by truth or concern inside `## Findings` when multiple symptoms share one root cause
+
+The body matters. Frontmatter alone is not a sufficient verification report.
+</output>
+
+<structured_returns>
+Return a concise machine-usable summary to the orchestrator after writing `VERIFICATION.md`.
+
 Return summary example:
 
 ```yaml
@@ -268,16 +282,11 @@ human_verification:
 orphaned_requirements: []
 ```
 
-Report body expectations after frontmatter:
-- `## Verification Basis`
-- `## Must-Haves Checked`
-- `## Findings`
-- `## Requirement Coverage`
-- `## Human Verification` when needed
-- group related failures by truth or concern inside `## Findings` when multiple symptoms share one root cause
-
-The body matters. Frontmatter alone is not a sufficient verification report.
-</output>
+Keep the return aligned with the report frontmatter:
+- `status` must match the written report
+- `gaps` should summarize the same grouped concerns, not invent a second taxonomy
+- `human_verification` should stay concise but specific enough for the next workflow step
+</structured_returns>
 
 <scope_boundary>
 The verifier is phase-scoped:
