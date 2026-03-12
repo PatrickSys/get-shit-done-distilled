@@ -69,6 +69,14 @@ The researcher merger is clean - scope is genuinely a parameter. The planner and
 - **Verifier:** The integration-checker's cross-phase wiring scope (orphaned exports, unconsumed API routes, broken E2E flows) is structurally different from single-phase goal-backward verification. GSDD keeps `verifier.md` phase-scoped and implements milestone integration audit as a separate surface: `distilled/workflows/audit-milestone.md` with `integration-checker.md`.
 - **Verifier output contract:** Upstream GSD exposes two relevant shapes: the slim `verification-report.md` template with base fields (`phase`, `verified`, `status`, `score`) and the richer `gsd-verifier.md` output example with structured `re_verification`, `gaps`, and `human_verification`. GSDD keeps the richer phase-verifier structure intentionally, but labels it as normalized verifier behavior rather than pretending every field came from the slimmer template alone.
 
+**Integration-checker second-pass recovery (2026-03-12):**
+
+The first extraction of `integration-checker.md` preserved the milestone scope and core algorithm, but over-stripped execution leverage. The recovery pass keeps the portable role framework-neutral while restoring the upstream scaffolding that materially improves compliance:
+
+- **Kept from GSD:** mandatory initial-read discipline, explicit section boundaries, auth-protection verification, end-to-end flow tracing, typed structured return, and checklist-driven completion.
+- **Intentionally stripped:** framework-specific Bash recipes, hardcoded path assumptions, file-extension-specific grep flags, and other tool/runtime details that do not survive vendor-agnostic distillation well.
+- **Gained in GSDD:** a cleaner split between role contract and milestone workflow, a stronger explicit phase-vs-milestone boundary, and a portable typed report shape aligned to the milestone auditor's current schema.
+
 **Unchanged roles (1:1):**
 
 | Canonical role | GSD source |

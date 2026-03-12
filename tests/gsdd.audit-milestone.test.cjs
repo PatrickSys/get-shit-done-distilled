@@ -60,13 +60,18 @@ describe('gsdd audit-milestone', () => {
     assert.ok(fs.existsSync(rolePath), 'integration-checker role must be distributed');
 
     const content = fs.readFileSync(rolePath, 'utf-8');
-    assert.match(content, /Existence/i, 'must contain core principle keyword "Existence"');
-    assert.match(content, /Integration/i, 'must contain core principle keyword "Integration"');
-    assert.match(content, /Export.*Import/i, 'must contain Export->Import semantic check pattern');
-    assert.match(content, /API.*Consumer/i, 'must contain API->Consumer semantic check pattern');
-    assert.doesNotMatch(content, /find src\/app\/api/, 'must not contain framework-specific bash');
-    assert.doesNotMatch(content, /grep -r "useAuth"/, 'must not contain framework-specific grep');
-    assert.doesNotMatch(content, /--include="\*\.tsx"/, 'must not contain file-type-specific flags');
+    assert.match(content, /<role>/i, 'must restore XML-style role structure');
+    assert.match(content, /<verification_process>/i, 'must restore structured verification process block');
+    assert.match(content, /<output>/i, 'must restore structured output block');
+    assert.match(content, /Mandatory initial read/i, 'must restore mandatory initial-read rule');
+    assert.match(content, /Requirements Integration Map/i, 'must include requirements integration map');
+    assert.match(content, /auth protection/i, 'must include auth-protection verification');
+    assert.match(content, /```yaml[\s\S]*requirements_integration:/i, 'must include typed YAML output example');
+    assert.match(content, /<success_criteria>/i, 'must include checklist block');
+    assert.doesNotMatch(content, /find src\/app\/api/i, 'must not contain framework-specific bash');
+    assert.doesNotMatch(content, /grep -r/i, 'must not contain literal grep recipes');
+    assert.doesNotMatch(content, /--include="\*\.tsx"/i, 'must not contain file-type-specific flags');
+    assert.doesNotMatch(content, /pages\/api/i, 'must not hardcode framework route layout');
   });
 
   test('FAIL gate and cross-reference preserved', async () => {
