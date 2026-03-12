@@ -203,7 +203,7 @@ auth_protection:
       evidence: "Current-user check before mutation"
   unprotected:
     - surface: "admin metrics page"
-      reason: "Sensitive data renders without auth or role gate"
+      evidence: "Sensitive data renders without auth or role gate"
 
 flows:
   complete:
@@ -279,7 +279,7 @@ The integration checker is milestone-scoped:
 - [ ] Missing connections identified
 - [ ] Requirements Integration Map produced with WIRED / PARTIAL / UNWIRED statuses
 - [ ] Structured report returned to the milestone auditor
-      </success_criteria>
+</success_criteria>
 
 ## Vendor Hints
 
