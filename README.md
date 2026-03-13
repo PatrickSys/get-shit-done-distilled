@@ -29,8 +29,9 @@ GSDD is a distilled fork of GSD. It preserves the high-leverage parts of long-ho
 - **Execution** — wave-based parallel execution with fresh context per plan
 - **Verification** — Exists/Substantive/Wired gate, anti-pattern scan
 - **Milestone audit** — cross-phase integration, requirements coverage, E2E flows
+- **Session management** — pause work with checkpoint, resume with context restoration and routing
 
-What it strips: GSD's broader operator surface (35 workflows, 12 agents, discovery modes, sprint ceremony, resume/progress/settings flows). GSDD has 7 workflows and 9 roles.
+What it strips: GSD's broader operator surface (35 workflows, 12 agents, discovery modes, sprint ceremony, progress/settings flows). GSDD has 9 workflows and 9 roles.
 
 **Target user:** Developer or small team that wants a spec-driven long-horizon kernel, not full operator comfort.
 
@@ -85,6 +86,7 @@ npx gsdd update --tools claude   # Update specific platform only
 
 ```
 init → [plan → execute → verify] × N phases → audit-milestone → done
+                    ↕ pause/resume (any point)
 ```
 
 ### 1. Initialize Project
@@ -174,7 +176,7 @@ Use for: bug fixes, small features, config changes, one-off tasks.
 
 ## Workflows
 
-GSDD has 7 workflows, run via generated skills or adapters:
+GSDD has 9 workflows, run via generated skills or adapters:
 
 | Workflow | What it does |
 |----------|--------------|
@@ -185,6 +187,8 @@ GSDD has 7 workflows, run via generated skills or adapters:
 | `gsdd-verify` | Verify completed phase: 3-level checks, anti-pattern scan |
 | `gsdd-audit-milestone` | Audit milestone: cross-phase integration, requirements coverage, E2E flows |
 | `gsdd-quick` | Quick task: plan and execute sub-hour work outside the phase cycle |
+| `gsdd-pause` | Pause work: save session context to checkpoint for seamless resumption |
+| `gsdd-resume` | Resume work: restore context from artifacts and route to next action |
 
 ## CLI Commands
 
@@ -235,6 +239,7 @@ GSDD consolidates GSD's agent surface into 9 roles with durable contracts:
 | `.planning/research/` | Research outputs |
 | `.planning/codebase/` | Codebase maps (4 files) |
 | `.planning/quick/` | Quick task tracking |
+| `.planning/.continue-here.md` | Session checkpoint (created by pause, consumed by resume) |
 
 ### Advisory Git Protocol
 
@@ -287,7 +292,7 @@ Advisory defaults, overridden by repo conventions:
 
 ## Design Decisions
 
-GSDD makes 11 documented design decisions relative to GSD, each with evidence from source files and external research. See [`distilled/DESIGN.md`](distilled/DESIGN.md) for the full rationale.
+GSDD makes 12 documented design decisions relative to GSD, each with evidence from source files and external research. See [`distilled/DESIGN.md`](distilled/DESIGN.md) for the full rationale.
 
 Key choices:
 - **4-file codebase standard** — drop state that rots (STRUCTURE, INTEGRATIONS, TESTING), keep rules that don't
@@ -300,13 +305,14 @@ Key choices:
 
 ## Invariant Tests
 
-GSDD includes 202 structural assertions that guard properties PRs repeatedly fixed manually:
+GSDD includes structural assertions that guard properties PRs repeatedly fixed manually:
 
 - **I1:** Delegate-role reference integrity (10 delegates resolve to existing roles)
 - **I2:** Role section structure (9 roles have role def, scope, output format, success criteria)
 - **I3:** Delegate thinness (no leaked role-contract sections in delegates)
-- **I4:** Workflow references (7 workflows, all delegate/role refs resolve)
+- **I4:** Workflow references (9 workflows, all delegate/role refs resolve)
 - **I9:** No deprecated content (no vendor paths, dropped files, legacy tooling)
+- **I5:** Session management workflows (no vendor APIs, no STATE.md, checkpoint contract)
 - **I10:** Mandatory initial-read enforcement on hardened lifecycle roles
 
 ```bash
@@ -321,9 +327,9 @@ GSDD is a distilled fork of [Get Shit Done](https://github.com/gsd-build/get-shi
 
 **What GSDD preserves** (~76% of core method): the long-horizon delivery spine — persistent artifacts, codebase mapping, scoped planning, execution, verification, and milestone auditing.
 
-**What GSDD does not cover** (~46% of full upstream surface): GSD currently exposes 35 workflow files and 12 agent files including discovery modes, progress/resume/settings flows, operator ergonomics, and session management. GSDD intentionally does not recreate this surface.
+**What GSDD does not cover** (~44% of full upstream surface): GSD currently exposes 35 workflow files and 12 agent files including discovery modes, progress/settings flows, operator ergonomics, and broader session management. GSDD intentionally does not recreate this full surface.
 
-**The trade-off:** Fewer moving parts for the human operator. Cleaner role contracts and a simpler artifact model. But reduced operator comfort and no control-plane features (telemetry, artifact linting, session continuity).
+**The trade-off:** Fewer moving parts for the human operator. Cleaner role contracts and a simpler artifact model. But reduced operator comfort and limited control-plane features (no telemetry, no artifact linting, no health diagnostics).
 
 ---
 

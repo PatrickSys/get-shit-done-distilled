@@ -254,18 +254,20 @@ describe('I3 — Delegate Thinness', () => {
 describe('I4 — Workflow References', () => {
   const workflows = getWorkflowFiles();
 
-  test('exactly 7 workflows exist', () => {
-    assert.strictEqual(workflows.length, 7, `Expected 7 workflows, got ${workflows.length}: ${workflows.join(', ')}`);
+  test('exactly 9 workflows exist', () => {
+    assert.strictEqual(workflows.length, 9, `Expected 9 workflows, got ${workflows.length}: ${workflows.join(', ')}`);
   });
 
-  test('all 7 workflows exist by name', () => {
+  test('all 9 workflows exist by name', () => {
     const expected = [
       'audit-milestone.md',
       'execute.md',
       'map-codebase.md',
       'new-project.md',
+      'pause.md',
       'plan.md',
       'quick.md',
+      'resume.md',
       'verify.md',
     ];
     for (const wf of expected) {
@@ -303,4 +305,73 @@ describe('I4 — Workflow References', () => {
       }
     });
   }
+});
+
+// --- I5: Session Management Workflows ---
+
+describe('I5 — Session Management Workflows', () => {
+  const SESSION_WORKFLOWS = ['pause.md', 'resume.md'];
+
+  for (const wf of SESSION_WORKFLOWS) {
+    test(`${wf} has no vendor API references (Task(), AskUserQuestion)`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(!content.includes('Task('), `${wf} must not reference Task() vendor API`);
+      assert.ok(!content.includes('AskUserQuestion'), `${wf} must not reference AskUserQuestion vendor API`);
+    });
+
+    test(`${wf} has no gsd-tools.cjs references`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(!content.includes('gsd-tools.cjs'), `${wf} must not reference gsd-tools.cjs`);
+    });
+
+    test(`${wf} has no STATE.md references (D7 compliance)`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(!content.includes('STATE.md'), `${wf} must not reference STATE.md (GSDD derives state from primary artifacts)`);
+    });
+
+    test(`${wf} has <success_criteria> section`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(content.includes('<success_criteria>'), `${wf} must have <success_criteria> section`);
+    });
+
+    test(`${wf} has <role> section`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(content.includes('<role>'), `${wf} must have <role> section`);
+    });
+
+    test(`${wf} has <process> section`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(content.includes('<process>'), `${wf} must have <process> section`);
+    });
+
+    test(`${wf} references .continue-here.md checkpoint`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(content.includes('.continue-here.md'), `${wf} must reference .continue-here.md checkpoint file`);
+    });
+  }
+
+  test('resume.md references ROADMAP.md for state derivation', () => {
+    const content = readWorkflow('resume.md');
+    assert.ok(content.includes('ROADMAP.md'), 'resume.md must reference ROADMAP.md for state derivation');
+  });
+
+  test('pause.md has <prerequisites> section', () => {
+    const content = readWorkflow('pause.md');
+    assert.ok(content.includes('<prerequisites>'), 'pause.md must have <prerequisites> section');
+  });
+
+  test('resume.md references SPEC.md for project context', () => {
+    const content = readWorkflow('resume.md');
+    assert.ok(content.includes('SPEC.md'), 'resume.md must reference SPEC.md for project context');
+  });
+
+  test('pause.md has no ~/.claude/ vendor paths', () => {
+    const content = readWorkflow('pause.md');
+    assert.ok(!content.includes('~/.claude/'), 'pause.md must not contain ~/.claude/ vendor paths');
+  });
+
+  test('resume.md has no ~/.claude/ vendor paths', () => {
+    const content = readWorkflow('resume.md');
+    assert.ok(!content.includes('~/.claude/'), 'resume.md must not contain ~/.claude/ vendor paths');
+  });
 });

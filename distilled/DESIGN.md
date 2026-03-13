@@ -19,6 +19,7 @@
 9. [Adapter Generation Over Conversion](#9-adapter-generation-over-conversion)
 10. [Context Isolation: Summaries Up, Documents to Disk](#10-context-isolation-summaries-up-documents-to-disk)
 11. [Quick-Work Lane](#11-quick-work-lane)
+12. [Session Persistence Without State File](#12-session-persistence-without-state-file)
 
 ---
 
@@ -422,6 +423,52 @@ Codex is skills-first because the Codex CLI already supports repository skills d
 - D7 (milestone hierarchy): STATE.md replaced by ROADMAP.md inline status
 - D8 (advisory git): repo conventions over framework defaults
 - D10 (context isolation): summaries up, documents to disk
+
+---
+
+## 12. Session Persistence Without State File
+
+**GSD:** 4 control-plane workflows — `pause-work.md` (123L), `resume-project.md` (307L), `progress.md` (382L), `health.md` (157L) = 969 lines. All depend on `STATE.md` for current position, `gsd-tools.cjs` for timestamps and init, and Claude-specific APIs (`Task()`, `AskUserQuestion`). Resume includes ASCII box UI, progress bars, interrupted-agent detection, and STATE.md reconstruction.
+
+**GSDD:** 2 workflows — `pause.md` (~80L) + `resume.md` (~120L) = ~200 lines.
+
+**What was kept from GSD:**
+- Disk-based state detection (phase directories, checkpoint files, plan/summary presence)
+- Conversational pause gathering (ask the user to fill gaps artifacts can't answer)
+- `.continue-here.md` checkpoint file with structured sections
+- Contextual resume routing (5 priority-ordered branches)
+- Quick-resume shortcut ("continue"/"go" = skip options, execute primary action)
+
+**What was stripped:**
+- `progress.md` (382L) — resume subsumes its status presentation and routing logic
+- `health.md` (157L) — GSDD's simpler `.planning/` structure does not warrant a dedicated error taxonomy and repair workflow
+- `STATE.md` loading and reconstruction — GSDD has no STATE.md (D7)
+- `gsd-tools.cjs` CLI calls for timestamps, init resume, and commit
+- Interrupted-agent detection (vendor-specific `Task()` API, `agent-history.json`)
+- ASCII box UI and progress bars
+- `CONTEXT.md` awareness (no discuss-phase workflow in GSDD)
+- Todo tracking integration
+- Session continuity STATE.md updates
+- Mandatory WIP commit format
+
+**What was added:**
+- Project-scoped checkpoint (single known location `.planning/.continue-here.md` vs GSD's phase-scoped glob)
+- Quick-task awareness (LOG.md incomplete entries detected by both pause and resume)
+- Workflow-type frontmatter in checkpoint (`workflow`, `phase`, `timestamp`) for resume routing
+- Checkpoint cleanup after successful resume routing
+- Explicit routing to GSDD workflow names (`gsdd-execute`, `gsdd-plan`, etc.)
+
+**Design principle:** Derive state from primary artifacts (ROADMAP.md checkboxes, phase directories, checkpoint file), not from secondary summary files that can drift. This extends D7's elimination of STATE.md.
+
+**No new roles or delegates.** Pause and resume are orchestrator-level workflows (read files, present status, route). Same pattern as `audit-milestone.md`. Delegate count stays at 10.
+
+**Evidence:**
+- GSD source: `get-shit-done/workflows/pause-work.md` (123 lines, phase-scoped checkpoint)
+- GSD source: `get-shit-done/workflows/resume-project.md` (307 lines, STATE.md-dependent)
+- GSDD: `distilled/workflows/pause.md` (project-scoped checkpoint, advisory git)
+- GSDD: `distilled/workflows/resume.md` (artifact-derived state, priority-ordered routing)
+- D7 (milestone hierarchy): STATE.md replaced by ROADMAP.md inline status
+- D8 (advisory git): WIP commit is suggested, not mandated
 
 ---
 
