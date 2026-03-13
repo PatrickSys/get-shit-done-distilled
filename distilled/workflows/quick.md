@@ -56,6 +56,9 @@ Delegate to the planner role in quick mode.
 - Create a SINGLE plan with 1-3 focused tasks
 - Quick tasks are atomic and self-contained
 - No research phase, no ROADMAP requirements
+- Do NOT extract phase requirement IDs — there is no active phase
+- Derive must-haves directly from the task description
+- Ignore <planning_process> Step 1 requirement extraction; use inline goal-backward planning only
 - Target minimal context usage
 
 **Output:** `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-PLAN.md`
@@ -84,6 +87,8 @@ Delegate to the executor role.
 **Constraints:**
 - Execute all tasks in the plan
 - Follow advisory git protocol from config.json
+- Skip the <state_updates> section of your role contract entirely
+- Do NOT update ROADMAP.md phase status or SPEC.md current state
 - Create summary at: `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-SUMMARY.md`
 
 **Output:** `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-SUMMARY.md`
@@ -98,8 +103,9 @@ After the executor returns:
 
 ## Step 5: Verify (conditional)
 
-Read `.planning/config.json`. If `workflow.verifier` is `true`, delegate to the verifier role.
-If `workflow.verifier` is `false`, skip this step.
+Read `.planning/config.json`.
+- If `workflow.verifier` is `false`, skip to Step 6.
+- If `workflow.verifier` is `true`, delegate to the verifier role:
 
 <delegate>
 **Identity:** Verifier (quick mode)

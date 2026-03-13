@@ -56,12 +56,6 @@ const HARDENED_ROLES = [
   'verifier.md',
 ];
 
-// The debugger is a utility role, not part of the core lifecycle
-const UTILITY_ROLES = ['debugger.md'];
-
-// Roles that predate XML hardening (markdown-header style)
-const LEGACY_STYLE_ROLES = ['mapper.md', 'researcher.md', 'debugger.md'];
-
 // --- I2: Role Section Structure ---
 
 describe('I2 — Role Section Structure', () => {
@@ -183,6 +177,7 @@ describe('I9 — No Deprecated Content', () => {
   const allFiles = [
     ...getRoleFiles().map(f => ({ name: f, dir: 'roles', read: () => readRole(f) })),
     ...getDelegateFiles().map(f => ({ name: f, dir: 'delegates', read: () => readDelegate(f) })),
+    ...getWorkflowFiles().map(f => ({ name: f, dir: 'workflows', read: () => readWorkflow(f) })),
   ];
 
   for (const file of allFiles) {
@@ -259,7 +254,11 @@ describe('I3 — Delegate Thinness', () => {
 describe('I4 — Workflow References', () => {
   const workflows = getWorkflowFiles();
 
-  test('all 7 workflows exist', () => {
+  test('exactly 7 workflows exist', () => {
+    assert.strictEqual(workflows.length, 7, `Expected 7 workflows, got ${workflows.length}: ${workflows.join(', ')}`);
+  });
+
+  test('all 7 workflows exist by name', () => {
     const expected = [
       'audit-milestone.md',
       'execute.md',
