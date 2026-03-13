@@ -916,17 +916,17 @@ describe('I3-gate — New-project.md Approval Gates', () => {
     );
   });
 
-  test('new-project.md approval gate instructs agent to stop', () => {
-    // Both gates must contain a "Do NOT proceed" instruction
-    const specGate = newProjectContent.includes('Do NOT proceed to roadmap creation');
-    const roadmapGate = newProjectContent.includes('Do NOT proceed to planning');
+  test('new-project.md spec approval gate instructs agent to stop', () => {
     assert.ok(
-      specGate,
-      'new-project.md spec approval gate must instruct agent not to proceed until approved'
+      newProjectContent.includes('Do NOT proceed to roadmap creation'),
+      'new-project.md spec approval gate must instruct agent not to proceed to roadmap creation until approved'
     );
+  });
+
+  test('new-project.md roadmap approval gate instructs agent to stop', () => {
     assert.ok(
-      roadmapGate,
-      'new-project.md roadmap approval gate must instruct agent not to proceed until approved'
+      newProjectContent.includes('Do NOT proceed to planning'),
+      'new-project.md roadmap approval gate must instruct agent not to proceed to planning until approved'
     );
   });
 
