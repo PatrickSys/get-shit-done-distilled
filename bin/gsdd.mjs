@@ -35,6 +35,8 @@ const WORKFLOWS = [
   { name: 'gsdd-verify', workflow: 'verify.md', description: 'Verify a completed phase - 3-level checks, anti-pattern scan', agent: 'Plan', opencodeType: 'plan' },
   { name: 'gsdd-audit-milestone', workflow: 'audit-milestone.md', description: 'Audit a completed milestone - cross-phase integration, requirements coverage, E2E flows', agent: 'Plan', opencodeType: 'plan' },
   { name: 'gsdd-quick', workflow: 'quick.md', description: 'Quick task - plan and execute a sub-hour task outside the phase cycle', agent: 'Code', opencodeType: 'edit' },
+  { name: 'gsdd-pause', workflow: 'pause.md', description: 'Pause work - save session context for seamless resumption', agent: 'Plan', opencodeType: 'plan' },
+  { name: 'gsdd-resume', workflow: 'resume.md', description: 'Resume work - restore context and route to next action', agent: 'Plan', opencodeType: 'plan' },
 ];
 
 const COMMANDS = {
