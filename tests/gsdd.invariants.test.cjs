@@ -339,6 +339,11 @@ describe('I5 — Session Management Workflows', () => {
       assert.ok(content.includes('<role>'), `${wf} must have <role> section`);
     });
 
+    test(`${wf} has <process> section`, () => {
+      const content = readWorkflow(wf);
+      assert.ok(content.includes('<process>'), `${wf} must have <process> section`);
+    });
+
     test(`${wf} references .continue-here.md checkpoint`, () => {
       const content = readWorkflow(wf);
       assert.ok(content.includes('.continue-here.md'), `${wf} must reference .continue-here.md checkpoint file`);

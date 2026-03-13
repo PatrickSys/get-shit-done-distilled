@@ -32,13 +32,15 @@ Ask the user conversationally to fill in the gaps the artifacts cannot answer:
 
 1. **What was completed** this session
 2. **Current approach** — the strategy or mental model driving the work
-3. **Blockers** — anything stuck or waiting on external input
-4. **What to do first** when resuming
+3. **Remaining work** — what tasks or steps are still outstanding
+4. **Key decisions** — any decisions made and their rationale
+5. **Blockers** — anything stuck or waiting on external input
+6. **What to do first** when resuming
 
 Read the relevant artifacts to pre-fill what you can:
-- For phase work: read the PLAN file and any partial SUMMARY
-- For quick tasks: read the quick task PLAN and LOG.md entry
-- For generic work: rely on the user's answers
+- For phase work: read the PLAN file and any partial SUMMARY — use these to pre-fill remaining_work and decisions where possible; only ask the user for gaps
+- For quick tasks: read the quick task PLAN and LOG.md entry — same pre-fill approach
+- For generic work: all six points must come from the user (no artifacts to derive from); ask all six explicitly
 
 ---
 

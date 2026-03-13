@@ -15,7 +15,7 @@ Core mindset: derive state from primary artifacts. Do not depend on secondary su
 Check for project artifacts in order:
 
 1. **No `.planning/` directory** — route user to run `gsdd init`. Stop.
-2. **No `.planning/SPEC.md` and no `.planning/ROADMAP.md`** — `.planning/` exists but the project is not initialized. Route user to run the `gsdd-new-project` workflow. Stop.
+2. **No `.planning/SPEC.md` or no `.planning/ROADMAP.md`** — `.planning/` exists but the project is not fully initialized (partial init). Route user to run the `gsdd-new-project` workflow. Stop.
 3. **Both exist** — proceed to Step 2.
 
 ---
@@ -132,9 +132,11 @@ Wait for user selection.
 
 ## Step 6: Clean up checkpoint
 
-After the user selects an action and begins working:
-- If `.continue-here.md` was consumed (user chose to resume from it), delete it.
-- If the user chose a different action, leave the checkpoint in place for future reference.
+Immediately after the user confirms their action selection (before routing to the target workflow):
+- If the user chose to resume from `.continue-here.md`, delete it now — before dispatching to the target workflow.
+- If the user chose a different action (not based on the checkpoint), leave `.continue-here.md` in place for a future resume.
+
+Deleting before routing ensures a failed or interrupted workflow does not leave a stale checkpoint that would mislead the next resume invocation.
 
 </process>
 
