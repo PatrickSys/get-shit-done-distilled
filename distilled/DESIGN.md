@@ -430,7 +430,7 @@ Codex is skills-first because the Codex CLI already supports repository skills d
 
 **GSD:** 4 control-plane workflows — `pause-work.md` (123L), `resume-project.md` (307L), `progress.md` (382L), `health.md` (157L) = 969 lines. All depend on `STATE.md` for current position, `gsd-tools.cjs` for timestamps and init, and Claude-specific APIs (`Task()`, `AskUserQuestion`). Resume includes ASCII box UI, progress bars, interrupted-agent detection, and STATE.md reconstruction.
 
-**GSDD:** 3 workflows — `pause.md` (~80L) + `resume.md` (~120L) + `progress.md` (~110L) = ~310 lines.
+**GSDD:** 3 workflows — `pause.md` (~107L) + `resume.md` (~139L) + `progress.md` (~200L) = ~446 lines. All three now use named XML sections inside `<process>` (aligned with core workflow conventions) and explicit scope boundaries in `<role>`.
 
 **What was kept from GSD:**
 - Disk-based state detection (phase directories, checkpoint files, plan/summary presence)
@@ -473,10 +473,10 @@ The initial D12 assessment — that resume subsumes progress — turned out to b
 
 A user who wants a quick status snapshot before deciding what to do next should not have to trigger a full session restore. Progress answers "where am I?" without side effects. Resume answers "restore me and get me moving."
 
-GSDD's `progress.md` (~109 lines) is a deep distillation of GSD's 382-line version:
+GSDD's `progress.md` (~200 lines) is a deep distillation of GSD's 382-line version:
 
-- **Kept from GSD:** project-existence check, ROADMAP.md phase-status parsing (`[ ]`/`[-]`/`[x]`), phase completion count, checkpoint-file detection, incomplete-work scanning (PLAN without SUMMARY, SUMMARY without VERIFICATION), quick-task log check, priority-ordered routing table
-- **Stripped:** `gsd-tools.cjs` CLI calls, `STATE.md` loading, progress-bar rendering, Recent Work from SUMMARY extracts, Key Decisions section, Blockers section, Pending Todos, Active Debug Sessions, Profile display, UAT gap routing
+- **Kept from GSD:** project-existence check, ROADMAP.md phase-status parsing (`[ ]`/`[-]`/`[x]`), phase completion count, checkpoint-file detection, incomplete-work scanning (PLAN without SUMMARY, SUMMARY without VERIFICATION), quick-task log check, priority-ordered routing with 6 named branches (A-F) and output blocks, recent work from 2-3 most recent SUMMARY.md files, between-milestones detection (SPEC exists, ROADMAP absent), edge case handling for compound states, typed filled-in example
+- **Stripped:** `gsd-tools.cjs` CLI calls, `STATE.md` loading, progress-bar rendering, Key Decisions section, Blockers section, Pending Todos, Active Debug Sessions, Profile display, UAT gap routing
 
 Design principle unchanged: derive state from primary artifacts (ROADMAP.md, SPEC.md, phase directories, checkpoint file). No new roles, no new delegates.
 

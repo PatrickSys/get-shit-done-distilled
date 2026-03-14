@@ -50,7 +50,7 @@ gsdd init           -> bootstrap (create .planning/, copy templates, generate sk
 /gsdd:progress      -> show status, route to next action
 ```
 
-## Current Status (updated 2026-03-13)
+## Current Status (updated 2026-03-14)
 
 | Workflow | Status | Notes |
 |----------|--------|-------|
@@ -60,9 +60,9 @@ gsdd init           -> bootstrap (create .planning/, copy templates, generate sk
 | `verify.md` | [OK] Source-audited | 5 gap closures against hardened verifier role contract: grouped-gap guidance, orphan detection, frontmatter enforcement, verification basis emphasis, requirements coverage chain |
 | `audit-milestone.md` | [OK] Defined, source-audited | Aggregates phase verification, cross-phase integration audit, auth protection checks, requirement reconciliation, and orphan detection into `MILESTONE-AUDIT.md` |
 | `quick.md` | [OK] | Quick-work lane for sub-hour tasks outside the phase cycle (D11) |
-| `pause.md` | [OK] | Session checkpoint writer with conversational handoff (D12) |
-| `resume.md` | [OK] | Session context restorer with priority-ordered routing (D12) |
-| `progress.md` | [OK] | Read-only status report and smart routing to next action |
+| `pause.md` | [OK] Source-audited | Session checkpoint writer with conversational handoff (D12) |
+| `resume.md` | [OK] Source-audited | Session context restorer with priority-ordered routing (D12) |
+| `progress.md` | [OK] Source-audited | Read-only status reporter with 6 named route branches, recent work, between-milestones detection (D12) |
 | `map-codebase.md` | [OK] Defined, source-audited | Standalone codebase mapping/refresh |
 
 Architecture notes:
