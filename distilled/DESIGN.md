@@ -533,7 +533,7 @@ Design principle unchanged: derive state from primary artifacts (ROADMAP.md, SPE
 | G3 | File Size Guards | ~29 | Prevent bloat regression (roles ≤500L, workflows ≤400L, delegates ≤100L) |
 | G4 | XML Section Well-Formedness | ~29 | Every `<tag>` has matching `</tag>` across all framework files |
 | G5 | Artifact Lifecycle Chain | ~11 | Each role references its input and output artifacts |
-| G6 | DESIGN.md Decision Registry | ~5 | ≥12 numbered decisions, each with Evidence subsection |
+| G6 | DESIGN.md Decision Registry | ~5 | ≥13 numbered decisions, each with Evidence subsection |
 | G7 | Delegate Thinness | ~9 | Non-empty lines ≤50 (plan-checker exempt) |
 
 **Why remediation messages matter:** OpenAI's Harness Engineering (Feb 2026) confirmed what GSDD's audit surfaced independently: for agent-driven development, **error messages ARE the enforcement mechanism**. When an agent reads `"pause.md: <tag> opened 2x but closed 1x. FIX: Add missing </tag>."`, it can act on the fix instruction directly. Test failures without actionable messages require the agent to reason about intent from stack traces — slower and less reliable.
