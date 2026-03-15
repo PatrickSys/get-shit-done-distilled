@@ -3,7 +3,7 @@
 // gsdd - GSD Distilled CLI
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, cpSync, realpathSync } from 'fs';
-import { join, dirname, basename } from 'path';
+import { join, dirname, basename, isAbsolute } from 'path';
 import { fileURLToPath } from 'url';
 import * as readline from 'readline';
 import { createAdapterRegistry } from './adapters/index.mjs';
@@ -80,6 +80,20 @@ if (IS_MAIN) {
   await runCli();
 }
 
+function buildDefaultConfig({ autoAdvance = false } = {}) {
+  const config = {
+    researchDepth: 'balanced',
+    parallelization: true,
+    commitDocs: true,
+    modelProfile: 'balanced',
+    workflow: { research: true, planCheck: true, verifier: true },
+    gitProtocol: { ...DEFAULT_GIT_PROTOCOL },
+    initVersion: 'v1.1',
+  };
+  if (autoAdvance) config.autoAdvance = true;
+  return config;
+}
+
 async function cmdInit(...initArgs) {
   console.log('gsdd init - setting up SDD workflow\n');
 
@@ -129,18 +143,21 @@ async function cmdInit(...initArgs) {
   // 3) Create config.json via interactive CLI (only if missing)
   const configFile = join(PLANNING_DIR, 'config.json');
   if (!existsSync(configFile)) {
-    if (!process.stdin.isTTY) {
+    const isAuto = parseAutoFlag(initArgs);
+
+    if (isAuto) {
+      const parsedTools = parseToolsFlag(initArgs);
+      if (parsedTools.length === 0) {
+        console.error('ERROR: --auto requires --tools <platform>. Example: gsdd init --auto --tools claude');
+        process.exitCode = 1;
+        return;
+      }
+      console.log('  - auto mode: writing config.json with defaults');
+      writeFileSync(configFile, JSON.stringify(buildDefaultConfig({ autoAdvance: true }), null, 2));
+      console.log('  - saved .planning/config.json (auto mode — autoAdvance enabled)\n');
+    } else if (!process.stdin.isTTY) {
       console.log('  - non-interactive mode detected: writing config.json with defaults');
-      const config = {
-        researchDepth: 'balanced',
-        parallelization: true,
-        commitDocs: true,
-        modelProfile: 'balanced',
-        workflow: { research: true, planCheck: true, verifier: true },
-        gitProtocol: { ...DEFAULT_GIT_PROTOCOL },
-        initVersion: 'v1.1',
-      };
-      writeFileSync(configFile, JSON.stringify(config, null, 2));
+      writeFileSync(configFile, JSON.stringify(buildDefaultConfig(), null, 2));
       console.log('  - saved .planning/config.json (defaults — re-run gsdd init in a terminal to customize)\n');
     } else {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -243,6 +260,20 @@ async function cmdInit(...initArgs) {
     } // end isTTY else
   } else {
     console.log('  - .planning/config.json already exists');
+  }
+
+  // 3b) Copy brief if provided (works with or without --auto)
+  const briefPath = parseBriefFlag(initArgs);
+  if (briefPath) {
+    const briefSource = isAbsolute(briefPath) ? briefPath : join(CWD, briefPath);
+    const briefDest = join(PLANNING_DIR, 'PROJECT_BRIEF.md');
+    if (!existsSync(briefSource)) {
+      console.error(`ERROR: Brief file not found: ${briefPath}`);
+      process.exitCode = 1;
+      return;
+    }
+    cpSync(briefSource, briefDest);
+    console.log(`  - copied project brief to .planning/PROJECT_BRIEF.md`);
   }
 
   // 4) Always generate open-standard skills into .agents/skills/gsdd-*
@@ -491,7 +522,10 @@ Spec-Driven Development for AI coding agents.
 Usage: gsdd <command> [args]
 
 Commands:
-  init [--tools <platform>]   Set up SDD + generate adapters
+  init [--tools <platform>] [--auto] [--brief <file>]
+                              Set up SDD + generate adapters
+                              --auto: non-interactive mode with smart defaults (requires --tools)
+                              --brief <file>: copy project brief to .planning/PROJECT_BRIEF.md
   update [--tools <platform>] Regenerate adapters from latest framework sources
   find-phase [N]              Show phase info as JSON (for agent consumption)
   verify <N>                  Run artifact checks for phase N
@@ -517,6 +551,8 @@ Notes:
 Examples:
   npx gsdd init
   npx gsdd init --tools claude
+  npx gsdd init --auto --tools claude --brief project-idea.md
+  npx gsdd init --auto --tools all
   npx gsdd init --tools agents
   npx gsdd init --tools all
   npx gsdd update
@@ -544,6 +580,16 @@ function parseToolsFlag(flagArgs) {
   if (!value) return [];
   if (value === 'all') return ['claude', 'opencode', 'agents'];
   return value.split(',').map((v) => v.trim()).filter(Boolean);
+}
+
+function parseAutoFlag(flagArgs) {
+  return flagArgs.includes('--auto');
+}
+
+function parseBriefFlag(flagArgs) {
+  const idx = flagArgs.indexOf('--brief');
+  if (idx === -1 || !flagArgs[idx + 1]) return null;
+  return flagArgs[idx + 1];
 }
 
 function normalizeRequestedTools(requestedTools) {
