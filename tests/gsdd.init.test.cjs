@@ -642,6 +642,8 @@ describe('gsdd init and update', () => {
         console.error = previousError;
         process.exitCode = previousExitCode;
       }
+
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
     });
 
     test('--auto config has same shape as interactive defaults', async () => {
@@ -733,6 +735,50 @@ describe('gsdd init and update', () => {
         console.error = previousError;
         process.exitCode = previousExitCode;
       }
+
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
+    });
+
+    test('--brief followed by another flag sets exitCode 1 and does not write config', async () => {
+      const previousExitCode = process.exitCode;
+      const previousError = console.error;
+      let errorOutput = '';
+      console.error = (...parts) => { errorOutput += parts.join(' '); };
+
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--auto', '--tools', 'claude', '--brief', '--auto');
+        assert.strictEqual(process.exitCode, 1);
+        assert.match(errorOutput, /--brief requires a file path/);
+      } finally {
+        restoreStdin();
+        console.error = previousError;
+        process.exitCode = previousExitCode;
+      }
+
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
+    });
+
+    test('--tools followed by another flag sets exitCode 1 and does not write config', async () => {
+      const previousExitCode = process.exitCode;
+      const previousError = console.error;
+      let errorOutput = '';
+      console.error = (...parts) => { errorOutput += parts.join(' '); };
+
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--auto', '--tools', '--brief', 'idea.md');
+        assert.strictEqual(process.exitCode, 1);
+        assert.match(errorOutput, /--tools requires a value/);
+      } finally {
+        restoreStdin();
+        console.error = previousError;
+        process.exitCode = previousExitCode;
+      }
+
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
     });
   });
 });

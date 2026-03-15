@@ -97,6 +97,38 @@ function buildDefaultConfig({ autoAdvance = false } = {}) {
 async function cmdInit(...initArgs) {
   console.log('gsdd init - setting up SDD workflow\n');
 
+  const isAuto = parseAutoFlag(initArgs);
+  const toolsFlag = parseFlagValue(initArgs, '--tools');
+  const briefFlag = parseFlagValue(initArgs, '--brief');
+  let briefSource = null;
+
+  if (toolsFlag.invalid) {
+    console.error('ERROR: --tools requires a value. Example: gsdd init --tools claude');
+    process.exitCode = 1;
+    return;
+  }
+
+  if (briefFlag.invalid) {
+    console.error('ERROR: --brief requires a file path. Example: gsdd init --brief project-idea.md');
+    process.exitCode = 1;
+    return;
+  }
+
+  if (briefFlag.value) {
+    briefSource = isAbsolute(briefFlag.value) ? briefFlag.value : join(CWD, briefFlag.value);
+    if (!existsSync(briefSource)) {
+      console.error(`ERROR: Brief file not found: ${briefFlag.value}`);
+      process.exitCode = 1;
+      return;
+    }
+  }
+
+  if (isAuto && parseToolsFlag(initArgs).length === 0) {
+    console.error('ERROR: --auto requires --tools <platform>. Example: gsdd init --auto --tools claude');
+    process.exitCode = 1;
+    return;
+  }
+
   // 1) Create .planning/ structure
   if (existsSync(PLANNING_DIR)) {
     console.log('  - .planning/ already exists (skipping folder creation)');
@@ -143,15 +175,7 @@ async function cmdInit(...initArgs) {
   // 3) Create config.json via interactive CLI (only if missing)
   const configFile = join(PLANNING_DIR, 'config.json');
   if (!existsSync(configFile)) {
-    const isAuto = parseAutoFlag(initArgs);
-
     if (isAuto) {
-      const parsedTools = parseToolsFlag(initArgs);
-      if (parsedTools.length === 0) {
-        console.error('ERROR: --auto requires --tools <platform>. Example: gsdd init --auto --tools claude');
-        process.exitCode = 1;
-        return;
-      }
       console.log('  - auto mode: writing config.json with defaults');
       writeFileSync(configFile, JSON.stringify(buildDefaultConfig({ autoAdvance: true }), null, 2));
       console.log('  - saved .planning/config.json (auto mode — autoAdvance enabled)\n');
@@ -263,15 +287,8 @@ async function cmdInit(...initArgs) {
   }
 
   // 3b) Copy brief if provided (works with or without --auto)
-  const briefPath = parseBriefFlag(initArgs);
-  if (briefPath) {
-    const briefSource = isAbsolute(briefPath) ? briefPath : join(CWD, briefPath);
+  if (briefSource) {
     const briefDest = join(PLANNING_DIR, 'PROJECT_BRIEF.md');
-    if (!existsSync(briefSource)) {
-      console.error(`ERROR: Brief file not found: ${briefPath}`);
-      process.exitCode = 1;
-      return;
-    }
     cpSync(briefSource, briefDest);
     console.log(`  - copied project brief to .planning/PROJECT_BRIEF.md`);
   }
@@ -573,10 +590,20 @@ function detectPlatforms() {
     .map((adapter) => adapter.name);
 }
 
-function parseToolsFlag(flagArgs) {
-  const idx = flagArgs.indexOf('--tools');
-  if (idx === -1) return [];
+function parseFlagValue(flagArgs, flagName) {
+  const idx = flagArgs.indexOf(flagName);
+  if (idx === -1) return { present: false, value: null, invalid: false };
+
   const value = flagArgs[idx + 1];
+  if (!value || value.startsWith('--')) {
+    return { present: true, value: null, invalid: true };
+  }
+
+  return { present: true, value, invalid: false };
+}
+
+function parseToolsFlag(flagArgs) {
+  const { value } = parseFlagValue(flagArgs, '--tools');
   if (!value) return [];
   if (value === 'all') return ['claude', 'opencode', 'agents'];
   return value.split(',').map((v) => v.trim()).filter(Boolean);
@@ -584,12 +611,6 @@ function parseToolsFlag(flagArgs) {
 
 function parseAutoFlag(flagArgs) {
   return flagArgs.includes('--auto');
-}
-
-function parseBriefFlag(flagArgs) {
-  const idx = flagArgs.indexOf('--brief');
-  if (idx === -1 || !flagArgs[idx + 1]) return null;
-  return flagArgs[idx + 1];
 }
 
 function normalizeRequestedTools(requestedTools) {
