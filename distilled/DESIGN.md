@@ -538,7 +538,7 @@ Design principle unchanged: derive state from primary artifacts (ROADMAP.md, SPE
 
 **Why remediation messages matter:** OpenAI's Harness Engineering (Feb 2026) confirmed what GSDD's audit surfaced independently: for agent-driven development, **error messages ARE the enforcement mechanism**. When an agent reads `"pause.md: <tag> opened 2x but closed 1x. FIX: Add missing </tag>."`, it can act on the fix instruction directly. Test failures without actionable messages require the agent to reason about intent from stack traces — slower and less reliable.
 
-**The G4 suite caught 4 real bugs on first run:** 3 session workflows (pause.md, progress.md, resume.md) had orphan `</output>` closing tags with no corresponding opener. These were invisible to manual review across PRs #20-23 but immediately flagged by the well-formedness check.
+**The G4 suite caught 3 real bugs on first run:** 3 session workflows (pause.md, progress.md, resume.md) had orphan `</output>` closing tags with no corresponding opener. These were invisible to manual review across PRs #20-23 but immediately flagged by the well-formedness check.
 
 **Evidence:**
 
