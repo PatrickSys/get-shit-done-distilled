@@ -101,6 +101,59 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(opencodePlanChecker, /Return JSON only/);
   });
 
+  test('codex plan skill is Codex-native and includes fresh-context orchestration loop', async () => {
+    const restoreStdin = setNonInteractiveStdin();
+    try {
+      const gsdd = await loadGsdd(tmpDir);
+      await gsdd.cmdInit('--tools', 'codex');
+    } finally {
+      restoreStdin();
+    }
+
+    const codexPlanSkill = fs.readFileSync(
+      path.join(tmpDir, '.agents', 'skills', 'gsdd-plan', 'SKILL.md'),
+      'utf-8'
+    );
+
+    assert.match(codexPlanSkill, /Codex-Native Plan Checking/);
+    assert.match(codexPlanSkill, /gsdd-plan-checker/);
+    assert.match(codexPlanSkill, /Maximum 3 checker cycles total/);
+    assert.match(codexPlanSkill, /"status": "passed"/);
+    assert.match(codexPlanSkill, /Status must be either "passed" or "issues_found"\./);
+    assert.match(codexPlanSkill, /spawn the `gsdd-plan-checker` subagent/);
+    assert.match(codexPlanSkill, /reduced assurance/);
+
+    // Must also contain the portable plan workflow content (not just the orchestration section)
+    assert.match(codexPlanSkill, /How Plan Checking Works/);
+  });
+
+  test('codex plan-checker is a read-only TOML agent with delegate content', async () => {
+    const restoreStdin = setNonInteractiveStdin();
+    try {
+      const gsdd = await loadGsdd(tmpDir);
+      await gsdd.cmdInit('--tools', 'codex');
+    } finally {
+      restoreStdin();
+    }
+
+    const codexPlanChecker = fs.readFileSync(
+      path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml'),
+      'utf-8'
+    );
+
+    assert.match(codexPlanChecker, /^name = "gsdd-plan-checker"/m);
+    assert.match(codexPlanChecker, /^sandbox_mode = "read-only"/m);
+    assert.match(codexPlanChecker, /^model_reasoning_effort = "high"/m);
+    assert.match(codexPlanChecker, /developer_instructions/);
+    assert.match(codexPlanChecker, /Return JSON only/);
+    assert.match(codexPlanChecker, /Runnable\?/);
+    assert.match(codexPlanChecker, /Fast\?/);
+    assert.match(codexPlanChecker, /Ordered\?/);
+
+    // Must NOT have a model line by default (inherits from parent session)
+    assert.doesNotMatch(codexPlanChecker, /^model = /m);
+  });
+
   test('plan-checker delegate includes verify quality sub-checks under task_completeness', async () => {
     const restoreStdin = setNonInteractiveStdin();
     try {

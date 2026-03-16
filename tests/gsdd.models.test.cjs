@@ -197,6 +197,72 @@ describe('gsdd models and model propagation', () => {
       assert.match(checker, /^model: opus$/m);
     });
 
+    test('Codex omits model by default (inherits from parent session)', async () => {
+      writePlanningConfig(tmpDir, { modelProfile: 'balanced' });
+
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--tools', 'codex');
+      } finally {
+        restoreStdin();
+      }
+
+      const checker = fs.readFileSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml'), 'utf-8');
+      assert.doesNotMatch(checker, /^model = /m);
+    });
+
+    test('Codex runtime override injects exact model id into plan-checker TOML', async () => {
+      writePlanningConfig(tmpDir, {
+        modelProfile: 'balanced',
+        runtimeModelOverrides: { codex: { 'plan-checker': 'gpt-5-codex' } },
+      });
+
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--tools', 'codex');
+      } finally {
+        restoreStdin();
+      }
+
+      const checker = fs.readFileSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml'), 'utf-8');
+      assert.match(checker, /^model = "gpt-5-codex"$/m);
+    });
+
+    test('Codex update re-renders model after runtime override changes', async () => {
+      writePlanningConfig(tmpDir, { modelProfile: 'balanced' });
+
+      let gsdd;
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--tools', 'codex');
+      } finally {
+        restoreStdin();
+      }
+
+      let checker = fs.readFileSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml'), 'utf-8');
+      assert.doesNotMatch(checker, /^model = /m);
+
+      writePlanningConfig(tmpDir, {
+        modelProfile: 'balanced',
+        runtimeModelOverrides: { codex: { 'plan-checker': 'gpt-5-codex' } },
+      });
+      await gsdd.cmdUpdate('--tools', 'codex');
+
+      checker = fs.readFileSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml'), 'utf-8');
+      assert.match(checker, /^model = "gpt-5-codex"$/m);
+
+      const config = readJson(path.join(tmpDir, '.planning', 'config.json'));
+      delete config.runtimeModelOverrides;
+      fs.writeFileSync(path.join(tmpDir, '.planning', 'config.json'), JSON.stringify(config, null, 2));
+      await gsdd.cmdUpdate('--tools', 'codex');
+
+      checker = fs.readFileSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml'), 'utf-8');
+      assert.doesNotMatch(checker, /^model = /m);
+    });
+
     test('Claude runtime override wins over semantic profile', async () => {
       writePlanningConfig(tmpDir, {
         modelProfile: 'quality',
@@ -389,6 +455,49 @@ describe('gsdd models and model propagation', () => {
         runtimeDetectedModel: 'anthropic/claude-sonnet-4-5',
       });
       assert.strictEqual(payload.detectedRuntimeModels.opencode, 'anthropic/claude-sonnet-4-5');
+    });
+
+    test('models show includes codex effective state', async () => {
+      writePlanningConfig(tmpDir, { modelProfile: 'balanced' });
+
+      const result = await runCliAsMain(tmpDir, ['models', 'show']);
+      assert.strictEqual(result.exitCode, 0);
+
+      const payload = JSON.parse(result.output);
+      assert.deepStrictEqual(payload.effective.codex['plan-checker'], {
+        mode: 'inherit',
+        model: null,
+      });
+    });
+
+    test('models show includes codex override when set', async () => {
+      writePlanningConfig(tmpDir, {
+        modelProfile: 'balanced',
+        runtimeModelOverrides: { codex: { 'plan-checker': 'gpt-5-codex' } },
+      });
+
+      const result = await runCliAsMain(tmpDir, ['models', 'show']);
+      assert.strictEqual(result.exitCode, 0);
+
+      const payload = JSON.parse(result.output);
+      assert.deepStrictEqual(payload.effective.codex['plan-checker'], {
+        mode: 'override',
+        model: 'gpt-5-codex',
+      });
+    });
+
+    test('models set/clear works for codex runtime', async () => {
+      let result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'codex', '--agent', 'plan-checker', '--model', 'gpt-5-codex']);
+      assert.strictEqual(result.exitCode, 0);
+
+      let config = readJson(path.join(tmpDir, '.planning', 'config.json'));
+      assert.strictEqual(config.runtimeModelOverrides.codex['plan-checker'], 'gpt-5-codex');
+
+      result = await runCliAsMain(tmpDir, ['models', 'clear', '--runtime', 'codex', '--agent', 'plan-checker']);
+      assert.strictEqual(result.exitCode, 0);
+
+      config = readJson(path.join(tmpDir, '.planning', 'config.json'));
+      assert.strictEqual(config.runtimeModelOverrides, undefined);
     });
 
     test('models rejects invalid runtime', async () => {
