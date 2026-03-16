@@ -160,7 +160,7 @@ Commands:
 Platforms (for --tools):
   claude    Generate Claude Code skills (.claude/skills/gsdd-*), commands (.claude/commands/gsdd-*.md), and native agents (.claude/agents/gsdd-*.md)
   opencode  Generate OpenCode local slash commands (.opencode/commands/gsdd-*.md) + native agents (.opencode/agents/gsdd-*.md)
-  codex     Generate Codex CLI native agents (.codex/agents/gsdd-*.toml) for planning and plan checking
+  codex     Generate Codex CLI native plan-checker agent (.codex/agents/gsdd-plan-checker.toml)
   agents    Generate/Update root AGENTS.md (bounded GSDD block)
   cursor    Same as 'agents'
   copilot   Same as 'agents'
@@ -171,7 +171,7 @@ Notes:
   - init always generates open-standard skills at .agents/skills/gsdd-* (portable workflow entrypoints)
   - --tools claude also generates native commands at .claude/commands/gsdd-*.md and native agents at .claude/agents/gsdd-*.md
   - --tools opencode also generates native agents at .opencode/agents/gsdd-*.md
-  - --tools codex generates native agents at .codex/agents/gsdd-*.toml for planning and plan checking
+  - --tools codex generates .codex/agents/gsdd-plan-checker.toml (portable skill is the entry surface)
   - root AGENTS.md is only written on init when explicitly requested via --tools agents (or all)
 
 Examples:

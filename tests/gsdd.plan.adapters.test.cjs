@@ -101,7 +101,7 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(opencodePlanChecker, /Return JSON only/);
   });
 
-  test('codex planner TOML is the native entry surface with orchestration loop', async () => {
+  test('portable skill is the Codex entry surface with checker invocation instructions', async () => {
     const restoreStdin = setNonInteractiveStdin();
     try {
       const gsdd = await loadGsdd(tmpDir);
@@ -110,35 +110,32 @@ describe('specialized plan adapter surfaces', () => {
       restoreStdin();
     }
 
-    const codexPlanner = fs.readFileSync(
-      path.join(tmpDir, '.codex', 'agents', 'gsdd-planner.toml'),
-      'utf-8'
-    );
+    // Checker agent must exist
+    assert.ok(fs.existsSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-plan-checker.toml')));
 
-    assert.match(codexPlanner, /^name = "gsdd-planner"/m);
-    assert.match(codexPlanner, /^sandbox_mode = "workspace-write"/m);
-    assert.match(codexPlanner, /gsdd-plan-checker/);
-    assert.match(codexPlanner, /Maximum 3 checker cycles total/);
-    assert.match(codexPlanner, /"status": "passed"/);
-    assert.match(codexPlanner, /Status must be either "passed" or "issues_found"\./);
-    assert.match(codexPlanner, /spawn the `gsdd-plan-checker` subagent/);
-    assert.match(codexPlanner, /reduced assurance/);
+    // No planner TOML — portable skill is the entry surface
+    assert.ok(!fs.existsSync(path.join(tmpDir, '.codex', 'agents', 'gsdd-planner.toml')));
 
-    // Planner references portable skill at runtime
-    assert.match(codexPlanner, /\.agents\/skills\/gsdd-plan\/SKILL\.md/);
-
-    // Must NOT have a model line by default (inherits from parent session)
-    assert.doesNotMatch(codexPlanner, /^model = /m);
-
-    // Portable skill must NOT contain Codex-specific content
+    // Portable skill must be self-sufficient for Codex
     const portableSkill = fs.readFileSync(
       path.join(tmpDir, '.agents', 'skills', 'gsdd-plan', 'SKILL.md'),
       'utf-8'
     );
+    assert.match(portableSkill, /How Plan Checking Works/);
+    assert.match(portableSkill, /Invoking the Checker/);
+    assert.match(portableSkill, /gsdd-plan-checker/);
+    assert.match(portableSkill, /Maximum 3 checker cycles total/);
+    assert.match(portableSkill, /"status": "passed"/);
+    assert.match(portableSkill, /Status must be either "passed" or "issues_found"\./);
+    assert.match(portableSkill, /reduced_assurance/);
+    assert.match(portableSkill, /Orchestration Summary/);
+
+    // Must NOT contain vendor-specific content
     assert.doesNotMatch(portableSkill, /Codex-Native/);
     assert.doesNotMatch(portableSkill, /spawn_agent/);
     assert.doesNotMatch(portableSkill, /\.codex\/agents\//);
-    assert.match(portableSkill, /How Plan Checking Works/);
+    assert.doesNotMatch(portableSkill, /\.claude\/agents\//);
+    assert.doesNotMatch(portableSkill, /\.opencode\/agents\//);
   });
 
   test('codex plan-checker is a read-only TOML agent with delegate content', async () => {

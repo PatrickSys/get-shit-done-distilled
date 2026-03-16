@@ -506,6 +506,18 @@ describe('gsdd models and model propagation', () => {
       assert.match(result.output, /Invalid runtime/);
     });
 
+    test('models rejects model IDs with injection characters', async () => {
+      const malicious = 'gpt-5"\nfoo = "bar';
+      const result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'codex', '--agent', 'plan-checker', '--model', malicious]);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /invalid characters/i);
+    });
+
+    test('models accepts valid model IDs with slashes colons and at signs', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'codex', '--agent', 'plan-checker', '--model', 'anthropic/claude-opus-4-6:latest@v2']);
+      assert.strictEqual(result.exitCode, 0);
+    });
+
     test('models show falls back to file config when OPENCODE_CONFIG_CONTENT has an unterminated block comment', async () => {
       writePlanningConfig(tmpDir, { modelProfile: 'balanced' });
       writeOpenCodeConfig(tmpDir, { model: 'openai/gpt-5.2' });
