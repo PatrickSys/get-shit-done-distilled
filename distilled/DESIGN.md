@@ -26,6 +26,7 @@
 16. [Template Versioning via Generation Manifest](#16-template-versioning-via-generation-manifest)
 17. [CLI Composition Root Boundary](#17-cli-composition-root-boundary)
 18. [Codex CLI Native Adapter](#18-codex-cli-native-adapter)
+19. [Scenario-Based Eval Coverage](#19-scenario-based-eval-coverage)
 
 ---
 
@@ -845,6 +846,36 @@ Implementation lives under `bin/lib/`:
 - GSDD adapter patterns: `bin/adapters/claude.mjs`, `bin/adapters/opencode.mjs`
 - GSDD implementation: `bin/adapters/codex.mjs`, `bin/adapters/index.mjs`, `bin/lib/init.mjs`, `bin/lib/models.mjs`
 - GSDD tests: `tests/gsdd.init.test.cjs`, `tests/gsdd.models.test.cjs`, `tests/gsdd.plan.adapters.test.cjs`
+
+---
+
+## 19. Scenario-Based Eval Coverage
+
+**GSD:** No structural eval tests. Correctness relied on manual review and live agent runs.
+
+**GSDD:** Deterministic scenario tests (`tests/gsdd.scenarios.test.cjs`) verify artifact-chain contracts across 3 golden paths and 2 native-capable runtime chains. No LLM calls required.
+
+**What scenarios test (S1–S5):**
+
+| Suite | Coverage |
+|-------|----------|
+| S1 — Greenfield Golden Path | init → new-project → plan → execute → verify → audit-milestone artifact chain |
+| S2 — Brownfield Path | map-codebase delegates, codebase map references, mapper role installation |
+| S3 — Quick-Task Path | Isolation from ROADMAP/research, role references, researcher exclusion |
+| S4 — Native Runtime Chain | Claude skill/command/checker + Codex TOML checker completeness, 7 dimensions |
+| S5 — Config-to-Content Propagation | Default config values reflected in generated artifacts |
+
+**What scenarios do NOT test:** Runtime LLM behavior, aggregate success rates, LLM-judge quality. Those belong in a future eval layer above this one.
+
+**Design rationale:** The testing pyramid for AI agents (Block, Jan 2026) puts deterministic no-LLM tests at the base. OpenAI's eval guidance recommends skill-level testing with deterministic graders. Anthropic's guidance says "grade outcomes, not paths" — these tests verify what was produced, not how. This layer complements the G1–G13 invariant suites (D13) which test structural properties of source files; scenario tests verify that the *generated* artifact chain between workflows is complete.
+
+**Evidence:**
+
+- OpenAI: "Testing Agent Skills Systematically with Evals" (developers.openai.com/blog/eval-skills)
+- Anthropic: "Demystifying Evals for AI Agents" (anthropic.com/engineering/demystifying-evals-for-ai-agents)
+- Block: "Testing Pyramid for AI Agents" (engineering.block.xyz/blog/testing-pyramid-for-ai-agents)
+- GSDD implementation: `tests/gsdd.scenarios.test.cjs` (S1–S5, ~37 assertions)
+- Invariant complement: D13, `tests/gsdd.invariants.test.cjs`, `tests/gsdd.guards.test.cjs`
 
 ---
 
