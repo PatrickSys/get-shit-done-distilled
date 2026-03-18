@@ -38,6 +38,10 @@ export function buildDefaultConfig({ autoAdvance = false } = {}) {
   return config;
 }
 
+export function isProjectInitialized(cwd = process.cwd()) {
+  return existsSync(join(cwd, '.planning', 'config.json'));
+}
+
 export function loadProjectModelConfig(cwd = process.cwd()) {
   const configPath = join(cwd, '.planning', 'config.json');
   if (!existsSync(configPath)) return buildDefaultConfig();
@@ -47,8 +51,18 @@ export function loadProjectModelConfig(cwd = process.cwd()) {
       ...buildDefaultConfig(),
       ...JSON.parse(readFileSync(configPath, 'utf-8')),
     };
-  } catch {
+  } catch (e) {
+    console.error(`WARNING: .planning/config.json is malformed (${e.message}). Using defaults.`);
     return buildDefaultConfig();
+  }
+}
+
+function loadConfigForMutation(cwd = process.cwd()) {
+  const configPath = join(cwd, '.planning', 'config.json');
+  try {
+    return { ok: true, config: { ...buildDefaultConfig(), ...JSON.parse(readFileSync(configPath, 'utf-8')) } };
+  } catch (e) {
+    return { ok: false, error: e.message };
   }
 }
 
@@ -183,9 +197,21 @@ function cmdModelsProfile(profile) {
     return;
   }
 
-  const config = ensureProjectConfig();
-  config.modelProfile = profile;
-  writeProjectConfig(config);
+  if (!isProjectInitialized()) {
+    console.error('ERROR: Project not initialized. Run gsdd init first.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = loadConfigForMutation();
+  if (!result.ok) {
+    console.error(`ERROR: .planning/config.json is malformed (${result.error}). Fix the file manually before running model mutations.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  result.config.modelProfile = profile;
+  writeProjectConfig(result.config);
   console.log(`  - set modelProfile to ${profile}`);
   console.log('  Run gsdd update to regenerate adapter files.');
 }
@@ -205,10 +231,22 @@ function cmdModelsAgentProfile(args) {
     return;
   }
 
-  const config = ensureProjectConfig();
-  config.agentModelProfiles = config.agentModelProfiles || {};
-  config.agentModelProfiles[agent] = profile;
-  writeProjectConfig(config);
+  if (!isProjectInitialized()) {
+    console.error('ERROR: Project not initialized. Run gsdd init first.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = loadConfigForMutation();
+  if (!result.ok) {
+    console.error(`ERROR: .planning/config.json is malformed (${result.error}). Fix the file manually before running model mutations.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  result.config.agentModelProfiles = result.config.agentModelProfiles || {};
+  result.config.agentModelProfiles[agent] = profile;
+  writeProjectConfig(result.config);
   console.log(`  - set ${agent} semantic profile to ${profile}`);
   console.log('  Run gsdd update to regenerate adapter files.');
 }
@@ -221,14 +259,26 @@ function cmdModelsClearAgentProfile(args) {
     return;
   }
 
-  const config = ensureProjectConfig();
-  if (config.agentModelProfiles) {
-    delete config.agentModelProfiles[agent];
-    if (Object.keys(config.agentModelProfiles).length === 0) {
-      delete config.agentModelProfiles;
+  if (!isProjectInitialized()) {
+    console.error('ERROR: Project not initialized. Run gsdd init first.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = loadConfigForMutation();
+  if (!result.ok) {
+    console.error(`ERROR: .planning/config.json is malformed (${result.error}). Fix the file manually before running model mutations.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (result.config.agentModelProfiles) {
+    delete result.config.agentModelProfiles[agent];
+    if (Object.keys(result.config.agentModelProfiles).length === 0) {
+      delete result.config.agentModelProfiles;
     }
   }
-  writeProjectConfig(config);
+  writeProjectConfig(result.config);
   console.log(`  - cleared semantic profile override for ${agent}`);
   console.log('  Run gsdd update to regenerate adapter files.');
 }
@@ -259,11 +309,23 @@ function cmdModelsSetRuntimeOverride(args) {
     return;
   }
 
-  const config = ensureProjectConfig();
-  config.runtimeModelOverrides = config.runtimeModelOverrides || {};
-  config.runtimeModelOverrides[runtime] = config.runtimeModelOverrides[runtime] || {};
-  config.runtimeModelOverrides[runtime][agent] = model.trim();
-  writeProjectConfig(config);
+  if (!isProjectInitialized()) {
+    console.error('ERROR: Project not initialized. Run gsdd init first.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = loadConfigForMutation();
+  if (!result.ok) {
+    console.error(`ERROR: .planning/config.json is malformed (${result.error}). Fix the file manually before running model mutations.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  result.config.runtimeModelOverrides = result.config.runtimeModelOverrides || {};
+  result.config.runtimeModelOverrides[runtime] = result.config.runtimeModelOverrides[runtime] || {};
+  result.config.runtimeModelOverrides[runtime][agent] = model.trim();
+  writeProjectConfig(result.config);
   console.log(`  - set ${runtime} runtime override for ${agent}`);
   console.log('  Run gsdd update to regenerate adapter files.');
 }
@@ -283,17 +345,29 @@ function cmdModelsClearRuntimeOverride(args) {
     return;
   }
 
-  const config = ensureProjectConfig();
-  if (config.runtimeModelOverrides?.[runtime]) {
-    delete config.runtimeModelOverrides[runtime][agent];
-    if (Object.keys(config.runtimeModelOverrides[runtime]).length === 0) {
-      delete config.runtimeModelOverrides[runtime];
+  if (!isProjectInitialized()) {
+    console.error('ERROR: Project not initialized. Run gsdd init first.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = loadConfigForMutation();
+  if (!result.ok) {
+    console.error(`ERROR: .planning/config.json is malformed (${result.error}). Fix the file manually before running model mutations.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (result.config.runtimeModelOverrides?.[runtime]) {
+    delete result.config.runtimeModelOverrides[runtime][agent];
+    if (Object.keys(result.config.runtimeModelOverrides[runtime]).length === 0) {
+      delete result.config.runtimeModelOverrides[runtime];
     }
-    if (Object.keys(config.runtimeModelOverrides).length === 0) {
-      delete config.runtimeModelOverrides;
+    if (Object.keys(result.config.runtimeModelOverrides).length === 0) {
+      delete result.config.runtimeModelOverrides;
     }
   }
-  writeProjectConfig(config);
+  writeProjectConfig(result.config);
   console.log(`  - cleared ${runtime} runtime override for ${agent}`);
   console.log('  Run gsdd update to regenerate adapter files.');
 }

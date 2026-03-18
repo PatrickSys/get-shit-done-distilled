@@ -9,6 +9,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const GSDD_PATH = path.join(ROOT, 'bin', 'gsdd.mjs');
+const MODELS_MODULE = path.join(ROOT, 'bin', 'lib', 'models.mjs');
 const MANIFEST_MODULE = path.join(ROOT, 'bin', 'lib', 'manifest.mjs');
 const INIT_MODULE = path.join(ROOT, 'bin', 'lib', 'init.mjs');
 const TEMPLATES_MODULE = path.join(ROOT, 'bin', 'lib', 'templates.mjs');
@@ -128,5 +129,50 @@ describe('G11 - Codex Doc Contract', () => {
       'distilled/README.md must not describe --tools codex as deprecated once the native checker adapter exists.');
     assert.match(readme, /\.codex\/agents\/gsdd-plan-checker\.toml/,
       'distilled/README.md must document the generated Codex checker agent.');
+  });
+});
+
+describe('G13 - Models Pre-Init Safety', () => {
+  test('models.mjs exports isProjectInitialized', async () => {
+    const mod = await import(`file://${MODELS_MODULE.replace(/\\/g, '/')}`);
+    assert.strictEqual(typeof mod.isProjectInitialized, 'function',
+      'models.mjs must export isProjectInitialized. FIX: Add isProjectInitialized export.');
+  });
+
+  test('all 5 mutation commands check isProjectInitialized', () => {
+    const modelsSource = fs.readFileSync(MODELS_MODULE, 'utf-8');
+    const mutationFunctions = [
+      'cmdModelsProfile',
+      'cmdModelsAgentProfile',
+      'cmdModelsClearAgentProfile',
+      'cmdModelsSetRuntimeOverride',
+      'cmdModelsClearRuntimeOverride',
+    ];
+    for (const fn of mutationFunctions) {
+      const fnStart = modelsSource.indexOf(`function ${fn}`);
+      assert.notStrictEqual(fnStart, -1, `${fn} must exist in models.mjs`);
+      const nextFnStart = modelsSource.indexOf('\nfunction ', fnStart + 1);
+      const fnBody = modelsSource.slice(fnStart, nextFnStart > -1 ? nextFnStart : fnStart + 1500);
+      assert.match(fnBody, /isProjectInitialized/,
+        `${fn} must call isProjectInitialized. FIX: Add pre-init guard to ${fn}.`);
+    }
+  });
+
+  test('mutation commands use loadConfigForMutation instead of ensureProjectConfig', () => {
+    const modelsSource = fs.readFileSync(MODELS_MODULE, 'utf-8');
+    const mutationFunctions = [
+      'cmdModelsProfile',
+      'cmdModelsAgentProfile',
+      'cmdModelsClearAgentProfile',
+      'cmdModelsSetRuntimeOverride',
+      'cmdModelsClearRuntimeOverride',
+    ];
+    for (const fn of mutationFunctions) {
+      const fnStart = modelsSource.indexOf(`function ${fn}`);
+      const nextFnStart = modelsSource.indexOf('\nfunction ', fnStart + 1);
+      const fnBody = modelsSource.slice(fnStart, nextFnStart > -1 ? nextFnStart : fnStart + 1500);
+      assert.doesNotMatch(fnBody, /ensureProjectConfig/,
+        `${fn} must not call ensureProjectConfig. FIX: Use loadConfigForMutation instead.`);
+    }
   });
 });

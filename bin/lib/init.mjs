@@ -46,13 +46,12 @@ export function createCmdInit(ctx) {
       return;
     }
 
-    if (existsSync(ctx.planningDir)) {
-      console.log('  - .planning/ already exists (skipping folder creation)');
-    } else {
-      mkdirSync(join(ctx.planningDir, 'phases'), { recursive: true });
-      mkdirSync(join(ctx.planningDir, 'research'), { recursive: true });
-      console.log('  - created .planning/ directory structure');
-    }
+    const existed = existsSync(ctx.planningDir);
+    mkdirSync(join(ctx.planningDir, 'phases'), { recursive: true });
+    mkdirSync(join(ctx.planningDir, 'research'), { recursive: true });
+    console.log(existed
+      ? '  - .planning/ already exists (ensured subdirectories)'
+      : '  - created .planning/ directory structure');
 
     installProjectTemplates(ctx);
     await ensureConfig(ctx.cwd, ctx.planningDir, isAuto);

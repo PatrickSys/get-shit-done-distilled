@@ -659,16 +659,20 @@ NOT injected into:
 - `gsdd models profile <quality|balanced|budget>`
 - `gsdd models agent-profile --agent plan-checker --profile <quality|balanced|budget>`
 - `gsdd models clear-agent-profile --agent plan-checker`
-- `gsdd models set --runtime <claude|opencode> --agent plan-checker --model <id>`
-- `gsdd models clear --runtime <claude|opencode> --agent plan-checker`
+- `gsdd models set --runtime <claude|opencode|codex> --agent plan-checker --model <id>`
+- `gsdd models clear --runtime <claude|opencode|codex> --agent plan-checker`
 
 **Trade-off: static files become stale after a profile change.** If the user changes `modelProfile`
 or runtime override config directly, generated checker files are not updated until `gsdd update`
 is run. This is consistent with D9 (adapter generation over conversion): adapter files are generated
 on demand.
 
-**Boundary:** This is a narrow native-adapter decision, not closure of Gap I4. It makes the current
-native checker surfaces honest and explicit. Broader delegate/runtime propagation remains follow-up work.
+**Scope: checker-only is the final design boundary.** GSDD delegates are inline orchestrator
+instructions (`<delegate>` blocks), not standalone agent files. Only the plan-checker produces
+standalone agent files (`.claude/agents/`, `.opencode/agents/`, `.codex/agents/`) where static `model:`
+injection is both possible and meaningful. GSD's per-agent model profiles relied on `Task(model=...)`;
+GSDD replaced `Task()` with agent-agnostic delegate blocks, making per-delegate model injection
+architecturally not viable without reverting to vendor-specific APIs. This closes Gap I4 by design.
 
 **Evidence:**
 - GSD reference: `modelProfile` in `.planning/config.json` plus per-agent model resolution, including

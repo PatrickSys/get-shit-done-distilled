@@ -11,6 +11,7 @@ const {
   createTempProject,
   loadGsdd,
   readJson,
+  runCliAsMain,
   runCliViaJunction,
   setNonInteractiveStdin,
 } = require('./gsdd.helpers.cjs');
@@ -808,6 +809,42 @@ describe('gsdd init and update', () => {
       }
 
       assert.ok(!fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
+    });
+  });
+
+  describe('partial .planning/ resilience', () => {
+    test('init creates phases/ and research/ even when .planning/ already exists', async () => {
+      fs.mkdirSync(path.join(tmpDir, '.planning'), { recursive: true });
+
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--auto', '--tools', 'claude');
+      } finally {
+        restoreStdin();
+      }
+
+      assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'phases')));
+      assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'research')));
+      assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
+    });
+
+    test('init after pre-init guard rejection creates complete structure', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'profile', 'quality']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')));
+
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(tmpDir);
+        await gsdd.cmdInit('--auto', '--tools', 'claude');
+      } finally {
+        restoreStdin();
+      }
+
+      assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'phases')));
+      assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'research')));
+      assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'config.json')));
     });
   });
 });

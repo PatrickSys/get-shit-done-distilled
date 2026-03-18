@@ -312,6 +312,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('models profile writes global modelProfile', async () => {
+      writePlanningConfig(tmpDir, {});
       const result = await runCliAsMain(tmpDir, ['models', 'profile', 'quality']);
       assert.strictEqual(result.exitCode, 0);
 
@@ -320,6 +321,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('models agent-profile writes semantic agent override', async () => {
+      writePlanningConfig(tmpDir, {});
       const result = await runCliAsMain(tmpDir, ['models', 'agent-profile', '--agent', 'plan-checker', '--profile', 'quality']);
       assert.strictEqual(result.exitCode, 0);
 
@@ -328,6 +330,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('models set writes runtime override and clear removes it', async () => {
+      writePlanningConfig(tmpDir, {});
       let result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'opencode', '--agent', 'plan-checker', '--model', 'anthropic/claude-opus-4-6']);
       assert.strictEqual(result.exitCode, 0);
 
@@ -342,6 +345,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('models clear-agent-profile removes semantic override only', async () => {
+      writePlanningConfig(tmpDir, {});
       await runCliAsMain(tmpDir, ['models', 'agent-profile', '--agent', 'plan-checker', '--profile', 'quality']);
       const result = await runCliAsMain(tmpDir, ['models', 'clear-agent-profile', '--agent', 'plan-checker']);
       assert.strictEqual(result.exitCode, 0);
@@ -487,6 +491,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('models set/clear works for codex runtime', async () => {
+      writePlanningConfig(tmpDir, {});
       let result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'codex', '--agent', 'plan-checker', '--model', 'gpt-5-codex']);
       assert.strictEqual(result.exitCode, 0);
 
@@ -514,6 +519,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('models accepts valid model IDs with slashes colons and at signs', async () => {
+      writePlanningConfig(tmpDir, {});
       const result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'codex', '--agent', 'plan-checker', '--model', 'anthropic/claude-opus-4-6:latest@v2']);
       assert.strictEqual(result.exitCode, 0);
     });
@@ -537,6 +543,7 @@ describe('gsdd models and model propagation', () => {
     });
 
     test('mutation commands include update reminder', async () => {
+      writePlanningConfig(tmpDir, {});
       let result = await runCliAsMain(tmpDir, ['models', 'profile', 'quality']);
       assert.match(result.output, /Run gsdd update/);
 
@@ -551,6 +558,72 @@ describe('gsdd models and model propagation', () => {
 
       result = await runCliAsMain(tmpDir, ['models', 'clear-agent-profile', '--agent', 'plan-checker']);
       assert.match(result.output, /Run gsdd update/);
+    });
+  });
+
+  describe('pre-init guard', () => {
+    test('models profile rejects when project is not initialized', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'profile', 'quality']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /not initialized/);
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')));
+    });
+
+    test('models agent-profile rejects pre-init', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'agent-profile', '--agent', 'plan-checker', '--profile', 'quality']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /not initialized/);
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')));
+    });
+
+    test('models set rejects pre-init', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'set', '--runtime', 'claude', '--agent', 'plan-checker', '--model', 'opus']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /not initialized/);
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')));
+    });
+
+    test('models clear rejects pre-init', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'clear', '--runtime', 'claude', '--agent', 'plan-checker']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /not initialized/);
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')));
+    });
+
+    test('models clear-agent-profile rejects pre-init', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'clear-agent-profile', '--agent', 'plan-checker']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /not initialized/);
+      assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')));
+    });
+
+    test('models show works without init (graceful fallback)', async () => {
+      const result = await runCliAsMain(tmpDir, ['models', 'show']);
+      assert.strictEqual(result.exitCode, 0);
+    });
+  });
+
+  describe('malformed config handling', () => {
+    test('mutation refuses on malformed config.json and preserves file', async () => {
+      const garbage = '{not valid json!!!}}}';
+      fs.mkdirSync(path.join(tmpDir, '.planning'), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, '.planning', 'config.json'), garbage);
+
+      const result = await runCliAsMain(tmpDir, ['models', 'profile', 'quality']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.match(result.output, /malformed/i);
+
+      const preserved = fs.readFileSync(path.join(tmpDir, '.planning', 'config.json'), 'utf-8');
+      assert.strictEqual(preserved, garbage);
+    });
+
+    test('models show warns on malformed config.json but succeeds', async () => {
+      fs.mkdirSync(path.join(tmpDir, '.planning'), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, '.planning', 'config.json'), '{broken');
+
+      const result = await runCliAsMain(tmpDir, ['models', 'show']);
+      assert.strictEqual(result.exitCode, 0);
+      assert.match(result.output, /WARNING.*malformed/i);
     });
   });
 });
