@@ -289,6 +289,11 @@ describe('S3 — Quick-Task Path (init → quick workflow isolation)', () => {
       !prereqs.includes('ROADMAP.md') || prereqs.includes('NOT required'),
       'prerequisites must not positively require ROADMAP.md'
     );
+    // SPEC.md must not appear in prerequisites at all — quick tasks are phase-independent
+    assert.ok(
+      !prereqs.includes('SPEC.md'),
+      'prerequisites must not reference SPEC.md'
+    );
   });
 
   test('quick delegates reference planner, executor, and verifier roles', () => {
@@ -507,9 +512,10 @@ describe('S5 — Config-to-Content Propagation', () => {
     assert.strictEqual(config.workflow.planCheck, true, 'default config must have workflow.planCheck = true');
 
     const content = readSkill(tmpDir, 'gsdd-plan');
+    // The exact XML section tag used in plan.md — broad OR terms risk matching incidental strings
     assert.ok(
-      content.includes('plan_check') || content.includes('planCheck') || content.includes('plan-check') || content.includes('plan_checker'),
-      'plan skill must contain plan-check orchestration reference'
+      content.includes('plan_check_orchestration'),
+      'plan skill must contain the plan_check_orchestration section from the plan workflow source'
     );
   });
 
@@ -521,9 +527,10 @@ describe('S5 — Config-to-Content Propagation', () => {
     assert.ok(config.gitProtocol.pr, 'gitProtocol must have pr');
 
     const content = readSkill(tmpDir, 'gsdd-execute');
+    // 'gitProtocol' is the exact config key referenced in execute.md — not just any 'git' string
     assert.ok(
-      content.includes('gitProtocol') || content.includes('git') || content.includes('Git'),
-      'execute skill must reference git guidance'
+      content.includes('gitProtocol'),
+      'execute skill must reference gitProtocol by name, not just any git string'
     );
   });
 
