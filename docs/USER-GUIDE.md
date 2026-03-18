@@ -315,7 +315,7 @@ GSDD does not impose commit formats, branch naming, or one-commit-per-task rules
 
 ```bash
 npx gsdd init --auto --tools claude           # Non-interactive, default config
-npx gsdd init --auto --brief path/to/PRD.md   # Seed from existing document
+npx gsdd init --auto --tools claude --brief path/to/PRD.md  # Seed from existing document
 ```
 
 ---
