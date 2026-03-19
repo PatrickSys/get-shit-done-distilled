@@ -1136,7 +1136,7 @@ This is acceptable because:
 
 ## 25. Consumer First-Run Experience
 
-**Problem:** GSDD's internal architecture is complete (24 design decisions, 811 tests, 10 workflows, 9 roles), but consumer-facing surfaces don't honestly guide first-time users. Two independent audits identified this as the single largest barrier to adoption.
+**Problem:** GSDD's internal architecture is complete (24 design decisions, 800+ tests, 10 workflows, 9 roles), but consumer-facing surfaces don't honestly guide first-time users. Two independent audits identified this as the single largest barrier to adoption.
 
 **Decision:** Make all consumer-facing surfaces (README, agents.block.md, post-init CLI output) honestly distinguish between native-capable and governance-only platforms, and provide platform-specific invocation guidance at every consumer touchpoint.
 

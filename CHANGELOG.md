@@ -54,7 +54,7 @@ Initial public release. 35 merged PRs, 800+ structural assertions, 25 design dec
 **Testing**
 - 800+ structural assertions across 9 test files, 0 failures
 - 13 invariant suites (I-series): delegate-role integrity, role structure, delegate thinness, workflow references, session management, artifact schemas, plan-checker dimensions, vendor API cleanliness, deprecation guards, initial-read enforcement
-- 17 guard suites (G-series): cross-document schema consistency, file size bounds, XML well-formedness, artifact lifecycle chain, DESIGN.md registry, auto-mode contract, generation manifest, CLI module boundary, Codex doc contract, documentation accuracy, models pre-init safety, health module contract, OWASP authorization matrix, distillation ledger, mapper output quantification, consumer governance completeness
+- 18 guard suites (G-series): cross-document schema consistency, file size bounds, XML well-formedness, artifact lifecycle chain, DESIGN.md registry, auto-mode contract, generation manifest, CLI module boundary, Codex doc contract, documentation accuracy, models pre-init safety, health module contract, OWASP authorization matrix, distillation ledger, mapper output quantification, consumer governance completeness, consumer first-run accuracy
 - 5 scenario suites (S-series): greenfield golden path, brownfield path, quick-task path, native runtime chain, config-to-content propagation
 - Functional test suites: init/update, model propagation, generation manifest, plan adapter surfaces, audit-milestone, health diagnostics
 

@@ -417,6 +417,7 @@ Mechanical enforcement that catches cross-document inconsistencies:
 | **G16** | Distillation ledger — DISTILLATION.md role coverage, merger table, D22 registration |
 | **G17** | Mapper output quantification — template sections, delegate instructions, D23 registration |
 | **G18** | Consumer governance completeness — agents.block.md workflow coverage, CHANGELOG accuracy |
+| **G19** | Consumer first-run accuracy — honest platform tiers, per-platform invocation guidance, Quickstart section |
 
 ### Scenario Suites (S-series)
 
