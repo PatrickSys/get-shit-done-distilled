@@ -77,6 +77,18 @@ Example (good):
 - "Checkout endpoint p95 is 1.8s in staging due to N+1 queries in `src/db/orders.ts` (see `getOrdersForUser`). Fix: batch query and add integration test asserting query count."
 </good_examples>
 
+## Downstream Impact Ranking
+
+Rank the top 3 concerns by how much future work they block. Use the Change Routing table in ARCHITECTURE.md as reference: concerns that block multiple change-routing rows rank highest.
+
+| Rank | Concern | Blocks | Severity | Fix effort |
+|------|---------|--------|----------|------------|
+| 1 | [Concern name] | [Which change types from ARCHITECTURE.md this blocks] | critical/moderate/minor | [small/medium/large] |
+| 2 | [Concern name] | [Blocks] | [Severity] | [Effort] |
+| 3 | [Concern name] | [Blocks] | [Severity] | [Effort] |
+
+Ranking heuristic: a concern that blocks 3 change-routing rows ranks above one that blocks 1, even if the latter is more severe in isolation.
+
 ---
 
 *Concerns audit: [date]*

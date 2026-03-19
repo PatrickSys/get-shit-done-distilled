@@ -92,6 +92,18 @@ Example (bad):
 - "Add routes wherever it makes sense."
 </good_examples>
 
+## Golden Files Per Layer
+
+For each architectural layer, identify the single most-instructive file using inbound import frequency as the signal: the most-imported file in a layer is the most stable and most understood.
+
+| Layer | Golden File | Why |
+|-------|-------------|-----|
+| [Layer name] | `[path/to/file.ts]` | [Why it's the most-imported / most-instructive for this layer] |
+| [Layer name] | `[path/to/file.ts]` | [Why] |
+| [Layer name] | `[path/to/file.ts]` | [Why] |
+
+To find the most-imported file in a layer: grep for imports of each candidate file and count occurrences. The highest count is the golden file.
+
 ---
 
 *Architecture analysis: [date]*

@@ -54,6 +54,8 @@ This means: file paths are critical (planner needs to navigate directly), patter
 - **Prescriptive, not descriptive.** "Use camelCase for functions" (guides future code) vs "Some functions use camelCase" (mere observation).
 - **Current state only.** Describe what IS, never what WAS or what was considered. No temporal language.
 - **Patterns over lists.** Show HOW things are done (with code examples) not just WHAT exists.
+- **Quantify where possible.** Adoption rates use `~N% (stable|rising|declining)` estimated by grep-counting (≥5 occurrences required to estimate). If count is not possible, write "prevalence unknown — seen in multiple files."
+- **Golden files are algorithmic, not subjective.** Use import frequency (most-imported file = golden for that layer) or pattern density (most conventions present = golden for CONVENTIONS.md). Do not choose by judgment alone.
 
 ## Anti-Patterns
 

@@ -12,12 +12,14 @@ Include:
 - Performance bottlenecks
 - Missing test coverage for critical paths
 - Deprecated or end-of-life dependencies
+- Downstream impact ranking: top 3 concerns ranked by how much future work they block (concerns blocking multiple change-routing rows from ARCHITECTURE.md rank highest, not just by severity)
 
 <quality_gate>
 - [ ] Secret scan completed and result reported
 - [ ] Concerns are specific (file references, not vague "some places")
 - [ ] Severity assigned per concern: critical / moderate / minor
 - [ ] Deprecated dependencies listed with EOL dates if known
+- [ ] Downstream impact table ranks at least top 3 concerns with Blocks column populated
 </quality_gate>
 
 Write to: `.planning/codebase/CONCERNS.md`

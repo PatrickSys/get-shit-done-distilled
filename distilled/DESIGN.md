@@ -30,6 +30,7 @@
 20. [Workspace Health Diagnostics](#20-workspace-health-diagnostics)
 21. [OWASP Authorization Matrix](#21-owasp-authorization-matrix)
 22. [Delegate Layer Architecture](#22-delegate-layer-architecture)
+23. [Mapper Output Quantification](#23-mapper-output-quantification)
 
 ---
 
@@ -1057,6 +1058,51 @@ This is acceptable because:
 - OpenDev "Terminal Agents" (arXiv 2603.05344): multi-agent coordination with explicit role contracts
 - GSDD implementation: `distilled/templates/delegates/`, `distilled/workflows/*.md` (with `<delegate>` blocks), `bin/lib/rendering.mjs` (delegate text injection)
 - Tests: `tests/gsdd.scenarios.test.cjs` (S1–S5 verify delegate invocation chains)
+
+---
+
+## 23. Mapper Output Quantification
+
+**GSD baseline:** Mapper agents produce qualitative descriptions ("uses constructor injection") without adoption rates, trend signals, or exemplar file identification. No systematic mechanism for ranking concerns by downstream impact.
+
+**GSDD decision:** Five quantification primitives added across codebase map templates and delegates:
+
+| Primitive | Where | Format |
+|-----------|-------|--------|
+| Convention adoption rates | CONVENTIONS.md + mapper-quality delegate | `~N% (stable\|rising\|declining)` via grep-counting |
+| Golden files (conventions) | CONVENTIONS.md + mapper-quality delegate | 2–3 files with highest convention density in production code |
+| Golden files per layer (arch) | ARCHITECTURE.md + mapper-arch delegate | Most-imported file per layer (inbound import frequency) |
+| Must-know packages | STACK.md + mapper-tech delegate | 3–5 packages with risk index low/medium/high + common mistake |
+| Downstream impact ranking | CONCERNS.md + mapper-concerns delegate | Top 3 concerns ranked by ARCHITECTURE.md change-routing rows blocked |
+
+**Why algorithmic, not subjective:** Each primitive has a deterministic algorithm so different agents produce comparable output:
+- Adoption rate: grep-count ÷ total instances, expressed as ~N%
+- Golden file (conventions): highest density of documented conventions per production file
+- Golden file (arch): highest inbound import count per layer
+- Must-know packages: misuse causes hardest-to-debug problems (data corruption or silent failure = risk: high)
+- Impact ranking: number of ARCHITECTURE.md change-routing rows blocked per concern
+
+**Why `~N%` format:** The tilde prefix signals estimation, not measurement. This prevents false precision while still providing a useful signal. "~84% (declining)" conveys the same planning information as an exact count while being honest about the estimation method.
+
+**Why separate sections, not inline annotations:** Inline annotations ("constructor injection — 84%") would require reformatting existing rules. Dedicated sections (Convention Adoption Rates, Golden Files) keep quantification additive — the existing prescriptive rules remain unchanged and the new sections are skippable by agents that don't need them.
+
+**Problem this solves:** Internal research (ideas.md, Feb 2026) directly compared GSDD's mapper against codebase-context MCP on the same codebase and found: GSDD returned "uses constructor injection" while CC returned "84% (declining)". The qualitative output gives downstream planners and executors weaker signal for prioritization decisions on brownfield projects.
+
+**Evidence:**
+
+1. `ideas.md` (internal, Feb 2026): direct per-tool comparison — "Quantification matters — '84% declining' > 'uses constructor injection'"
+2. ArXiv 2602.20478 (Codified Context): structured quantifiable facts enable agents to load context JIT without reading full files
+3. GetDX measurement framework (2026): adoption % is the primary signal for convention strength in engineering teams
+4. Anthropic 2026 Agentic Coding Trends: context quality is the primary competitive advantage; bottleneck is "does agent have context it needs?"
+5. Codebase-Context MCP (PatrickSys): already returns quantified patterns — GSDD without this produces weaker artifacts on the same codebase
+
+**Trade-offs:**
+
+- Benefit: downstream planners and executors get quantified signals for prioritization; "~84% declining" tells the planner to budget for migration, "~100% stable" tells it not to
+- Cost: mapper must grep-count each major convention, adding analysis time; the tilde prefix is honest about estimation but agents may treat it as less authoritative than exact counts
+- Scope: quantification is additive — existing qualitative rules remain; agents can skip the new sections if not needed
+
+**GSDD implementation:** `distilled/templates/codebase/conventions.md`, `distilled/templates/codebase/architecture.md`, `distilled/templates/codebase/stack.md`, `distilled/templates/codebase/concerns.md`, `distilled/templates/delegates/mapper-quality.md`, `distilled/templates/delegates/mapper-arch.md`, `distilled/templates/delegates/mapper-tech.md`, `distilled/templates/delegates/mapper-concerns.md`, `agents/mapper.md`
 
 ---
 

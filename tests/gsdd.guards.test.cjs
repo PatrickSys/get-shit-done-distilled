@@ -314,6 +314,168 @@ describe('G15: OWASP Authorization Matrix', () => {
   });
 });
 
+// ── G17: Mapper Output Quantification ─────────────────────────────────
+describe('G17 - Mapper Output Quantification', () => {
+  const CONVENTIONS_TPL = path.join(ROOT, 'distilled', 'templates', 'codebase', 'conventions.md');
+  const ARCHITECTURE_TPL = path.join(ROOT, 'distilled', 'templates', 'codebase', 'architecture.md');
+  const STACK_TPL = path.join(ROOT, 'distilled', 'templates', 'codebase', 'stack.md');
+  const CONCERNS_TPL = path.join(ROOT, 'distilled', 'templates', 'codebase', 'concerns.md');
+  const DELEGATE_QUALITY = path.join(ROOT, 'distilled', 'templates', 'delegates', 'mapper-quality.md');
+  const DELEGATE_ARCH = path.join(ROOT, 'distilled', 'templates', 'delegates', 'mapper-arch.md');
+  const DELEGATE_TECH = path.join(ROOT, 'distilled', 'templates', 'delegates', 'mapper-tech.md');
+  const DELEGATE_CONCERNS = path.join(ROOT, 'distilled', 'templates', 'delegates', 'mapper-concerns.md');
+  const MAPPER_ROLE = path.join(ROOT, 'agents', 'mapper.md');
+  const DESIGN_PATH = path.join(ROOT, 'distilled', 'DESIGN.md');
+
+  // A: Template section presence (8 assertions)
+  test('conventions.md has Convention Adoption Rates section', () => {
+    const content = fs.readFileSync(CONVENTIONS_TPL, 'utf-8');
+    assert.match(content, /## Convention Adoption Rates/,
+      'conventions.md must have Convention Adoption Rates section. FIX: Add ## Convention Adoption Rates section.');
+  });
+
+  test('conventions.md has Golden Files section', () => {
+    const content = fs.readFileSync(CONVENTIONS_TPL, 'utf-8');
+    assert.match(content, /## Golden Files/,
+      'conventions.md must have Golden Files section. FIX: Add ## Golden Files section.');
+  });
+
+  test('conventions.md Convention Adoption Rates uses ~N% format instruction', () => {
+    const content = fs.readFileSync(CONVENTIONS_TPL, 'utf-8');
+    assert.match(content, /~N%.*stable.*rising.*declining|stable\|rising\|declining/,
+      'conventions.md must instruct ~N% (stable|rising|declining) format. FIX: Add format instruction to Convention Adoption Rates.');
+  });
+
+  test('architecture.md has Golden Files Per Layer section', () => {
+    const content = fs.readFileSync(ARCHITECTURE_TPL, 'utf-8');
+    assert.match(content, /## Golden Files Per Layer/,
+      'architecture.md must have Golden Files Per Layer section. FIX: Add ## Golden Files Per Layer section.');
+  });
+
+  test('stack.md has Must-Know Packages section', () => {
+    const content = fs.readFileSync(STACK_TPL, 'utf-8');
+    assert.match(content, /## Must-Know Packages/,
+      'stack.md must have Must-Know Packages section. FIX: Add ## Must-Know Packages section.');
+  });
+
+  test('stack.md Must-Know Packages mentions risk index', () => {
+    const content = fs.readFileSync(STACK_TPL, 'utf-8');
+    assert.match(content, /risk:.*low.*medium.*high|low\/medium\/high/,
+      'stack.md Must-Know Packages must include risk index (low/medium/high). FIX: Add risk level language to Must-Know Packages.');
+  });
+
+  test('concerns.md has Downstream Impact Ranking section', () => {
+    const content = fs.readFileSync(CONCERNS_TPL, 'utf-8');
+    assert.match(content, /## Downstream Impact Ranking/,
+      'concerns.md must have Downstream Impact Ranking section. FIX: Add ## Downstream Impact Ranking section.');
+  });
+
+  test('concerns.md Downstream Impact Ranking has table header with Blocks column', () => {
+    const content = fs.readFileSync(CONCERNS_TPL, 'utf-8');
+    assert.match(content, /\| Rank \|.*\| Blocks \|/,
+      'concerns.md Downstream Impact Ranking must have table with Blocks column. FIX: Add table with Rank/Concern/Blocks/Severity/Fix effort headers.');
+  });
+
+  // B: Delegate quantification instructions (8 assertions)
+  test('mapper-quality delegate Include list mentions adoption rate estimation', () => {
+    const content = fs.readFileSync(DELEGATE_QUALITY, 'utf-8');
+    assert.match(content, /adoption rate|~N%/,
+      'mapper-quality delegate must include adoption rate estimation. FIX: Add adoption rate instruction to Include list.');
+  });
+
+  test('mapper-quality delegate quality_gate has adoption rate check', () => {
+    const content = fs.readFileSync(DELEGATE_QUALITY, 'utf-8');
+    assert.match(content, /At least one convention has a quantified adoption rate|quantified adoption/,
+      'mapper-quality quality_gate must check for quantified adoption rate. FIX: Add adoption rate quality_gate item.');
+  });
+
+  test('mapper-quality delegate Include list mentions golden files', () => {
+    const content = fs.readFileSync(DELEGATE_QUALITY, 'utf-8');
+    assert.match(content, /[Gg]olden files/,
+      'mapper-quality delegate must include golden files instruction. FIX: Add golden files to Include list.');
+  });
+
+  test('mapper-quality delegate quality_gate has golden files check', () => {
+    const content = fs.readFileSync(DELEGATE_QUALITY, 'utf-8');
+    assert.match(content, /Golden files.*at least 2|at least 2.*files/,
+      'mapper-quality quality_gate must check golden files count. FIX: Add golden files quality_gate item.');
+  });
+
+  test('mapper-arch delegate Include list mentions golden files per layer', () => {
+    const content = fs.readFileSync(DELEGATE_ARCH, 'utf-8');
+    assert.match(content, /[Gg]olden files per layer|import frequency/,
+      'mapper-arch delegate must include golden files per layer instruction. FIX: Add golden files per layer to Include list.');
+  });
+
+  test('mapper-arch delegate quality_gate has golden files table check', () => {
+    const content = fs.readFileSync(DELEGATE_ARCH, 'utf-8');
+    assert.match(content, /[Gg]olden files table/,
+      'mapper-arch quality_gate must check golden files table. FIX: Add golden files table quality_gate item.');
+  });
+
+  test('mapper-tech delegate Include list mentions must-know packages with risk', () => {
+    const content = fs.readFileSync(DELEGATE_TECH, 'utf-8');
+    assert.match(content, /[Mm]ust-know packages|risk index/,
+      'mapper-tech delegate must include must-know packages instruction. FIX: Add must-know packages to Include list.');
+  });
+
+  test('mapper-tech delegate quality_gate has must-know packages check', () => {
+    const content = fs.readFileSync(DELEGATE_TECH, 'utf-8');
+    assert.match(content, /[Mm]ust-know packages.*at least 3|at least 3.*packages/,
+      'mapper-tech quality_gate must check must-know packages count. FIX: Add must-know packages quality_gate item.');
+  });
+
+  test('mapper-concerns delegate Include list mentions downstream impact ranking', () => {
+    const content = fs.readFileSync(DELEGATE_CONCERNS, 'utf-8');
+    assert.match(content, /[Dd]ownstream impact|impact ranking/,
+      'mapper-concerns delegate must include downstream impact ranking instruction. FIX: Add downstream impact ranking to Include list.');
+  });
+
+  test('mapper-concerns delegate quality_gate has downstream impact ranking check', () => {
+    const content = fs.readFileSync(DELEGATE_CONCERNS, 'utf-8');
+    assert.match(content, /[Dd]ownstream impact.*table|impact.*table|at least.*concerns/,
+      'mapper-concerns quality_gate must check downstream impact ranking table. FIX: Add downstream impact ranking quality_gate item.');
+  });
+
+  // C: Role quality guarantees (3 assertions)
+  test('mapper.md Quality Guarantees mentions quantification', () => {
+    const content = fs.readFileSync(MAPPER_ROLE, 'utf-8');
+    assert.match(content, /[Qq]uantif/,
+      'mapper.md Quality Guarantees must mention quantification. FIX: Add quantification guarantee to mapper.md.');
+  });
+
+  test('mapper.md Quality Guarantees mentions ~N% format', () => {
+    const content = fs.readFileSync(MAPPER_ROLE, 'utf-8');
+    assert.match(content, /~N%/,
+      'mapper.md Quality Guarantees must mention ~N% format. FIX: Add ~N% format to mapper.md quantification guarantee.');
+  });
+
+  test('mapper.md Quality Guarantees mentions algorithmic golden files', () => {
+    const content = fs.readFileSync(MAPPER_ROLE, 'utf-8');
+    assert.match(content, /[Gg]olden files are algorithmic|import frequency.*golden/,
+      'mapper.md Quality Guarantees must describe algorithmic golden file selection. FIX: Add algorithmic golden files guarantee to mapper.md.');
+  });
+
+  // D: D23 registration (3 assertions)
+  test('DESIGN.md has D23 section', () => {
+    const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
+    assert.match(content, /## 23\./,
+      'DESIGN.md must contain section 23. FIX: Add D23 Mapper Output Quantification.');
+  });
+
+  test('DESIGN.md ToC has D23 entry', () => {
+    const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
+    assert.match(content, /23\. \[Mapper Output Quantification/,
+      'DESIGN.md ToC must have D23 entry. FIX: Add ToC entry for D23.');
+  });
+
+  test('D23 cites at least one evidence source', () => {
+    const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
+    assert.match(content, /ideas\.md.*Feb 2026|Codified Context|GetDX|Agentic Coding Trends|codebase-context/i,
+      'D23 must cite at least one evidence source. FIX: Add evidence citations to D23.');
+  });
+});
+
 // ── G16: Distillation Ledger + Delegate Architecture ─────────────────────────────────
 describe('G16 - Distillation Ledger + Delegate Architecture', () => {
   const DISTILLATION_PATH = path.join(ROOT, 'agents', 'DISTILLATION.md');
