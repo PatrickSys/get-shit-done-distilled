@@ -74,6 +74,20 @@ Return values:
 Exports:
 - [Pattern]
 
+## Convention Adoption Rates
+
+For each major convention documented above, estimate adoption rate using grep-counting (count occurrences in production source files, exclude `node_modules`, `vendor`, generated files). Use the format `~N% (stable|rising|declining)`.
+
+- Pattern requires ≥5 occurrences to estimate; below that, write "prevalence unknown — seen in multiple files."
+- Trend signal: stable = consistent across file age, rising = newer files adopt more, declining = older files adopt more.
+
+Examples:
+- Constructor injection: `~84% (declining)` — 37 of 44 service classes; newer files use factory functions
+- camelCase exports: `~100% (stable)` — enforced by lint rule, zero violations found
+- Inline error handling: `~62% (rising)` — 18 of 29 handlers; recent PRs consistently use this
+
+Replace examples with findings from this codebase.
+
 ## Testing And Mocking (High-Leverage)
 
 Test types used:
@@ -160,6 +174,18 @@ Example (good):
 Example (bad):
 - "We use JWT and have some webhooks." (no paths, no security rules, no boundaries)
 </good_examples>
+
+## Golden Files
+
+Identify 3–5 files that best exemplify this codebase's conventions. Selection algorithm: highest density of documented conventions in production feature files (not scaffolding, not generated code, not test files).
+
+Format: `file path — what makes it a good example`
+
+- `[path/to/file.ts]` — [which conventions it demonstrates, e.g., "named exports, constructor injection, custom error class, full test coverage"]
+- `[path/to/file.ts]` — [conventions it demonstrates]
+- `[path/to/file.ts]` — [conventions it demonstrates]
+
+If no single file exemplifies multiple conventions, list the best per-category file instead.
 
 ---
 

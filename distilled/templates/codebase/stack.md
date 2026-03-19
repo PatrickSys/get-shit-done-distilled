@@ -48,6 +48,18 @@ Critical libraries:
 Infra/observability:
 - [Package] - purpose: [reason] - config: `[paths]`
 
+## Must-Know Packages
+
+Flag 3–5 packages that new contributors must understand before making changes. These are not necessarily the most-used packages — they are the ones where misuse causes hard-to-debug problems.
+
+Each entry: `package-name — why it's critical — risk: low|medium|high — common mistake: what goes wrong`
+
+Risk levels: low (causes build errors — immediately visible), medium (causes runtime bugs — visible in testing), high (causes data corruption or silent failures — hard to detect).
+
+- `[package]` — [why critical] — risk: [level] — common mistake: [what goes wrong]
+- `[package]` — [why critical] — risk: [level] — common mistake: [what goes wrong]
+- `[package]` — [why critical] — risk: [level] — common mistake: [what goes wrong]
+
 ## How To Run
 
 Install:

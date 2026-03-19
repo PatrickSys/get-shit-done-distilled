@@ -9,6 +9,7 @@ Include:
 - Data flow direction (not just "they communicate" — which way does data move)
 - "Change Routing" table: where to add new code by change type (new endpoint? new model? new UI component?)
 - Key architectural patterns used (e.g., event-driven, layered, modular monolith)
+- Golden files per layer: for each major layer, the single most-imported file (highest inbound import count = most stable, most understood); use import frequency as the signal, not judgment
 
 **Anti-staleness:** Do NOT include static directory trees or full file inventories. DO include file paths for key components, entry points, and architectural boundaries (e.g., `src/services/user.ts`) -- downstream agents navigate directly to files.
 
@@ -17,6 +18,7 @@ Include:
 - [ ] Data flow direction is explicit
 - [ ] Change Routing table is populated (where to add new code by type)
 - [ ] Hard-to-reverse architectural decisions flagged
+- [ ] Golden files table populated with at least one file per major layer
 </quality_gate>
 
 Write to: `.planning/codebase/ARCHITECTURE.md`
