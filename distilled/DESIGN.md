@@ -995,7 +995,7 @@ Permission values: ALLOW (role can access), DENY (explicit rejection required), 
 
 **GSD:** Orchestrator subagent prompts were embedded inline in workflow files or referenced indirectly through agent role contracts. No explicit thin-wrapper layer. Scope and context were implicit in the orchestrator's prompt shaping.
 
-**GSDD:** Extracted 10 delegates as explicit thin-wrapper files in `distilled/templates/delegates/`. A delegate is a sub-agent instruction wrapper scoped to a specific orchestrator task, carrying a bounded input/output contract. Nine delegates wrap canonical role contracts (mapper, researcher × 2, synthesizer, planner, roadmapper, executor, verifier, integration-checker); one (plan-checker) is a fresh-context adversarial reviewer for plan quality assurance.
+**GSDD:** Extracted 10 delegates as explicit thin-wrapper files in `distilled/templates/delegates/`. A delegate is a sub-agent instruction wrapper scoped to a specific orchestrator task, carrying a bounded input/output contract. Ten delegates cover 3 canonical roles: mapper × 4 focus-scoped variants, researcher × 4 dimension-scoped variants, synthesizer × 1 (via `researcher-synthesizer.md`), plus one fresh-context adversarial reviewer (`plan-checker.md`, new in D9, no GSD equivalent). Executor, verifier, integration-checker, planner, and roadmapper are invoked directly from orchestrator workflows without thin-wrapper delegates.
 
 **Why "delegates":** In multi-agent orchestration literature (Anthropic multi-agent guidance, OpenAI harness engineering, OpenDev terminal-agents paper arXiv 2603.05344), a delegate is a sub-agent invoked by an orchestrator with:
 1. A single, bounded responsibility (not a general-purpose role)
@@ -1011,10 +1011,10 @@ Orchestrator workflows need to invoke sub-agents with consistent, predictable be
 
 ```
 <delegate>
-Instruction: Read .planning/templates/delegates/researcher.md
-Scope: phase-level research
-Input: Phase goal, tech constraints, research mode
-Output: RESEARCH.md with structured findings and confidence levels
+Instruction: Read .planning/templates/delegates/researcher-stack.md
+Scope: domain tech stack research
+Input: Project domain, tech constraints, research mode
+Output: STACK.md with structured findings and confidence levels
 </delegate>
 ```
 
@@ -1043,12 +1043,12 @@ This is acceptable because:
 | `mapper-arch.md` | Map codebase architecture | mapper (focus: arch) |
 | `mapper-quality.md` | Map code quality conventions | mapper (focus: quality) |
 | `mapper-concerns.md` | Identify code concerns and debt | mapper (focus: concerns) |
-| `researcher-project.md` | Research project-scope ecosystem | researcher (scope: project) |
-| `researcher-phase.md` | Research phase-specific implementation | researcher (scope: phase) |
-| `synthesizer.md` | Synthesize research into roadmap implications | synthesizer |
-| `planner.md` | Decompose phase into executable plan | planner |
-| `plan-checker.md` | Fresh-context adversarial plan review | (new in D9, no GSD equivalent) |
-| `roadmapper.md` | Create phase roadmap from synthesis | roadmapper |
+| `researcher-stack.md` | Research domain tech stack | researcher (dimension: stack) |
+| `researcher-features.md` | Research domain feature landscape | researcher (dimension: features) |
+| `researcher-architecture.md` | Research domain architecture patterns | researcher (dimension: architecture) |
+| `researcher-pitfalls.md` | Research domain pitfalls and risks | researcher (dimension: pitfalls) |
+| `researcher-synthesizer.md` | Synthesize research into roadmap implications | synthesizer |
+| `plan-checker.md` | Fresh-context adversarial plan review | planner (adversarial, new in D9) |
 
 **Evidence:**
 

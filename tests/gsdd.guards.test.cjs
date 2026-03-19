@@ -390,4 +390,18 @@ describe('G16 - Distillation Ledger + Delegate Architecture', () => {
     assert.match(content, /Anthropic.*multi-agent|OpenAI.*[Hh]arness|arXiv.*2603/,
       'D22 must cite multi-agent orchestration evidence. FIX: Add evidence citations to D22.');
   });
+
+  test('D22 delegate table matches actual delegate files on disk', () => {
+    const delegatesDir = path.join(ROOT, 'distilled', 'templates', 'delegates');
+    const actualFiles = fs.readdirSync(delegatesDir)
+      .filter(f => f.endsWith('.md'))
+      .sort();
+    const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
+    for (const file of actualFiles) {
+      assert.ok(content.includes('`' + file + '`'),
+        `D22 table must list actual delegate file ${file}. FIX: Update D22 table to match distilled/templates/delegates/.`);
+    }
+    assert.strictEqual(actualFiles.length, 10,
+      `Expected 10 delegate files, found ${actualFiles.length}. FIX: Update delegate count.`);
+  });
 });
