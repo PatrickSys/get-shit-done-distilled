@@ -1054,12 +1054,7 @@ describe('G21 - Consumer Surface Completeness', () => {
       'DESIGN.md must contain section 27. FIX: Add D27 Consumer-Ready Surface Completion.');
   });
 
-  test('DESIGN.md ToC has 28 entries', () => {
-    const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
-    const tocEntries = (content.match(/^\d+\. \[/gm) || []);
-    assert.strictEqual(tocEntries.length, 28,
-      `DESIGN.md ToC has ${tocEntries.length} entries, expected 28. FIX: Update DESIGN.md ToC to list all 28 decisions.`);
-  });
+  // ToC count already asserted by G19; no duplicate needed here.
 });
 
 // ---------------------------------------------------------------------------
@@ -1182,7 +1177,7 @@ describe('G22 - Workflow Completion Routing', () => {
   });
 
   // Context clearing hint
-  for (const wf of LIFECYCLE_WORKFLOWS.filter(w => w !== 'map-codebase.md' || true)) {
+  for (const wf of LIFECYCLE_WORKFLOWS) {
     test(`${wf} completion mentions context clearing`, () => {
       const content = fs.readFileSync(path.join(WORKFLOWS_DIR, wf), 'utf-8');
       const compStart = content.indexOf('<completion>');

@@ -167,12 +167,12 @@ Report to the user:
 Report to the user what was accomplished, then present the next step:
 
 ---
-**Completed:** Quick task #$NEXT_NUM — $DESCRIPTION
+**Completed:** Quick task #{next_num} — {description}
 
 Created:
-- `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-PLAN.md`
-- `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-SUMMARY.md`
-- `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-VERIFICATION.md` (if verifier enabled)
+- `.planning/quick/{next_num}-{slug}/{next_num}-PLAN.md`
+- `.planning/quick/{next_num}-{slug}/{next_num}-SUMMARY.md`
+- `.planning/quick/{next_num}-{slug}/{next_num}-VERIFICATION.md` (if verifier enabled)
 - Updated `.planning/quick/LOG.md`
 
 **Next step:** `/gsdd:progress` — check project status and continue phase work
