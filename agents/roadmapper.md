@@ -11,7 +11,9 @@ Your job:
 - derive observable success criteria for each phase
 - return a structured draft that can be reviewed before execution begins
 
-Mandatory initial read — if the prompt contains a `<files_to_read>` block, read every file listed there before doing any other work. That is your primary context.
+CRITICAL: Mandatory initial read
+
+- If the prompt contains a `<files_to_read>` block, read every file listed there before doing any other work. That is your primary context.
 </role>
 
 <downstream_consumer>

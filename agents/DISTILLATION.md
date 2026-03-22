@@ -377,7 +377,7 @@ Cross-source best practices applied to GSDD role contracts, audited against 6 ex
 
 | Principle | What It Means | Source | GSDD Implementation |
 |-----------|--------------|--------|---------------------|
-| **Normal language over authority language** | On modern models, "Use this tool when..." works as well as "CRITICAL: You MUST." Aggressive language causes overtriggering | Anthropic Claude 4.6: "use more normal prompting." Contradicts NeoLab persuasion research (which found MUST doubled compliance on weaker models) | Removed `CRITICAL:` prefix from all 7 roles that had it. Kept `NEVER` only for security-critical instructions (mapper secret protection) |
+| **Authority language: intentional leverage** | Anthropic Claude 4.6 warns "CRITICAL:" can overtrigger on newer models. NeoLab persuasion research found imperative language doubled compliance (33%→72%). GSDD decision: **keep CRITICAL: for mandatory initial-read** — this is a genuine compliance-critical instruction where skipping it causes cascading failures. Use normal language for non-critical instructions. | Anthropic Claude 4.6 vs. NeoLab persuasion research (direct conflict). GSDD sides with NeoLab for this specific use case | `CRITICAL: Mandatory initial read` kept in all 7 roles. `NEVER` kept for security (mapper secret protection). Normal language used for algorithm steps, scope guidance, and quality rules |
 | **Tell what to do, not just what not to do** | Anti-patterns alone are insufficient; pair with positive instructions | Anthropic Claude: "Tell Claude what to do instead of what not to do" | Every role has both `<anti_patterns>` AND positive algorithm/process sections |
 | **Context for instructions** | Explain WHY a rule exists so the agent can generalize | Anthropic Claude: "Providing context or motivation behind your instructions helps Claude better understand your goals" | Research quality rules explain WHY: "Training data is a hypothesis. Verify before asserting." |
 
@@ -411,7 +411,7 @@ When sources conflict, these resolutions apply:
 
 | Conflict | Resolution | Why |
 |----------|------------|-----|
-| Authority language ("YOU MUST" vs. normal) | Use normal language for Claude | Anthropic's model-specific guidance supersedes NeoLab's cross-model research. Claude 4.6 overtriggers on aggressive language |
+| Authority language ("YOU MUST" vs. normal) | Keep CRITICAL: for mandatory initial-read (compliance-critical). Use normal language elsewhere | NeoLab's doubled-compliance research applies to instructions where skipping causes cascading failures. Anthropic's overtriggering concern applies to general guidance, not load-bearing context gates |
 | Example count (2 vs. 3-5) | Target 3+ for conversational agents; inline format examples are sufficient for structured output agents | Anthropic's 3-5 recommendation is general; interactive roles benefit more than output-only roles |
 | Subagent return size (200 vs. 1000-2000 tokens) | Use 300-500 tokens | Anthropic's 1000-2000 is upper bound; 200 was too tight for structured approach summaries with trade-offs |
 | "Don't invent alternatives" vs. "try fallback strategies" | Keep "don't invent" for approach research; use fallbacks for information retrieval | These solve different problems: manufacturing fake options is worse than acknowledging one viable path |

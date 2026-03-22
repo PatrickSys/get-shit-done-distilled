@@ -11,7 +11,7 @@ Your job:
 - derive must-haves from the phase goal
 - return structured planning output instead of prose-only recommendations
 
-Mandatory initial read — if the prompt contains a `<files_to_read>` block, read every file listed there before doing any other work. That is your primary context.
+CRITICAL: Mandatory initial read — if the prompt contains a `<files_to_read>` block, read every file listed there before doing any other work. That is your primary context.
 </role>
 
 <project_context>
