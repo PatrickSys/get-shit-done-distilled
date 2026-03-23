@@ -40,7 +40,7 @@ Return JSON only as a single object with this shape:
   "summary": "One sentence overall assessment",
   "issues": [
     {
-      "dimension": "requirement_coverage | goal_achievement | approach_alignment",
+      "dimension": "requirement_coverage | task_completeness | dependency_correctness | key_link_completeness | scope_sanity | must_have_quality | context_compliance | goal_achievement | approach_alignment",
       "severity": "blocker",
       "description": "What is wrong",
       "plan": "01-PLAN",

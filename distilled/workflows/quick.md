@@ -76,7 +76,7 @@ Before proceeding to execution, verify the plan meets minimum quality:
 - [ ] Each task's `<verify>` has at least one runnable command
 - [ ] Plan tasks do not exceed 3 (quick scope constraint)
 
-This is a self-check, not an independent plan-check. Report `reduced_assurance` in the completion summary.
+This is a self-check, not an independent plan-check. Failures are noted but do NOT block execution — report `reduced_assurance` in the completion summary.
 
 ---
 

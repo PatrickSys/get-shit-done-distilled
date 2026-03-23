@@ -1380,7 +1380,7 @@ Isolating research in subagents and returning compressed summaries follows the C
 4. Anthropic long-context research (2024): instructions at decision points are followed more reliably than instructions at document start — validates positional STOP placement at exact deviation points
 5. D13 consistency argument: mechanical invariant enforcement prevents regression. The same structural pattern should be enforced everywhere it applies, not selectively.
 
-**Tradeoff:** ~17 new guard assertions (G24) to maintain, but prevents artifact loss across 5 additional workflows. Each persistence gate adds 1-2 lines to its workflow. Positional STOP gates add 1 line each. The cost is minimal relative to the failure modes prevented (lost SPEC.md, lost checkpoint, empty codebase maps poisoning downstream planning).
+**Tradeoff:** 18 new guard assertions (G24) to maintain, but prevents artifact loss across 5 additional workflows. Each persistence gate adds 1-2 lines to its workflow. Positional STOP gates add 1 line each. The cost is minimal relative to the failure modes prevented (lost SPEC.md, lost checkpoint, empty codebase maps poisoning downstream planning).
 
 **GSDD implementation:** `distilled/workflows/quick.md`, `distilled/workflows/map-codebase.md`, `distilled/workflows/new-project.md`, `distilled/workflows/audit-milestone.md`, `distilled/workflows/pause.md`, `tests/gsdd.guards.test.cjs` (G24)
 

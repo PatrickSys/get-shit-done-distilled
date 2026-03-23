@@ -1449,4 +1449,22 @@ describe('G24 - Hardening Propagation', () => {
     assert.match(content, /[Ss]uccess criteria.*reachable|[Ss]uccess.*criteria.*traceable/i,
       'plan-checker.md goal_achievement must include success criteria reachable check. FIX: Add success criteria traceability check.');
   });
+
+  test('plan.md dimension list includes goal_achievement', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'plan.md'), 'utf-8');
+    assert.match(content, /goal_achievement/,
+      'plan.md checker dimension list must include goal_achievement. FIX: Add goal_achievement dimension to "What The Checker Verifies" section and JSON schema hint.');
+  });
+
+  test('claude adapter dimension hint includes goal_achievement', () => {
+    const content = fs.readFileSync(path.join(ROOT, 'bin', 'adapters', 'claude.mjs'), 'utf-8');
+    assert.match(content, /goal_achievement/,
+      'claude.mjs plan-checker schema hint must include goal_achievement. FIX: Add goal_achievement to the dimension enum in the checker invocation JSON schema.');
+  });
+
+  test('opencode adapter dimension hint includes goal_achievement', () => {
+    const content = fs.readFileSync(path.join(ROOT, 'bin', 'adapters', 'opencode.mjs'), 'utf-8');
+    assert.match(content, /goal_achievement/,
+      'opencode.mjs plan-checker schema hint must include goal_achievement. FIX: Add goal_achievement to the dimension enum in the checker invocation JSON schema.');
+  });
 });
