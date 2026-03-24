@@ -724,8 +724,8 @@ describe('G19 - Consumer First-Run Accuracy', () => {
   test('DESIGN.md ToC lists 31 entries', () => {
     const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
     const tocEntries = (content.match(/^\d+\. \[/gm) || []);
-    assert.strictEqual(tocEntries.length, 31,
-      `DESIGN.md ToC has ${tocEntries.length} entries, expected 31. FIX: Update DESIGN.md ToC to list all 31 decisions.`);
+    assert.strictEqual(tocEntries.length, 34,
+      `DESIGN.md ToC has ${tocEntries.length} entries, expected 34. FIX: Update DESIGN.md ToC to list all 34 decisions.`);
   });
 });
 
@@ -1313,16 +1313,16 @@ describe('G24 - Hardening Propagation', () => {
 
   // --- quick.md (H1, H2, H6) ---
 
-  test('quick.md has MANDATORY persistence gate for SUMMARY.md', () => {
+  test('quick.md has STOP persistence gate for SUMMARY.md', () => {
     const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
-    assert.match(content, /MANDATORY.*SUMMARY.*disk|MANDATORY.*SUMMARY.*exist/s,
-      'quick.md must have MANDATORY persistence gate for SUMMARY.md after executor delegate. FIX: Add MANDATORY write enforcement after Step 4.');
+    assert.match(content, /STOP.*SUMMARY.*disk|STOP.*SUMMARY.*exist/s,
+      'quick.md must have STOP persistence gate for SUMMARY.md after executor delegate. FIX: Add STOP write enforcement after Step 4.');
   });
 
-  test('quick.md has MANDATORY persistence gate for VERIFICATION.md', () => {
+  test('quick.md has STOP persistence gate for VERIFICATION.md', () => {
     const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
-    assert.match(content, /MANDATORY.*VERIFICATION.*disk|MANDATORY.*VERIFICATION.*exist/s,
-      'quick.md must have MANDATORY persistence gate for VERIFICATION.md after verifier delegate. FIX: Add MANDATORY write enforcement after Step 5.');
+    assert.match(content, /STOP.*VERIFICATION.*disk|STOP.*VERIFICATION.*exist/s,
+      'quick.md must have STOP persistence gate for VERIFICATION.md after verifier delegate. FIX: Add STOP write enforcement after Step 5.');
   });
 
   test('quick.md has STOP gate between plan and execute', () => {
@@ -1340,6 +1340,156 @@ describe('G24 - Hardening Propagation', () => {
     const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
     assert.match(content, /reduced_assurance/,
       'quick.md must label self-check as reduced_assurance. FIX: Add reduced_assurance plan self-check after STOP gate.');
+  });
+
+  // --- quick.md D32: Alignment Hardening (plan preview, scope signal, conditional plan-checker) ---
+
+  test('quick.md has plan preview gate between plan and execute', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const planStep = content.indexOf('## Step 3:');
+    const executeStep = content.indexOf('## Step 4:');
+    assert.ok(planStep > -1 && executeStep > -1,
+      'quick.md must have Step 3 (plan) and Step 4 (execute). FIX: Check workflow structure.');
+    const between = content.slice(planStep, executeStep);
+    assert.match(between, /[Pp]lan [Pp]review/,
+      'quick.md must have plan preview gate between plan and execute steps (D32). FIX: Add Step 3.7 plan preview section.');
+  });
+
+  test('quick.md plan preview shows task count and files', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    assert.match(content, /[Tt]asks:.*\{count\}|[Tt]ask count/,
+      'quick.md plan preview must display task count. FIX: Add task count to plan preview output.');
+    assert.match(content, /[Ff]iles.*\{file|[Ff]iles to.*touch|[Ff]ile.*list/i,
+      'quick.md plan preview must display files to be modified. FIX: Add file list to plan preview output.');
+  });
+
+  test('quick.md plan preview has default-yes confirmation', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    assert.match(content, /Enter.*proceed|default.*yes|press.*Enter/i,
+      'quick.md plan preview must have default-yes (Enter to proceed) confirmation (D32). FIX: Add default-yes prompt to plan preview.');
+  });
+
+  test('quick.md preview edit branch cleans up provisional task directory', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const previewStart = content.indexOf('## Step 3.7');
+    assert.ok(previewStart > -1,
+      'quick.md must have ## Step 3.7 plan preview section. FIX: Add Step 3.7 plan preview.');
+    const previewSection = content.slice(previewStart, previewStart + 2200);
+    assert.match(previewSection, /edit description.*clean up the task directory/i,
+      'quick.md must clean up the provisional quick-task directory before returning to Step 1 from the plan preview. FIX: Add cleanup to the "edit description" branch.');
+  });
+
+  test('quick.md preview /gsdd:plan branch cleans up provisional task directory', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const previewStart = content.indexOf('## Step 3.7');
+    assert.ok(previewStart > -1,
+      'quick.md must have ## Step 3.7 plan preview section. FIX: Add Step 3.7 plan preview.');
+    const previewSection = content.slice(previewStart, previewStart + 2200);
+    assert.match(previewSection, /switch to \/gsdd:plan.*clean up the task directory/i,
+      'quick.md must clean up the provisional quick-task directory before switching to /gsdd:plan from the plan preview. FIX: Add cleanup to the "switch to /gsdd:plan" branch.');
+  });
+
+  test('quick.md has scope signal evaluation', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    assert.match(content, /[Ss]cope [Ss]ignal/,
+      'quick.md must have scope signal evaluation section (D32). FIX: Add Step 3.6 scope signal evaluation.');
+    assert.match(content, /8.*files|>8|architecture.*keyword/i,
+      'quick.md scope signal must check file count or architecture keywords. FIX: Add scope heuristics (file count >8, architecture keywords).');
+  });
+
+  test('quick.md scope signal recommends /gsdd:plan for escalation', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    // Find the actual ## Step 3.6 heading (not anti_patterns mention of Step 3.6)
+    const scopeStart = content.indexOf('## Step 3.6');
+    assert.ok(scopeStart > -1,
+      'quick.md must have ## Step 3.6 scope signal section. FIX: Add Step 3.6 scope signal evaluation.');
+    const afterScope = content.slice(scopeStart, scopeStart + 1500);
+    assert.match(afterScope, /gsdd:plan/,
+      'quick.md scope signal must recommend /gsdd:plan for escalation (D32). FIX: Add /gsdd:plan recommendation in scope signal.');
+  });
+
+  test('quick.md has conditional plan-checker referencing plan-checker.md', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    assert.match(content, /workflow\.planCheck|planCheck/,
+      'quick.md must reference workflow.planCheck config toggle (D32). FIX: Add conditional plan-checker gated on workflow.planCheck.');
+    assert.match(content, /plan-checker\.md/,
+      'quick.md must reference plan-checker.md delegate for independent check (D32). FIX: Add delegate block referencing plan-checker.md.');
+  });
+
+  test('quick.md plan-checker uses max 1 revision cycle', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    assert.match(content, /1 revision cycle|[Mm]aximum 1|[Mm]ax 1/,
+      'quick.md plan-checker must use max 1 revision cycle for quick scope (D32). FIX: Limit plan-checker to 1 revision cycle.');
+  });
+
+  test('quick.md Step 4 requires plan preview completion', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step4Start = content.indexOf('## Step 4');
+    assert.ok(step4Start > -1, 'quick.md must have Step 4.');
+    const step4Section = content.slice(step4Start, step4Start + 500);
+    assert.match(step4Section, /preview|confirm|Step 3\.7/i,
+      'quick.md Step 4 must reference plan preview or confirmation as prerequisite (D32). FIX: Add guard text at Step 4 referencing plan preview.');
+  });
+
+  // --- quick.md D33: Approach Clarification (conditional pre-plan interview) ---
+
+  test('quick.md has approach clarification step between Step 2 and Step 3', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step2 = content.indexOf('## Step 2:');
+    const step3 = content.indexOf('## Step 3:');
+    assert.ok(step2 > -1 && step3 > -1,
+      'quick.md must have Step 2 and Step 3. FIX: Check workflow structure.');
+    const between = content.slice(step2, step3);
+    assert.match(between, /Step 2\.5|[Aa]pproach [Cc]larification/,
+      'quick.md must have approach clarification step between Step 2 and Step 3 (D33). FIX: Add Step 2.5 approach clarification.');
+  });
+
+  test('quick.md approach clarification gates on workflow.discuss', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step25Start = content.indexOf('Step 2.5');
+    assert.ok(step25Start > -1,
+      'quick.md must have Step 2.5. FIX: Add Step 2.5 approach clarification.');
+    const step25Section = content.slice(step25Start, step25Start + 2000);
+    assert.match(step25Section, /workflow\.discuss/,
+      'quick.md approach clarification must gate on workflow.discuss config toggle (D33). FIX: Add workflow.discuss check to Step 2.5.');
+  });
+
+  test('quick.md approach clarification has ambiguity signals', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step25Start = content.indexOf('Step 2.5');
+    assert.ok(step25Start > -1, 'quick.md must have Step 2.5.');
+    const step25Section = content.slice(step25Start, step25Start + 2000);
+    assert.match(step25Section, /[Aa]mbiguity|[Dd]estructive|[Vv]ague scope|[Mm]ultiple valid/i,
+      'quick.md approach clarification must have ambiguity signal detection (D33). FIX: Add ambiguity signals table to Step 2.5.');
+  });
+
+  test('quick.md approach clarification uses recommendation-first questions', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step25Start = content.indexOf('Step 2.5');
+    assert.ok(step25Start > -1, 'quick.md must have Step 2.5.');
+    const step25Section = content.slice(step25Start, step25Start + 2000);
+    assert.match(step25Section, /recommend|I'd approach|proceed.*prefer/i,
+      'quick.md approach clarification must use recommendation-first question format (D33). FIX: Add recommendation-first question template.');
+  });
+
+  test('quick.md planner receives approach context', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step3Start = content.indexOf('## Step 3:');
+    const step35Start = content.indexOf('## Step 3.5:');
+    assert.ok(step3Start > -1 && step35Start > -1,
+      'quick.md must have Step 3 and Step 3.5.');
+    const plannerSection = content.slice(step3Start, step35Start);
+    assert.match(plannerSection, /\$APPROACH_CONTEXT|[Aa]pproach.*context/i,
+      'quick.md Step 3 planner delegate must receive approach context from Step 2.5 (D33). FIX: Add $APPROACH_CONTEXT to planner context.');
+  });
+
+  test('quick.md approach clarification limits to max 2 questions', () => {
+    const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'quick.md'), 'utf-8');
+    const step25Start = content.indexOf('Step 2.5');
+    assert.ok(step25Start > -1, 'quick.md must have Step 2.5.');
+    const step25Section = content.slice(step25Start, step25Start + 2000);
+    assert.match(step25Section, /[Mm]aximum 2|[Mm]ax 2|2 questions/,
+      'quick.md approach clarification must limit to max 2 questions (D33). FIX: Add maximum 2 questions constraint.');
   });
 
   // --- map-codebase.md (H3, H4) ---
@@ -1466,5 +1616,67 @@ describe('G24 - Hardening Propagation', () => {
     const content = fs.readFileSync(path.join(ROOT, 'bin', 'adapters', 'opencode.mjs'), 'utf-8');
     assert.match(content, /goal_achievement/,
       'opencode.mjs plan-checker schema hint must include goal_achievement. FIX: Add goal_achievement to the dimension enum in the checker invocation JSON schema.');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G26 - Context Engineering: Quick Workflow (D34)
+// ---------------------------------------------------------------------------
+
+describe('G26 - Context Engineering: Quick Workflow', () => {
+  const QUICK_PATH = path.join(ROOT, 'distilled', 'workflows', 'quick.md');
+
+  test('quick.md has <anti_patterns> section', () => {
+    const content = fs.readFileSync(QUICK_PATH, 'utf-8');
+    assert.match(content, /<anti_patterns>/,
+      'quick.md must have <anti_patterns> section (D34). FIX: Add <anti_patterns> after <role>.');
+  });
+
+  test('quick.md anti_patterns placed after role and before process', () => {
+    const content = fs.readFileSync(QUICK_PATH, 'utf-8');
+    const roleEnd = content.indexOf('</role>');
+    const antiStart = content.indexOf('<anti_patterns>');
+    const processStart = content.indexOf('<process>');
+    assert.ok(roleEnd > -1 && antiStart > -1 && processStart > -1,
+      'quick.md must have </role>, <anti_patterns>, and <process>.');
+    assert.ok(antiStart > roleEnd,
+      'quick.md <anti_patterns> must be placed after </role> (D34). FIX: Move <anti_patterns> after </role>.');
+    assert.ok(antiStart < processStart,
+      'quick.md <anti_patterns> must be before <process> (D34). FIX: Place <anti_patterns> between </role> and <process>.');
+  });
+
+  test('quick.md anti_patterns mentions plan preview gate', () => {
+    const content = fs.readFileSync(QUICK_PATH, 'utf-8');
+    const apStart = content.indexOf('<anti_patterns>');
+    const apEnd = content.indexOf('</anti_patterns>');
+    const section = content.slice(apStart, apEnd);
+    assert.match(section, /plan preview|Step 3\.7/i,
+      'quick.md anti_patterns must mention plan preview gate (D34). FIX: Add plan preview anti-pattern.');
+  });
+
+  test('quick.md anti_patterns mentions file verification', () => {
+    const content = fs.readFileSync(QUICK_PATH, 'utf-8');
+    const apStart = content.indexOf('<anti_patterns>');
+    const apEnd = content.indexOf('</anti_patterns>');
+    const section = content.slice(apStart, apEnd);
+    assert.match(section, /file.*exist|disk|verification gate/i,
+      'quick.md anti_patterns must mention file verification gates (D34). FIX: Add file verification anti-pattern.');
+  });
+
+  test('quick.md uses consistent gate language (no MANDATORY in process)', () => {
+    const content = fs.readFileSync(QUICK_PATH, 'utf-8');
+    const processStart = content.indexOf('<process>');
+    const processEnd = content.indexOf('</process>');
+    const processContent = content.slice(processStart, processEnd);
+    assert.doesNotMatch(processContent, /\*\*MANDATORY/,
+      'quick.md process gates must use STOP, not MANDATORY (D34). FIX: Normalize MANDATORY to STOP in process gates.');
+  });
+
+  test('quick.md structural sections use XML tags', () => {
+    const content = fs.readFileSync(QUICK_PATH, 'utf-8');
+    for (const tag of ['role', 'anti_patterns', 'prerequisites', 'process', 'success_criteria', 'completion']) {
+      assert.match(content, new RegExp(`<${tag}>`),
+        `quick.md must have <${tag}> XML section (D34). FIX: Add <${tag}> section.`);
+    }
   });
 });
