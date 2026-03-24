@@ -39,6 +39,9 @@
 29. [Approach Exploration](#29-approach-exploration)
 30. [Hardening Propagation](#30-hardening-propagation)
 31. [Outcome Dimension for Plan-Checker](#31-outcome-dimension-for-plan-checker)
+32. [Quick Workflow Alignment Hardening](#32-quick-workflow-alignment-hardening)
+33. [Quick Approach Clarification](#33-quick-approach-clarification)
+34. [Context Engineering Applied to Quick Workflow](#34-context-engineering-applied-to-quick-workflow)
 
 ---
 
@@ -1407,6 +1410,132 @@ This creates a hybrid process+outcome verification architecture: 7 structural di
 **Tradeoff:** One additional dimension for the checker to evaluate per plan. Minimal cost: the goal and success criteria are already available as checker inputs (phase goal from ROADMAP.md, success criteria from ROADMAP.md phase section). No new inputs required.
 
 **GSDD implementation:** `distilled/templates/delegates/plan-checker.md` (`goal_achievement` dimension), `tests/gsdd.guards.test.cjs` (G24 assertions)
+
+---
+
+## 32. Quick Workflow Alignment Hardening
+
+**Problem:** GSDD's quick workflow has exactly one user alignment touchpoint — the task description at Step 1. After "what do you want to do?", the agent has unchecked autonomy over approach selection, scope interpretation, and execution. The full ceremony (`plan.md`) has 3-4 alignment touchpoints (approach exploration, plan review, checker escalation, mandatory verification). This gap is too large: quick mode trades ALL alignment for speed, creating a cliff between "zero agent oversight" and "full multi-round ceremony."
+
+GSD's approach was a `--full` flag that added plan-checking + verification to quick tasks. But a flag you must remember to use doesn't solve alignment — the default mode still had zero user visibility into the plan before execution.
+
+**Decision:** Three targeted interventions that close the alignment gap from 1 to 2-3 touchpoints without killing quick mode's speed advantage:
+
+1. **Plan Preview Gate (mandatory, default-yes):** After the planner returns and the STOP gate verifies the plan exists, present a structured summary (task count, files to touch, 1-sentence approach) and wait for the user. Default-yes: pressing Enter proceeds. Options include edit, abort, and (when scope signal fires) switch to full ceremony. This is the core fix — the user sees agent intent before code changes happen.
+
+2. **Scope Signal with Escalation (advisory, always-on):** Inline orchestrator evaluation checks the plan against quick-scope boundaries: >8 files modified, architecture keywords in description (`refactor`, `migration`, `security`, `auth`, `API design`, `schema`, `database`), new public APIs. If any signal fires, the advisory appears in the plan preview with a recommendation to use `/gsdd:plan` for approach exploration. Advisory only — the user decides. Keyword heuristics have false positives; blocking would train users to ignore the signal.
+
+3. **Config-Gated Independent Plan Check (optional):** When `workflow.planCheck: true` in config.json, the existing plan-checker delegate runs against the quick task plan with 5 of 9 dimensions: `requirement_coverage`, `task_completeness`, `dependency_correctness`, `scope_sanity`, `must_have_quality`. Maximum 1 revision cycle (not 3 — diminishing returns for 1-3 task plans). If blockers remain, they surface in the plan preview for user decision. No new delegate or config key — reuses existing infrastructure.
+
+**GSD comparison:**
+
+| Aspect | GSD `--full` | GSDD D32 |
+|--------|-------------|----------|
+| Plan visibility | None in default, plan-checker in --full | Always-on preview (default-yes) |
+| Activation | Flag per invocation (easy to forget) | Config-driven (project-wide, consistent) |
+| Scope awareness | None | Advisory scope signal with escalation |
+| Checker scope | Full 5-dimension check (--full only) | 5-dimension quick-scoped check (config-gated) |
+| Revision cycles | Max 2 (--full only) | Max 1 (quick tasks don't warrant extended loops) |
+| User decision | Force proceed or abort after checker | Preview + scope signal + checker issues → informed decision |
+
+**Evidence:**
+
+1. Risk-adaptive autonomy pattern (AWS, Azure, Anthropic 2025-2026): confirmation gates should scale with consequence level — routine auto-proceeds, uncertain pauses, high-impact requires sign-off. The plan preview is the "pause for uncertain" gate.
+2. Human-on-the-loop > human-in-the-loop (Anthropic agent autonomy research 2026): HOTL gives visibility without requiring active management of each step. Default-yes implements HOTL — the user monitors, intervenes only when needed.
+3. Osmani / Fowler on spec-driven development (2025): "iterate in small loops, course-correct quickly." The plan preview IS the small-loop checkpoint for quick tasks.
+4. Madaan et al. "Self-Refine" (NeurIPS 2023): 1 revision cycle captures most improvement; diminishing returns argue against 3 cycles for 1-3 task plans. Validates max-1 checker cycle for quick scope.
+5. Huang et al. "LLMs Cannot Self-Correct Reasoning Yet" (ICLR 2024): self-check without external feedback is unreliable. The plan preview provides external feedback (user eyes on the plan) even when the independent checker is disabled.
+6. SkillsBench (Feb 2026): focused skills outperform comprehensive docs. Quick mode should stay focused and escalate to full ceremony when scope exceeds boundaries, not expand to absorb more ceremony.
+
+**Tradeoff:** ~5 seconds overhead for plan preview (default-yes), ~60-90 seconds if independent checker runs. Sub-hour work stays sub-hour. Adds ~60 lines to quick.md (198→~260). No new files, no new delegates, no new config keys.
+
+**GSDD implementation:** `distilled/workflows/quick.md` (Steps 3.5-3.7), `distilled/DESIGN.md` (this section), `tests/gsdd.guards.test.cjs` (G24 assertions for plan preview, scope signal, conditional plan-checker)
+
+---
+
+## 33. Quick Approach Clarification
+
+**Problem:** D32 added post-plan alignment to quick tasks (plan preview, scope signal, optional plan check), but all three interventions are **reactive** — the agent selects the approach unilaterally, writes the plan, then shows it to the user. The user can abort or edit the description, but cannot shape the approach before the planner commits. The full ceremony's `<approach_exploration>` (plan.md) solves this at scale with 3-4 grey areas, research subagents, and persisted APPROACH.md — but that's wrong for sub-hour work.
+
+**Decision:** Add Step 2.5 (Approach Clarification) between Initialize and Plan. Config-gated via the existing `workflow.discuss` toggle — same toggle that gates full ceremony's approach exploration, same intent ("align on approach before planning"), lighter mechanism for quick scope.
+
+The step has a **dual gate** — even with `workflow.discuss: true`, it evaluates the task description for ambiguity signals before asking anything:
+
+| Signal | Detection | Example |
+|--------|-----------|---------|
+| Multiple valid approaches | Description solvable via distinct patterns | "add caching" (Redis? in-memory? HTTP headers?) |
+| Destructive operations | Contains: `delete`, `remove`, `migrate`, `rename`, `replace`, `rewrite`, `drop` | "remove the old auth middleware" |
+| Vague scope | Contains: `improve`, `fix`, `update`, `refactor`, `clean up`, `optimize` without specifying target | "improve error handling" |
+| Trade-off present | Implies competing goals | "make it faster" (algorithmic? caching? denormalization?) |
+
+If no signals fire, the step skips silently — no questions asked, even with toggle on. When signals fire, the orchestrator identifies 1-2 grey areas and asks targeted questions in **recommendation-first format**: "I'd approach this with X because Y. Want me to proceed, or do you prefer Z?" Maximum 2 questions — if a task has 3+ grey areas, the scope signal (D32) should already be recommending `/gsdd:plan`.
+
+Output is inline `$APPROACH_CONTEXT` (e.g., "User confirmed: use in-memory LRU cache, not Redis") passed to the planner as locked constraints. No APPROACH.md file — file artifacts add overhead with no return for sub-hour work.
+
+**GSD comparison:** GSD has no pre-plan questioning in quick mode. The `--full` flag adds plan-checking and verification but not approach alignment — the agent still decides the approach unilaterally in all modes.
+
+| Aspect | GSD Quick | GSDD Quick (D32) | GSDD Quick (D32+D33) | GSDD Full Ceremony |
+|--------|----------|------------------|---------------------|-------------------|
+| Pre-plan alignment | None | None | 1-2 questions (conditional) | 3-4 grey areas + research subagents |
+| Post-plan alignment | None (--full adds checker) | Preview + scope signal | Preview + scope signal | Checker blocks (max-3 cycles) |
+| Approach persistence | None | None | Inline context only | APPROACH.md file |
+| User alignment rounds | 1 | 2-3 | 2-4 | 3-4 |
+
+**Evidence:**
+
+1. Anthropic "Measuring AI agent autonomy in practice" (2025): Claude asks 2x+ more on complex tasks; uncertainty awareness is treated as a safety property. D33's ambiguity detection formalizes what Claude naturally does — ask when uncertain, proceed when confident.
+2. Knight First Amendment Institute "Levels of Autonomy for AI Agents" (2025): 5-level autonomy spectrum. Quick tasks map to Level 3 ("Consultant"): agent decides, asks when uncertain. D33 implements this — agent leads with recommendation, asks only on ambiguity.
+3. Anthropic "Framework for safe and trustworthy agents" (2025): recommendation-first framing validated. "I'd do X because Y. Approve?" outperforms open-ended "What should I do?" — preserves agent leadership while giving user override.
+4. Martin Fowler "Humans and Agents in SE Loops" (2025): HOTL > HITL — agents handle 95% autonomously, pause for 5% edge cases. D33 asks only when ambiguity detected, not on every task.
+5. Huang et al. "LLMs Cannot Self-Correct Reasoning Yet" (ICLR 2024): LLMs cannot reliably self-correct without external feedback. Pre-plan user input catches approach errors that self-check cannot detect.
+6. Anthropic trust calibration data (2025): users auto-approve 20% initially → 40% by session 750+. Config-gated design respects this — experienced users who trust the agent disable `workflow.discuss`.
+
+**Counter-evidence addressed:** Asking too much creates HITL bottleneck (iMerit 2025, McKinsey 2025) → mitigated by dual gate (config + ambiguity detection). Open-ended questions reduce user confidence (Anthropic best practices) → mitigated by recommendation-first format. Routine tasks shouldn't be interrupted (SkillsBench Feb 2026) → mitigated by silent skip when no ambiguity detected.
+
+**Competitor landscape:** Cursor uses explicit mode selection (Ask vs Agent) without automatic ambiguity detection. GitHub Copilot uses post-hoc PR review only. GSD uses per-invocation `--full` flag. None do automatic ambiguity-sensitive pre-plan questioning.
+
+**Tradeoff:** ~15-30 seconds overhead when triggered (1-2 questions). Skipped entirely when no ambiguity detected, even with toggle on. Adds ~40 lines to quick.md. No new files, no new delegates, no new config keys — reuses existing `workflow.discuss` toggle.
+
+**GSDD implementation:** `distilled/workflows/quick.md` (Step 2.5), `distilled/DESIGN.md` (this section), `tests/gsdd.guards.test.cjs` (G25 assertions for approach clarification, ambiguity signals, recommendation-first format)
+
+---
+
+## 34. Context Engineering Applied to Quick Workflow
+
+**GSD:** GSD quick.md has `<purpose>`, `<required_reading>`, `<process>` (XML outer sections) with `**Step N:**` bold markdown inside `<process>`. No `<anti_patterns>` section. No authority language conventions for process gates.
+
+**GSDD (before D34):** Same XML outer sections with markdown step headers inside `<process>`. All 9 role contracts have `<anti_patterns>` after `<role>` (documented in DISTILLATION.md as mandatory placement), but quick.md — an orchestrator consumed by AI agents — had none. Authority language mixed between `**STOP.**` and `**MANDATORY:**` across 3 file-verification gates.
+
+**GSDD (D34):** Two targeted changes applying context engineering principles from the prompty/agentskit reference implementation (28 primary sources) and Anthropic prompting guidance:
+
+**Change 1: `<anti_patterns>` section.** Added 7 anti-patterns after `<role>`, matching the 5-8 item range used by role contracts. Each maps to a real workflow gate (plan preview, file verification, max 2 questions, no APPROACH.md, no ROADMAP/SPEC updates, config.json reads, no scope expansion). This is the single highest-value context engineering improvement — it gives agents explicit "don't do this" guardrails for the workflow's most critical gates.
+
+**Change 2: Authority language normalization.** `**MANDATORY:**` → `**STOP.**` on 2 of 3 file-verification gates. DISTILLATION.md resolves authority language vocabulary: CRITICAL for initial-read gates, normal imperative language for process gates. STOP is the correct word for "halt and check" gates; MANDATORY is not in the resolved vocabulary.
+
+**What was investigated but NOT changed:**
+
+| Finding | Decision | Why |
+|---------|----------|-----|
+| Steps use markdown headers, not XML `<step>` tags | Keep markdown headers | All 10 GSDD workflows use the same pattern. prompty's agentskit-architect SKILL.md uses the identical pattern (single `<algorithm>` container with text step labels). Changing quick.md alone creates cross-workflow inconsistency. Candidate for a future cross-workflow PR. |
+| No `<output_contract>` section | Not needed | `<completion>` section already specifies what the workflow produces — paths, status, next steps |
+| No `<input_contract>` section | Not needed | `<prerequisites>` section already covers required preconditions |
+| No progressive disclosure restructuring | Not needed | ~350 lines is within the agentskills.io 500-line recommended limit |
+| Caching-friendly ordering | Already correct | Static content (role, anti_patterns, prerequisites) at top, variable content (process steps) below |
+
+**Evidence:**
+
+| Source | Contribution |
+|--------|-------------|
+| Anthropic Claude Prompting Best Practices [S1] | "Claude has been specifically tuned to pay special attention to your structure when using XML tags." Validates XML for section boundaries. Anti-patterns placed early for attention weight. |
+| DISTILLATION.md (GSDD internal) | "Anti-patterns early — Place 'don't do this' instructions near the top, after role definition." Cross-source validated pattern across all 9 role contracts. Authority language resolution: CRITICAL for initial-read, normal language elsewhere. |
+| Selective Prompt Anchoring, arxiv 2408.09121 (2024) | Up to 12.9% Pass@1 improvement from strategic attention anchoring. XML tags create hard attention boundaries; markdown headers may be treated as content formatting. |
+| agentskit-architect SKILL.md (prompty) | Uses single `<algorithm>` container with text step labels inside — same structural pattern as GSDD's `<process>` with markdown headers. Validates the hybrid XML-outer/markdown-inner approach. |
+| Manus AI Context Engineering [S5] | "Filesystem as extended context" — structural quality of prompt files directly impacts agent behavior. Validates treating workflow files as engineered artifacts, not documentation. |
+| agentskit-evaluator SKILL.md (prompty) | Authority language audit: "CRITICAL only for gates?" is a scored compliance check. Validates normalizing gate vocabulary. |
+
+**Scope:** quick.md only. If `<anti_patterns>` proves valuable for orchestrators, extend to plan.md and other workflows in a follow-up PR.
+
+**GSDD implementation:** `distilled/workflows/quick.md` (`<anti_patterns>` section, STOP normalization), `distilled/DESIGN.md` (this section), `tests/gsdd.guards.test.cjs` (G26 assertions for anti_patterns placement, content, gate language consistency, XML structural sections)
 
 ---
 

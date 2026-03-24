@@ -5,6 +5,16 @@ Quick tasks are for sub-hour work: bug fixes, small features, config changes, on
 They reuse the same planner, executor, and verifier roles but skip research and synthesizer.
 </role>
 
+<anti_patterns>
+- Do not execute before the user sees the plan preview (Step 3.7 must complete before Step 4)
+- Do not proceed past file verification gates if the expected file does not exist on disk — a plan that exists only in conversation context will be lost on compaction
+- Do not ask more than 2 approach clarification questions — if 3+ grey areas exist, recommend /gsdd:plan instead
+- Do not create APPROACH.md for quick tasks — use inline $APPROACH_CONTEXT only
+- Do not update ROADMAP.md or SPEC.md from quick tasks — these are phase-level artifacts
+- Do not skip config.json reads — workflow toggles (discuss, planCheck, verifier) control flow
+- Do not expand scope mid-execution — if the plan reveals architectural work, surface the scope signal (Step 3.6) and let the user decide
+</anti_patterns>
+
 <prerequisites>
 `.planning/` must exist (from `gsdd init`). ROADMAP.md is NOT required -- quick tasks work during any project phase.
 
@@ -39,6 +49,44 @@ If `.planning/quick/` does not exist, create it along with an empty `LOG.md`:
 
 ---
 
+## Step 2.5: Approach clarification (conditional)
+
+Read `.planning/config.json`.
+- If `workflow.discuss` is `false` (or key missing): set `$APPROACH_CONTEXT` to empty, skip to Step 3.
+- If `workflow.discuss` is `true`: evaluate `$DESCRIPTION` for ambiguity signals.
+
+### Ambiguity signals
+
+| Signal | Detection | Example |
+|--------|-----------|---------|
+| Multiple valid approaches | Description could be solved via distinct patterns | "add caching" (Redis? in-memory? HTTP headers?) |
+| Destructive operations | Contains: `delete`, `remove`, `migrate`, `rename`, `replace`, `rewrite`, `drop` | "remove the old auth middleware" |
+| Vague scope | Contains: `improve`, `fix`, `update`, `refactor`, `clean up`, `optimize` without specifying target | "improve error handling" |
+| Trade-off present | Description implies competing goals (performance vs simplicity, DRY vs explicit) | "make it faster" |
+
+If **no signals fire**: set `$APPROACH_CONTEXT` to empty, skip to Step 3 silently.
+
+If **any signal fires**: identify 1-2 grey areas and ask targeted questions.
+
+### Question format
+
+For each grey area, present 2-3 concrete options with a recommended default:
+
+"I'd approach this with **{recommendation}** because {reason}. Want me to proceed, or do you prefer {alternative}?"
+
+- If user says "go ahead" / "your call" / presses Enter → use the recommendation.
+- If user specifies a preference → record it.
+- Maximum 2 questions. If the task has 3+ grey areas, it's not a quick task.
+
+### Output
+
+Store confirmed decisions as `$APPROACH_CONTEXT` — a short string of user-validated choices.
+Example: "User confirmed: use in-memory LRU cache, not Redis. Keep existing error format."
+
+No APPROACH.md file is created. This is inline context only.
+
+---
+
 ## Step 3: Plan
 
 Delegate to the planner role in quick mode.
@@ -49,10 +97,12 @@ Delegate to the planner role in quick mode.
 
 **Context to provide:**
 - Task description: `$DESCRIPTION`
+- Approach context: `$APPROACH_CONTEXT` (user-confirmed decisions from Step 2.5 — treat as locked constraints, do not revisit)
 - Mode: quick (single plan, 1-3 tasks, no research phase)
 - Output path: `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-PLAN.md`
 
 **Constraints:**
+- If `$APPROACH_CONTEXT` is non-empty, implement the user's confirmed choices — do not substitute alternatives
 - Create a SINGLE plan with 1-3 focused tasks
 - Quick tasks are atomic and self-contained
 - No research phase, no ROADMAP requirements
@@ -80,7 +130,101 @@ This is a self-check, not an independent plan-check. Failures are noted but do N
 
 ---
 
+## Step 3.5: Independent plan check (conditional)
+
+Read `.planning/config.json`.
+- If `workflow.planCheck` is `false` (or key missing): skip to Step 3.6.
+- If `workflow.planCheck` is `true`: delegate to the plan-checker with quick-scoped dimensions.
+
+<delegate>
+**Identity:** Plan Checker (quick mode)
+**Instruction:** Read `.planning/templates/delegates/plan-checker.md` for your role contract, then check this quick task plan.
+
+**Context to provide:**
+- Task description: `$DESCRIPTION` (treat as the phase goal equivalent)
+- Plan: `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-PLAN.md`
+- Mode: quick
+
+**Constraints:**
+- Check 5 dimensions only: `requirement_coverage`, `task_completeness`, `dependency_correctness`, `scope_sanity`, `must_have_quality`
+- Skip: `key_link_completeness`, `context_compliance`, `goal_achievement`, `approach_alignment`
+- Maximum 1 revision cycle (if blockers found, send back to planner once, then accept result)
+- Blocker threshold: only block on `task_completeness` or `scope_sanity` violations
+- Warnings for other dimensions are noted but do not block
+
+**Output:** Checker response (passed | issues_found) with issue details.
+**Return:** Status and issue summary.
+</delegate>
+
+If the checker returns `issues_found` with blockers and this is the first cycle:
+1. Send the issue list back to the planner for targeted revision of the plan file.
+2. Re-run the checker once more.
+3. If blockers remain after 1 revision cycle, store `$CHECKER_ISSUES` for display in the plan preview. Do NOT block — the user decides in Step 3.7.
+
+If the checker returns `passed`, or `workflow.planCheck` is false, `$CHECKER_ISSUES` is empty.
+
+---
+
+## Step 3.6: Scope signal evaluation
+
+Evaluate the plan against quick-scope boundaries. Read the plan file and check:
+
+| Signal | Threshold | `$SCOPE_WARNING` text |
+|--------|-----------|----------------------|
+| Files modified | >8 distinct files in plan | "This task touches {N} files — consider `/gsdd:plan` for full ceremony." |
+| Architecture keywords in `$DESCRIPTION` | contains: `refactor`, `migration`, `security`, `auth`, `API design`, `schema`, `database` | "This looks like architectural work — consider `/gsdd:plan` for approach exploration." |
+| New public APIs | Plan tasks create new route files, API endpoints, or exported interfaces | "New public surface area detected — consider `/gsdd:plan` for approach exploration." |
+
+If any signal fires, set `$SCOPE_WARNING` to the first matching advisory text. Multiple signals concatenate.
+If no signals fire, `$SCOPE_WARNING` is empty.
+
+This is advisory only — it does NOT block execution.
+
+---
+
+## Step 3.7: Plan preview
+
+Present the plan summary to the user before execution begins.
+
+Read the plan file and extract:
+- Task count and task names
+- List of files to be modified/created (from plan task `<files>` sections)
+- A 1-sentence approach summary (first sentence of the plan's objective or goal)
+
+Display:
+
+```
+Quick Task Plan Preview:
+- Tasks: {count} ({task_names})
+- Files: {file_list}
+- Approach: {1-sentence summary}
+```
+
+If `$SCOPE_WARNING` is non-empty, append:
+```
+Scope signal: {$SCOPE_WARNING}
+```
+
+If `$CHECKER_ISSUES` is non-empty, append:
+```
+Plan check issues: {$CHECKER_ISSUES}
+```
+
+Present options (default-yes — pressing Enter proceeds):
+- If `$SCOPE_WARNING` is empty: `[Enter to proceed / edit description / abort]`
+- If `$SCOPE_WARNING` is non-empty: `[Enter to proceed / switch to /gsdd:plan / edit description / abort]`
+
+Handle response:
+- **Enter (or "yes"):** proceed to Step 4.
+- **"edit description":** return to Step 1, pre-filling `$DESCRIPTION` as starting point.
+- **"switch to /gsdd:plan":** stop quick workflow, report: "Use `/gsdd:plan` for full ceremony with approach exploration. Task description: {$DESCRIPTION}"
+- **"abort":** clean up the task directory, report cancellation, stop.
+
+---
+
 ## Step 4: Execute
+
+**Only reached after the user has seen the plan preview in Step 3.7.**
 
 Delegate to the executor role.
 
@@ -106,7 +250,7 @@ Delegate to the executor role.
 
 After the executor returns:
 
-**MANDATORY: Verify the SUMMARY file exists at `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-SUMMARY.md` on disk. If it does not exist, STOP and report the write failure. Do NOT proceed to verification or LOG.md update without a persisted summary.**
+**STOP. Verify the SUMMARY file exists at `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-SUMMARY.md` on disk. If it does not exist, report the write failure. Do NOT proceed to verification or LOG.md update without a persisted summary.**
 
 ---
 
@@ -134,7 +278,7 @@ Read `.planning/config.json`.
 **Return:** Verification status (passed | gaps_found | human_needed).
 </delegate>
 
-**MANDATORY: Verify the VERIFICATION file exists at `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-VERIFICATION.md` on disk (when verifier ran). If it does not exist, STOP and report the write failure. Do NOT proceed to LOG.md update without a persisted verification report.**
+**STOP. Verify the VERIFICATION file exists at `.planning/quick/$NEXT_NUM-$SLUG/$NEXT_NUM-VERIFICATION.md` on disk (when verifier ran). If it does not exist, report the write failure. Do NOT proceed to LOG.md update without a persisted verification report.**
 
 ---
 
@@ -165,9 +309,13 @@ Report to the user:
 
 <success_criteria>
 - [ ] User provided a task description
+- [ ] Approach clarification ran (only if workflow.discuss is true AND ambiguity detected)
 - [ ] `.planning/quick/` directory exists (created if needed)
 - [ ] Task directory created at `.planning/quick/NNN-slug/`
 - [ ] `NNN-PLAN.md` created by planner (1-3 tasks)
+- [ ] Independent plan check ran (only if workflow.planCheck is true)
+- [ ] Plan preview presented to user before execution
+- [ ] User confirmed (or pressed Enter) before execution proceeded
 - [ ] `NNN-SUMMARY.md` created by executor
 - [ ] `NNN-VERIFICATION.md` created by verifier (only if workflow.verifier is true)
 - [ ] `LOG.md` updated with task row
