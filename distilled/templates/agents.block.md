@@ -83,8 +83,10 @@ If you are not confident about a domain/library/pattern:
 
 How you run these workflows depends on your tool:
 
-- **Claude Code / OpenCode:** Use slash commands — `/gsdd-new-project`, `/gsdd-plan`, `/gsdd-execute`, etc.
+- **Claude Code / OpenCode / Cursor / Copilot / Gemini:** Use slash commands — `/gsdd-new-project`, `/gsdd-plan`, `/gsdd-execute`, etc.
 - **Codex CLI:** Use skill references — `$gsdd-new-project`, `$gsdd-plan`, `$gsdd-execute`, etc.
-- **All other tools (Cursor, Copilot, Gemini, any AI agent):** Open the SKILL.md file listed above and follow its instructions. This AGENTS.md governance block keeps the agent aligned with GSDD discipline.
+- **Other AI tools:** Open the SKILL.md file listed above and follow its instructions.
+
+If this root `AGENTS.md` block is present in a Cursor, Copilot, or Gemini project, treat it as behavioral governance on top of the runtime's native slash-command discovery. Do not treat this file as the mechanism that makes the workflows discoverable.
 
 Start with the new-project workflow to produce `.planning/SPEC.md` and `.planning/ROADMAP.md`.

@@ -84,6 +84,12 @@ export function createCmdInit(ctx) {
       console.log('  OpenCode:     /gsdd-new-project');
     if (platforms.includes('codex'))
       console.log('  Codex CLI:    $gsdd-new-project');
+    if (platforms.includes('cursor'))
+      console.log('  Cursor:       /gsdd-new-project');
+    if (platforms.includes('copilot'))
+      console.log('  Copilot:      /gsdd-new-project');
+    if (platforms.includes('gemini'))
+      console.log('  Gemini CLI:   /gsdd-new-project');
 
     // Always show the portable fallback
     console.log('  Any tool:     open .agents/skills/gsdd-new-project/SKILL.md\n');
@@ -170,9 +176,9 @@ Platforms (for --tools):
   opencode  Generate OpenCode local slash commands (.opencode/commands/gsdd-*.md) + native agents (.opencode/agents/gsdd-*.md)
   codex     Generate Codex CLI native plan-checker agent (.codex/agents/gsdd-plan-checker.toml)
   agents    Generate/Update root AGENTS.md (bounded GSDD block)
-  cursor    Same as 'agents'
-  copilot   Same as 'agents'
-  gemini    Same as 'agents'
+  cursor    Generate root AGENTS.md governance block; workflows are already discovered natively from .agents/skills/
+  copilot   Generate root AGENTS.md governance block; workflows are already discovered natively from .agents/skills/
+  gemini    Generate root AGENTS.md governance block; workflows are already discovered natively from .agents/skills/
   all       Generate all adapters (Claude, OpenCode, Codex, AGENTS-based surfaces)
 
 Notes:

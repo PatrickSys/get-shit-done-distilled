@@ -56,9 +56,11 @@ Then run the new-project workflow to produce `.planning/SPEC.md` and `.planning/
 
 Your tool determines how you invoke workflows:
 
-- **Claude Code / OpenCode:** Use slash commands directly — `/gsdd-new-project`, `/gsdd-plan`, etc.
+- **Claude Code / OpenCode / Cursor / Copilot / Gemini:** Use slash commands directly — `/gsdd-new-project`, `/gsdd-plan`, etc.
 - **Codex CLI:** Use skill references — `$gsdd-new-project`, `$gsdd-plan`, etc.
-- **Cursor / Copilot / Gemini / Others:** Open `.agents/skills/gsdd-<workflow>/SKILL.md` and follow the instructions. The root `AGENTS.md` governance block keeps the agent on track.
+- **Other AI tools:** Open `.agents/skills/gsdd-<workflow>/SKILL.md` and follow the instructions.
+
+If you generate the root `AGENTS.md` block, it adds GSDD behavioral governance. For Cursor, Copilot, and Gemini, that governance is optional discipline on top of native skill discovery — not the mechanism that makes workflows discoverable.
 
 First workflow to run: **new-project** — it asks about your goals, audits the codebase (if brownfield), and produces `.planning/SPEC.md` + `.planning/ROADMAP.md`.
 
@@ -81,7 +83,8 @@ npx gsdd-cli init --tools all        # All of the above
 | **Claude Code** | Native | `.claude/skills/`, `.claude/commands/`, `.claude/agents/` — slash commands work immediately |
 | **OpenCode** | Native | `.opencode/commands/`, `.opencode/agents/` — slash commands work immediately |
 | **Codex CLI** | Native | `.codex/agents/gsdd-plan-checker.toml` — skill reference `$gsdd-plan` works immediately |
-| **Cursor / Copilot / Gemini** | Governance | Root `AGENTS.md` block — governs agent behavior; invoke workflows by opening `.agents/skills/gsdd-*/SKILL.md` directly |
+| **Cursor / Copilot / Gemini** | Skills-native runtime + optional governance | Native slash-command discovery from `.agents/skills/`; optional root `AGENTS.md` block adds behavioral governance |
+| **Other AI tools** | Open standard fallback | Open `.agents/skills/gsdd-*/SKILL.md` directly |
 
 ### Updating
 
@@ -192,7 +195,8 @@ When all phases are done, run `gsdd-audit-milestone` to verify:
 
 - `Claude Code / OpenCode`: `/gsdd-quick`
 - `Codex CLI`: `$gsdd-quick`
-- `Cursor / Copilot / Gemini / Others`: open `.agents/skills/gsdd-quick/SKILL.md`
+- `Cursor / Copilot / Gemini`: `/gsdd-quick`
+- `Other AI tools`: open `.agents/skills/gsdd-quick/SKILL.md`
 
 For sub-hour tasks that don't need the full phase cycle:
 
@@ -231,7 +235,8 @@ Workflows are agent skills or commands, not plain shell utilities. How you invok
 | Claude Code | `/gsdd-plan` (slash command, works immediately after init) |
 | OpenCode | `/gsdd-plan` (slash command, works immediately after init) |
 | Codex CLI | `$gsdd-plan` (skill reference, works immediately after init) |
-| Cursor / Copilot / Gemini | Open `.agents/skills/gsdd-plan/SKILL.md` and paste or reference its content. The `AGENTS.md` governance block steers agent behavior. |
+| Cursor / Copilot / Gemini | `/gsdd-plan` (skills-native slash command). If the root `AGENTS.md` block is present, it adds governance, not workflow discovery. |
+| Other AI tools | Open `.agents/skills/gsdd-plan/SKILL.md` and paste or reference its content. |
 
 ## CLI Commands
 
@@ -279,14 +284,15 @@ GSDD generates vendor-specific files from vendor-agnostic markdown — it does n
 
 | Adapter | Kind | Strategy |
 |---------|------|----------|
-| **Claude Code** | `native_capable` | Skill-primary plan surface (stays in main context to spawn checker subagent), thin command alias, native `gsdd-plan-checker` agent |
-| **OpenCode** | `native_capable` | Specialized `/gsdd-plan` command (`subtask: false`), hidden `gsdd-plan-checker` subagent (`mode: subagent`) |
-| **Codex CLI** | `native_capable` | Portable skill as entry surface, `.codex/agents/gsdd-plan-checker.toml` (read-only, high reasoning effort) |
-| **Cursor / Copilot / Gemini** | `governance_only` | Root `AGENTS.md` block governs agent behavior; invoke workflows by opening `.agents/skills/gsdd-*/SKILL.md` directly |
+| **Claude Code** | `native_capable` adapter + skills-native runtime | Skill-primary plan surface (stays in main context to spawn checker subagent), thin command alias, native `gsdd-plan-checker` agent |
+| **OpenCode** | `native_capable` adapter + skills-native runtime | Specialized `/gsdd-plan` command (`subtask: false`), hidden `gsdd-plan-checker` subagent (`mode: subagent`) |
+| **Codex CLI** | `native_capable` adapter + skills-native runtime | Portable skill as entry surface, `.codex/agents/gsdd-plan-checker.toml` (read-only, high reasoning effort) |
+| **Cursor / Copilot / Gemini** | skills-native runtime + `governance_only` adapter | Runtime discovers `.agents/skills/` natively; optional root `AGENTS.md` block adds behavioral governance only |
+| **agents** (`--tools agents`) | `governance_only` adapter | Root `AGENTS.md` block for tools that benefit from governance or need open-standard fallback guidance |
 
 All adapters render the plan-checker from a single source (`distilled/templates/delegates/plan-checker.md`). Each adapter shapes the output to its platform's native mechanics, and the portable skill remains the shared workflow source.
 
-Cursor, Copilot, and Gemini CLI generate the same root `AGENTS.md` governance block as `--tools agents`. They do not have native adapter surfaces — invoke workflows by opening `.agents/skills/gsdd-*/SKILL.md` directly.
+Cursor, Copilot, and Gemini CLI generate the same root `AGENTS.md` governance block as `--tools agents`, but that file is governance only. Those runtimes already discover `.agents/skills/` natively and surface the workflows as slash commands.
 
 Model IDs pass through a two-layer injection guard: a regex whitelist (`/^[a-zA-Z0-9._\/:@-]+$/`) at the CLI boundary, plus format-specific escaping (TOML string escaping, triple-quote break prevention) at the adapter layer.
 
@@ -410,7 +416,7 @@ For detailed troubleshooting and recovery procedures, see the [User Guide](docs/
 
 ## Design Decisions
 
-GSDD makes 34 documented design decisions relative to GSD, each with evidence from source files and external research. See [`distilled/DESIGN.md`](distilled/DESIGN.md) for the full rationale.
+GSDD makes 35 documented design decisions relative to GSD, each with evidence from source files and external research. See [`distilled/DESIGN.md`](distilled/DESIGN.md) for the full rationale.
 
 Key choices:
 - **4-file codebase standard** — drop state that rots (STRUCTURE, INTEGRATIONS, TESTING), keep rules that don't
