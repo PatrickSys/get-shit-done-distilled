@@ -639,6 +639,7 @@ describe('G18 - Consumer Governance Completeness', () => {
 describe('G19 - Consumer First-Run Accuracy', () => {
   const AGENTS_BLOCK = path.join(ROOT, 'distilled', 'templates', 'agents.block.md');
   const DESIGN_PATH = path.join(ROOT, 'distilled', 'DESIGN.md');
+  const INIT_HELP = path.join(ROOT, 'bin', 'lib', 'init.mjs');
 
   test('README platform table uses only Native or Governance tier labels (no skill_aware)', () => {
     const readme = fs.readFileSync(README_MD, 'utf-8');
@@ -652,10 +653,10 @@ describe('G19 - Consumer First-Run Accuracy', () => {
       'README.md must not contain custom_command_aware. FIX: Replace custom_command_aware with governance_only in adapter tables.');
   });
 
-  test('README invocation table includes "open SKILL.md" guidance for non-native platforms', () => {
+  test('README invocation table uses slash-command guidance for Cursor/Copilot/Gemini', () => {
     const readme = fs.readFileSync(README_MD, 'utf-8');
-    assert.match(readme, /Cursor.*Copilot.*Gemini.*Open.*SKILL\.md/i,
-      'README invocation table must tell non-native platforms to open SKILL.md. FIX: Add SKILL.md guidance for governance-only platforms.');
+    assert.match(readme, /Cursor \/ Copilot \/ Gemini \| .*\/gsdd-plan.*skills-native slash command/i,
+      'README invocation table must describe Cursor/Copilot/Gemini as skills-native slash-command runtimes. FIX: Replace grouped SKILL.md guidance with slash-command wording plus optional governance note.');
   });
 
   test('README contains a Quickstart section', () => {
@@ -677,16 +678,25 @@ describe('G19 - Consumer First-Run Accuracy', () => {
       'Quickstart must mention opening SKILL.md. FIX: Add SKILL.md invocation pattern to Quickstart.');
   });
 
+  test('README quickstart does not tell Cursor/Copilot/Gemini to open SKILL.md directly', () => {
+    const readme = fs.readFileSync(README_MD, 'utf-8');
+    const quickstartStart = readme.indexOf('### Quickstart');
+    const quickstartEnd = readme.indexOf('###', quickstartStart + 1);
+    const quickstart = readme.slice(quickstartStart, quickstartEnd > -1 ? quickstartEnd : quickstartStart + 800);
+    assert.doesNotMatch(quickstart, /Cursor.*Copilot.*Gemini.*SKILL\.md/i,
+      'Quickstart must not group Cursor/Copilot/Gemini under direct SKILL.md opening. FIX: Keep them under slash-command guidance and reserve SKILL.md for fallback tools.');
+  });
+
   test('agents.block.md contains "How To Invoke Workflows" section', () => {
     const content = fs.readFileSync(AGENTS_BLOCK, 'utf-8');
     assert.match(content, /### How To Invoke Workflows/,
       'agents.block.md must have "How To Invoke Workflows" section. FIX: Add ### How To Invoke Workflows section.');
   });
 
-  test('agents.block.md invocation section mentions Claude/OpenCode slash commands', () => {
+  test('agents.block.md invocation section mentions slash commands for skills-native runtimes', () => {
     const content = fs.readFileSync(AGENTS_BLOCK, 'utf-8');
-    assert.match(content, /Claude Code.*OpenCode.*slash command|slash command.*\/gsdd-/i,
-      'agents.block.md invocation must mention slash commands for Claude/OpenCode. FIX: Add slash command guidance.');
+    assert.match(content, /Claude Code.*OpenCode.*Cursor.*Copilot.*Gemini.*slash commands|slash commands.*\/gsdd-/i,
+      'agents.block.md invocation must mention slash commands for skills-native runtimes. FIX: Include Cursor/Copilot/Gemini in slash-command guidance.');
   });
 
   test('agents.block.md invocation section mentions Codex skill references', () => {
@@ -695,10 +705,16 @@ describe('G19 - Consumer First-Run Accuracy', () => {
       'agents.block.md invocation must mention Codex skill references. FIX: Add skill reference guidance for Codex.');
   });
 
-  test('agents.block.md invocation section mentions opening SKILL.md for other tools', () => {
+  test('agents.block.md invocation section mentions opening SKILL.md for fallback tools', () => {
     const content = fs.readFileSync(AGENTS_BLOCK, 'utf-8');
-    assert.match(content, /[Oo]pen the SKILL\.md file/,
-      'agents.block.md invocation must mention opening SKILL.md for other tools. FIX: Add SKILL.md guidance for non-native tools.');
+    assert.match(content, /Other AI tools.*Open the SKILL\.md file/i,
+      'agents.block.md invocation must mention opening SKILL.md for fallback tools. FIX: Add explicit SKILL.md guidance for other AI tools.');
+  });
+
+  test('agents.block.md says AGENTS governance is not workflow discovery for Cursor/Copilot/Gemini', () => {
+    const content = fs.readFileSync(AGENTS_BLOCK, 'utf-8');
+    assert.match(content, /Do not treat this file as the mechanism that makes the workflows discoverable/i,
+      'agents.block.md must distinguish AGENTS governance from workflow discovery for Cursor/Copilot/Gemini. FIX: Add explicit governance-vs-discovery wording.');
   });
 
   test('README adapter architecture table does NOT contain skill_aware', () => {
@@ -721,11 +737,31 @@ describe('G19 - Consumer First-Run Accuracy', () => {
       'DESIGN.md must contain section 25. FIX: Add D25 Consumer First-Run Experience.');
   });
 
-  test('DESIGN.md ToC lists 31 entries', () => {
+  test('init help text does not imply Cursor/Copilot/Gemini need AGENTS for workflow discovery', () => {
+    const content = fs.readFileSync(INIT_HELP, 'utf-8');
+    assert.match(content, /cursor\s+Generate root AGENTS\.md governance block; workflows are already discovered natively from \.agents\/skills\//,
+      "init help must describe cursor as governance augmentation on top of native skill discovery. FIX: Replace 'Same as agents' with native-discovery wording.");
+    assert.match(content, /copilot\s+Generate root AGENTS\.md governance block; workflows are already discovered natively from \.agents\/skills\//,
+      "init help must describe copilot as governance augmentation on top of native skill discovery. FIX: Replace 'Same as agents' with native-discovery wording.");
+    assert.match(content, /gemini\s+Generate root AGENTS\.md governance block; workflows are already discovered natively from \.agents\/skills\//,
+      "init help must describe gemini as governance augmentation on top of native skill discovery. FIX: Replace 'Same as agents' with native-discovery wording.");
+  });
+
+  test('post-init routing includes slash-command guidance for Cursor/Copilot/Gemini', () => {
+    const content = fs.readFileSync(INIT_HELP, 'utf-8');
+    assert.match(content, /Cursor:\s+\/gsdd-new-project/,
+      'post-init routing must show Cursor slash-command guidance. FIX: Add Cursor /gsdd-new-project to init output.');
+    assert.match(content, /Copilot:\s+\/gsdd-new-project/,
+      'post-init routing must show Copilot slash-command guidance. FIX: Add Copilot /gsdd-new-project to init output.');
+    assert.match(content, /Gemini CLI:\s+\/gsdd-new-project/,
+      'post-init routing must show Gemini slash-command guidance. FIX: Add Gemini /gsdd-new-project to init output.');
+  });
+
+  test('DESIGN.md ToC lists 35 entries', () => {
     const content = fs.readFileSync(DESIGN_PATH, 'utf-8');
     const tocEntries = (content.match(/^\d+\. \[/gm) || []);
-    assert.strictEqual(tocEntries.length, 34,
-      `DESIGN.md ToC has ${tocEntries.length} entries, expected 34. FIX: Update DESIGN.md ToC to list all 34 decisions.`);
+    assert.strictEqual(tocEntries.length, 35,
+      `DESIGN.md ToC has ${tocEntries.length} entries, expected 35. FIX: Update DESIGN.md ToC to list all 35 decisions.`);
   });
 });
 

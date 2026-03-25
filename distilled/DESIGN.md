@@ -42,6 +42,7 @@
 32. [Quick Workflow Alignment Hardening](#32-quick-workflow-alignment-hardening)
 33. [Quick Approach Clarification](#33-quick-approach-clarification)
 34. [Context Engineering Applied to Quick Workflow](#34-context-engineering-applied-to-quick-workflow)
+35. [Skills-Native Runtimes vs Governance Adapters](#35-skills-native-runtimes-vs-governance-adapters)
 
 ---
 
@@ -1536,6 +1537,34 @@ Output is inline `$APPROACH_CONTEXT` (e.g., "User confirmed: use in-memory LRU c
 **Scope:** quick.md only. If `<anti_patterns>` proves valuable for orchestrators, extend to plan.md and other workflows in a follow-up PR.
 
 **GSDD implementation:** `distilled/workflows/quick.md` (`<anti_patterns>` section, STOP normalization), `distilled/DESIGN.md` (this section), `tests/gsdd.guards.test.cjs` (G26 assertions for anti_patterns placement, content, gate language consistency, XML structural sections)
+
+---
+
+## 35. Skills-Native Runtimes vs Governance Adapters
+
+**Problem:** Repo surfaces had started conflating two different questions:
+1. Does the runtime discover `.agents/skills/` natively?
+2. What extra generated adapter artifact does `gsdd init --tools <runtime>` add?
+
+That conflation was survivable while Cursor and Copilot were incorrectly treated as governance-first tools, but it became actively misleading once live testing proved they were skills-native. Gemini then moved into the same bucket via user-performed live validation on 2026-03-25. The old grouped README / AGENTS wording wrongly implied the root `AGENTS.md` block was required for workflow discovery on those runtimes.
+
+**Decision:** Separate runtime capability from generated adapter artifact kind.
+
+- Cursor, Copilot, and Gemini are documented as **skills-native runtimes**: they discover `.agents/skills/gsdd-*` and surface the workflows directly as slash commands.
+- `--tools cursor`, `--tools copilot`, `--tools gemini`, and `--tools agents` still generate the same root `AGENTS.md` bounded block, but that artifact is **governance only**.
+- The root `AGENTS.md` block remains valuable behavioral discipline, but it must not be described as the workflow-discovery mechanism for a skills-native runtime.
+- No new runtime-specific adapter files are introduced just to make the docs read cleaner. The generated artifact model stays simple unless a stronger runtime-specific UX is actually needed.
+
+**Why this fits the architecture:** The adapter code already had the right implementation shape: one shared root-governance generator (`createRootAgentsAdapter`) with different runtime labels. The bug was the capability story wrapped around it. Fixing the narrative without inventing redundant adapter files preserves leverage and keeps the portable `.agents/skills/` surface as the canonical entry layer.
+
+**Evidence:**
+
+1. Live consumer testing (2026-03-20) proved Cursor and Copilot auto-discover `.agents/skills/` and expose slash commands without AGENTS.md.
+2. User-performed live validation (2026-03-25) confirmed the same behavior for Gemini.
+3. GSDD implementation already always generates `.agents/skills/` and uses the root `AGENTS.md` block as a bounded governance upsert, not as a workflow source.
+4. This resolution matches the repo rule that skills, adapters, and governance surfaces must not be conflated.
+
+**GSDD implementation:** `README.md`, `distilled/templates/agents.block.md`, `bin/lib/init.mjs`, `SPEC.md`, `.internal-research/TODO.md`, `.internal-research/gaps.md`, `.internal-research/lessons-learned.md`, `tests/gsdd.guards.test.cjs`
 
 ---
 

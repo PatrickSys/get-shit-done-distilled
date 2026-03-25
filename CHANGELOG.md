@@ -49,7 +49,7 @@ For the upstream GSD changelog, see [get-shit-done/CHANGELOG.md](https://github.
 
 ## [0.1.0] - 2026-03-19
 
-Initial public release. 35 merged PRs, 862 structural assertions, 34 design decisions.
+Initial public release. 35 merged PRs, 862 structural assertions, 35 design decisions.
 
 ### Added
 
