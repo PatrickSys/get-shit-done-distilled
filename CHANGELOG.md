@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.3.0...v0.3.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* align skills-native runtime guidance ([#46](https://github.com/PatrickSys/get-shit-done-distilled/issues/46)) ([111471c](https://github.com/PatrickSys/get-shit-done-distilled/commit/111471cb343a968a48bf94f2bb08ccb79a44f92c))
+
 # [0.3.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.2.0...v0.3.0) (2026-03-24)
 
 
