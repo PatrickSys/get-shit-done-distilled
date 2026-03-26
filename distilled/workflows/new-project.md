@@ -296,7 +296,7 @@ After the subagent research completes, synthesize EVERYTHING into `SPEC.md`:
 6. **Key Decisions are logged** — any choices made during questioning or dictated by the SOTA research.
 7. **Typed Data Schemas** *(SOTA: GitHub Blog — "Multi-agent workflows often fail")*: explicitly define the core Data Models/Typed Schemas the project will use (e.g., `type UserProfile = { id: number; plan: 'free' | 'pro' }`). Multi-agent systems require typed schemas to pass reliable state; natural language instructions fail across agent handoffs. *SPEC.md defines WHAT, not HOW — do not include implementation tasks.*
 8. **Done-When Verification Chain** *(SOTA: Cyanluna)*: For EVERY requirement in the "Must Have (v1)" section, define a clear, verifiable `[Done-When: ...]` criterion. "User can log in" must become "User can log in [Done-When: Login form submits, JWT is received, and User is redirected to Dashboard]". No exceptions.
-9. **Capability & Security Gates**: Handle per the `<capability_gates>` section below.
+9. **Capability & Security Gates**: Handle per the `<capability_gates>` section at the end of this `<spec_creation>` block.
 10. **Authorization Matrix (optional)**: For projects with multiple user roles or protected resources, create `.planning/AUTH_MATRIX.md` using the template at `.planning/templates/auth-matrix.md`. The integration checker will use this matrix for systematic auth verification during milestone audits.
 11. **Current State is set** to Phase 1, Status: Not started.
 
