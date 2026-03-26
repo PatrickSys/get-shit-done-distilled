@@ -306,8 +306,7 @@ Before finishing SPEC.md, explicitly define what the agents are NOT allowed to d
 If `autoAdvance: true`, skip this question. Add a deferred placeholder to SPEC.md:
 "## Capability & Security Gates\n_Deferred — auto mode cannot elicit gate preferences; requires explicit review before production deployment._"
 Otherwise:
-Ask the user: "Are there any destructive actions, purchases, or external API calls that should require mandatory human approval (Capability Gates)?"
-Add these into the `## Capability & Security Gates` section of the SPEC.md.
+Add these into the new `## Capability & Security Gates` section of the SPEC.md.
 </capability_gates>
 
 ### Quality Check Before Presenting
