@@ -1,3 +1,15 @@
+# [0.4.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.3.1...v0.4.0) (2026-03-27)
+
+
+### Bug Fixes
+
+* merge floating spec-creation sections into unified numbered list ([#49](https://github.com/PatrickSys/get-shit-done-distilled/issues/49)) ([c5263a7](https://github.com/PatrickSys/get-shit-done-distilled/commit/c5263a7a48425bd19f9390e36d463353d3ea8da0))
+
+
+### Features
+
+* spec/plan quality hardening + outcome-based verification contracts ([#50](https://github.com/PatrickSys/get-shit-done-distilled/issues/50)) ([5b1ad53](https://github.com/PatrickSys/get-shit-done-distilled/commit/5b1ad533338b0bb0949a5c9da8ff2397ea437d49))
+
 ## [0.3.1](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.3.0...v0.3.1) (2026-03-25)
 
 
