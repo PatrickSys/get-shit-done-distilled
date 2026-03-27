@@ -281,7 +281,7 @@ Frontmatter guidance:
 - when gaps or human checks exist, keep them machine-readable in frontmatter — do not collapse them into prose-only body text
 - keep `re_verification`, `gaps`, and `human_verification` structured when they materially help re-verification, gap closure, or explicit human handoff
 - use `severity: warning` in gaps when an artifact is missing but proof exists through other means; use `severity: blocker` only when the required proof type (`runtime-check`, `repo-test`, or `user-confirmation` where mandated) could not be satisfied by any available evidence
-  </report_format>
+</report_format>
 
 <next_steps>
 Based on the verification result:
@@ -304,7 +304,7 @@ Present a focused recommendation:
 - list the exact manual checks
 - state the expected outcome for each one
 - do not convert human-needed status into passed until those checks are acknowledged
-  </next_steps>
+</next_steps>
 
 <persistence>
 MANDATORY: Write the verification report to disk.
@@ -331,7 +331,7 @@ Verification is done when all of these are true:
 - [ ] The developer was informed of the result and recommended next step
 - [ ] Related failures grouped by concern, not returned as a flat symptom list
 - [ ] Requirements coverage chain completed (collect, restate, map, report, check orphans)
-      </success_criteria>
+</success_criteria>
 
 <completion>
 Report the verification result to the user, then present the next step:
@@ -354,6 +354,6 @@ Also available:
 - `/gsdd:execute` — fix gaps inline without re-planning (small fixes only)
 - `/gsdd:pause` — save context for later if stopping work
 
-## Consider clearing context before starting the next workflow for best results.
+Consider clearing context before starting the next workflow for best results.
 
 </completion>
