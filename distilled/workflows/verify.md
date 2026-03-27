@@ -167,7 +167,7 @@ Also look for:
 - placeholder components
 - static mock responses where live behavior is expected
 - orphaned files added in the phase but never referenced
-  </anti_pattern_scan>
+</anti_pattern_scan>
 
 <grouped_gaps>
 Before finalizing the report, group related failures by concern:
