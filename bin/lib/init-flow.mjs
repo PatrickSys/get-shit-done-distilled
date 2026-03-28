@@ -1,5 +1,30 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from 'fs';
 import { join, isAbsolute } from 'path';
+
+function validateKindContract(adapter, cwd) {
+  if (!adapter.subagentFiles) return;
+  if (adapter.kind === 'native_capable') {
+    const missing = adapter.subagentFiles
+      .map(f => join(cwd, f))
+      .filter(p => !existsSync(p));
+    if (missing.length > 0) {
+      console.warn(
+        `[WARN] ${adapter.name} adapter (kind=native_capable) missing expected subagent files:\n` +
+        missing.map(p => `  - ${p}`).join('\n')
+      );
+    }
+  } else if (adapter.kind === 'governance_only') {
+    const unexpected = adapter.subagentFiles
+      .map(f => join(cwd, f))
+      .filter(p => existsSync(p));
+    if (unexpected.length > 0) {
+      console.warn(
+        `[WARN] ${adapter.name} adapter (kind=governance_only) unexpectedly generated subagent files:\n` +
+        unexpected.map(p => `  - ${p}`).join('\n')
+      );
+    }
+  }
+}
 import { renderSkillContent } from './rendering.mjs';
 import { buildManifest, writeManifest } from './manifest.mjs';
 import { parseFlagValue, parseToolsFlag, parseAutoFlag } from './cli-utils.mjs';
@@ -86,6 +111,7 @@ export function createCmdInit(ctx) {
 
     for (const adapter of resolveAdapters(ctx.adapters, interactiveSession.adapterTargets)) {
       adapter.generate();
+      validateKindContract(adapter, ctx.cwd);
       console.log(`  - ${adapter.summary('generated')}`);
     }
 
@@ -132,6 +158,7 @@ export function createCmdUpdate(ctx) {
         console.log(`  - would update ${adapter.name} adapter`);
       } else {
         adapter.generate();
+        validateKindContract(adapter, ctx.cwd);
         console.log(`  - ${adapter.summary('updated')}`);
       }
       updated = true;
