@@ -165,10 +165,18 @@ Suggested next action:
 **Branch F: Between milestones (SPEC.md exists, ROADMAP.md absent)**
 Condition: `.planning/SPEC.md` exists but `.planning/ROADMAP.md` does not — a milestone was completed and archived.
 
+Check `.planning/MILESTONES.md`:
+- If MILESTONES.md exists and has at least one milestone entry → this is a subsequent milestone
+- If MILESTONES.md does not exist or is empty → this is the first milestone setup
+
 ```
-Suggested next action:
-  Run /gsdd:new-project to start the next milestone cycle (create a new ROADMAP.md)
+Suggested next action (subsequent milestone):
+  Run /gsdd:new-milestone to start the next milestone cycle (gather goals, define requirements, create ROADMAP.md)
   Also available: /gsdd:progress (refresh after milestone setup)
+
+Suggested next action (first-time setup):
+  Run /gsdd:new-project to initialize the project (create SPEC.md + ROADMAP.md)
+  Also available: /gsdd:progress (refresh after setup)
 ```
 
 If none of the above conditions match, report that the project is in a clean state with no obvious next action.
