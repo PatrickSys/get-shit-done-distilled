@@ -508,7 +508,7 @@ describe('S4 — Native Runtime Chain (Claude + Codex adapter completeness)', ()
 
     beforeEach(async () => {
       kindTmpDir = createTempProject();
-      await initProject(kindTmpDir, '--auto', '--tools', 'claude,opencode,codex');
+      await initProject(kindTmpDir, '--auto', '--tools', 'claude,opencode,codex,agents');
     });
 
     afterEach(() => { cleanup(kindTmpDir); });
@@ -534,8 +534,12 @@ describe('S4 — Native Runtime Chain (Claude + Codex adapter completeness)', ()
       );
     });
 
-    test('agents (governance_only) did not create any agent subdirectory', () => {
-      // The agents adapter is governance_only — it only writes AGENTS.md, no agent dirs
+    test('agents (governance_only) wrote AGENTS.md but no agent subdirectory', () => {
+      // The agents adapter is governance_only — it writes AGENTS.md but no agent dirs
+      assert.ok(
+        fs.existsSync(path.join(kindTmpDir, 'AGENTS.md')),
+        'governance_only agents adapter must write AGENTS.md'
+      );
       assert.ok(
         !fs.existsSync(path.join(kindTmpDir, '.agents', 'agents')),
         'governance_only agents adapter must not create an agent subdir'

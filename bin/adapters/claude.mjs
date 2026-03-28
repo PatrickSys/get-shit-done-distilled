@@ -4,7 +4,6 @@ import {
   PLAN_CHECK_DIMENSIONS,
   MAX_CHECKER_CYCLES,
   CHECKER_STATUSES,
-  CHECKER_JSON_SCHEMA,
 } from '../lib/plan-constants.mjs';
 
 const CLAUDE_MODEL_PROFILES = {

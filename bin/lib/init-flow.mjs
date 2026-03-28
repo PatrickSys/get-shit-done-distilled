@@ -1,5 +1,19 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from 'fs';
 import { join, isAbsolute } from 'path';
+import { renderSkillContent } from './rendering.mjs';
+import { buildManifest, writeManifest } from './manifest.mjs';
+import { parseFlagValue, parseToolsFlag, parseAutoFlag } from './cli-utils.mjs';
+import { buildDefaultConfig } from './models.mjs';
+import { installProjectTemplates, refreshTemplates } from './templates.mjs';
+import {
+  detectPlatforms,
+  getAdaptersToUpdate,
+  getPostInitRoutingLines,
+  normalizeRequestedTools,
+  resolveAdapters,
+  resolveInteractiveInitSession,
+} from './init-runtime.mjs';
+import { createInitPromptApi } from './init-prompts.mjs';
 
 function validateKindContract(adapter, cwd) {
   if (!adapter.subagentFiles) return;
@@ -25,20 +39,6 @@ function validateKindContract(adapter, cwd) {
     }
   }
 }
-import { renderSkillContent } from './rendering.mjs';
-import { buildManifest, writeManifest } from './manifest.mjs';
-import { parseFlagValue, parseToolsFlag, parseAutoFlag } from './cli-utils.mjs';
-import { buildDefaultConfig } from './models.mjs';
-import { installProjectTemplates, refreshTemplates } from './templates.mjs';
-import {
-  detectPlatforms,
-  getAdaptersToUpdate,
-  getPostInitRoutingLines,
-  normalizeRequestedTools,
-  resolveAdapters,
-  resolveInteractiveInitSession,
-} from './init-runtime.mjs';
-import { createInitPromptApi } from './init-prompts.mjs';
 
 export function createCmdInit(ctx) {
   return async function cmdInit(...initArgs) {
