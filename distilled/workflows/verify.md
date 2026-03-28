@@ -315,7 +315,7 @@ This is non-negotiable. Verification output that exists only in chat context wil
 
 If you cannot write the file (permissions, path issue), STOP and report the blocker to the user. Do NOT silently skip the write.
 
-After writing VERIFICATION.md, if `status: passed`, also update the phase entry in `.planning/ROADMAP.md` to `[x]` if it is not already `[x]`. Execute is the primary owner of ROADMAP status, but execute can be interrupted before its state_updates run. Verify is the terminal workflow and must close the ROADMAP entry when it confirms the phase is complete.
+After writing VERIFICATION.md, if `status: passed`, also update the phase entry in `.planning/ROADMAP.md` to `[x]` if it is not already `[x]`. Execute is the primary owner of ROADMAP status, but execute can be interrupted before its state_updates run. Verify is the terminal workflow and must close the ROADMAP entry when it confirms the phase is complete. If ROADMAP.md cannot be updated (path issue, file missing), STOP and report the blocker — do NOT complete verification without updating it.
 </persistence>
 
 <success_criteria>
