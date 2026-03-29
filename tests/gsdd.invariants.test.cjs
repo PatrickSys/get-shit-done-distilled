@@ -259,7 +259,7 @@ describe('I4 — Workflow References', () => {
     assert.strictEqual(workflows.length, 14, `Expected 14 workflows, got ${workflows.length}: ${workflows.join(', ')}`);
   });
 
-  test('all 13 workflows exist by name', () => {
+  test('all 14 workflows exist by name', () => {
     const expected = [
       'audit-milestone.md',
       'complete-milestone.md',
@@ -274,6 +274,7 @@ describe('I4 — Workflow References', () => {
       'quick.md',
       'resume.md',
       'verify.md',
+      'verify-work.md',
     ];
     for (const wf of expected) {
       assert.ok(

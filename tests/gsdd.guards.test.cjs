@@ -990,7 +990,7 @@ describe('G20 - Session Continuity Contracts', () => {
       `resume.md determine_action must route to at least 3 workflows, found ${workflows.length}. FIX: Add routing branches.`);
   });
 
-  test('progress <route_action> routes to workflows that exist in the 13-workflow set', () => {
+  test('progress <route_action> routes to workflows that exist in the 14-workflow set', () => {
     const content = fs.readFileSync(PROGRESS_PATH, 'utf-8');
     const section = content.slice(content.indexOf('<route_action>'), content.indexOf('</route_action>'));
     const workflows = section.match(/\/gsdd-\w[\w-]*/g) || [];

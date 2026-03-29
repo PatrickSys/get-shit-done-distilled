@@ -73,7 +73,7 @@ For each task in the plan, follow this loop:
 ### Frontmatter And Task Semantics
 
 The executor consumes the plan schema defined by `/gsdd-plan`:
-- frontmatter keys: `phase`, `plan`, `type`, `wave`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `must_haves`
+- frontmatter keys: `phase`, `plan`, `type`, `wave`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `must_haves`, `tdd`
 - task types:
   - `type="auto"` - proceed without pausing
   - `type="checkpoint:user"` - stop for a required user decision or human-only step

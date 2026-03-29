@@ -29,7 +29,7 @@ Before starting a new session, check for existing UAT state:
 
 ```bash
 # Check for existing UAT files in this phase
-ls .planning/phases/*-{N}/*-UAT.md 2>/dev/null || echo "none"
+ls .planning/phases/{N}-*/*-UAT.md 2>/dev/null || echo "none"
 ```
 
 **If a UAT.md exists** with `status: testing`, offer to resume:
