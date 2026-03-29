@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.6.0...v0.6.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* add registry-url to setup-node so npm uses OIDC trusted publisher ([4e1853e](https://github.com/PatrickSys/get-shit-done-distilled/commit/4e1853eaec71e40537c93309d8207165a966f71a))
+
 # [0.6.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.5.0...v0.6.0) (2026-03-29)
 
 
