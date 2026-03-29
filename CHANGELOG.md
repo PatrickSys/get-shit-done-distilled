@@ -1,3 +1,10 @@
+## [0.6.2](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.6.1...v0.6.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* remove @semantic-release/npm to unblock OIDC trusted publisher ([4c49322](https://github.com/PatrickSys/get-shit-done-distilled/commit/4c4932298d623bc72f38630b593f66d443001333))
+
 ## [0.6.1](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.6.0...v0.6.1) (2026-03-29)
 
 
