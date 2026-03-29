@@ -1,3 +1,17 @@
+# [0.6.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.5.0...v0.6.0) (2026-03-29)
+
+
+### Bug Fixes
+
+* skip .internal-research/gaps.md guards in CI (gitignored file) ([4ce0d51](https://github.com/PatrickSys/get-shit-done-distilled/commit/4ce0d517bc4224d9f3009787851205eb897e3480))
+
+
+### Features
+
+* milestone lifecycle — distill complete-milestone, new-milestone, plan-milestone-gaps ([#54](https://github.com/PatrickSys/get-shit-done-distilled/issues/54)) ([6412401](https://github.com/PatrickSys/get-shit-done-distilled/commit/6412401786596b36934328fef893fe16283b67a7))
+* Phase 5 — evidence index, I27 accept-by-design (D38), G31/G32/G33 guards ([e8416b6](https://github.com/PatrickSys/get-shit-done-distilled/commit/e8416b656be23a429d4bdad5a74771911a8154f9))
+* v0.6.0 — UX clarity, workflow depth, UAT ([#56](https://github.com/PatrickSys/get-shit-done-distilled/issues/56)) ([261011c](https://github.com/PatrickSys/get-shit-done-distilled/commit/261011c77e707ddce8095d0685be63c925cb3078))
+
 # [0.5.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.4.1...v0.5.0) (2026-03-28)
 
 
