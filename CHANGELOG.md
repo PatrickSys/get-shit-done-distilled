@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.7.0...v0.8.0) (2026-03-30)
+
+
+### Features
+
+* add compressed judgment handoffs ([#59](https://github.com/PatrickSys/get-shit-done-distilled/issues/59)) ([3beb12c](https://github.com/PatrickSys/get-shit-done-distilled/commit/3beb12cfaa3bbcf4f10b45963926860cbf5307b3))
+
 # [0.7.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.6.3...v0.7.0) (2026-03-30)
 
 
