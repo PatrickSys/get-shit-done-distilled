@@ -60,19 +60,21 @@ Only run this step when `.planning/.continue-here.md` was found in `<load_artifa
 
 Cross-validate checkpoint fields against current roadmap state in this order:
 
-1. Extract the checkpoint `phase` frontmatter field.
+1. Extract the checkpoint `workflow` and `phase` frontmatter fields.
 2. If `phase` is non-null, look up that exact phase name in `.planning/ROADMAP.md`.
    - If the matching roadmap entry is `[x]`, mark the checkpoint as stale.
    - Record the specific reason in this form: `checkpoint references phase "[phase]" which is already complete [x] in ROADMAP.md`.
-3. If the checkpoint `workflow` frontmatter is `phase`, check whether the repo has a matching in-progress phase signal:
-   - A roadmap phase marked `[-]`, or
-   - A phase with active execution evidence such as a `PLAN` file without a `SUMMARY`.
-   If neither exists, mark the checkpoint as potentially stale.
-   Record the reason in this form: `checkpoint workflow is "phase" but no matching in-progress phase was found in ROADMAP.md or phase artifacts`.
-4. If `workflow` is `generic` and `phase` is null, do not apply a structural staleness check. Skip validation cleanly.
+   - Stop further staleness checks after recording this reason.
+3. If `workflow` is `phase` and `phase` is null, mark the checkpoint as potentially stale.
+   - Record the reason in this form: `checkpoint workflow is "phase" but checkpoint phase is missing`.
+4. If `workflow` is `phase` and `phase` is non-null but no matching roadmap entry exists, mark the checkpoint as potentially stale.
+   - Record the reason in this form: `checkpoint workflow is "phase" but phase "[phase]" was not found in ROADMAP.md`.
+5. If `workflow` is `phase` and `phase` matches a roadmap entry with status `[ ]` or `[-]`, do not mark it stale based only on missing execution artifacts. Continue normally.
+6. If no structural staleness rule applied, skip validation cleanly. This includes `generic` or `quick` checkpoints with null `phase`.
 
 When staleness is detected:
 - Record a staleness flag and keep the full reason text.
+- Record only one staleness reason string. Do not append additional reasons after the first matching rule.
 - Do NOT delete the checkpoint.
 - Do NOT suppress the checkpoint contents.
 
@@ -90,9 +92,10 @@ Phase: [current] of [total] — [phase name]
 Completed: [N] phases done
 
 [If .continue-here.md exists:]
+[If stale checkpoint flag set:]
 ⚠ Stale checkpoint detected
   Reason: [specific staleness reason]
-  Review the checkpoint contents below and decide whether to resume from it or discard it.
+  Review the checkpoint contents below and decide whether to resume from it or continue without it.
 
 Checkpoint found: [workflow type] — [phase name or task description]
   Last paused: [timestamp from frontmatter]
@@ -119,7 +122,7 @@ Route based on the `workflow` frontmatter:
 - `quick` — route to `/gsdd-quick` to complete the task
 - `generic` — present the next_action and let the user decide
 
-If `<validate_checkpoint>` marked the checkpoint as stale, keep the same routing logic. The user may still choose to resume from the checkpoint after reviewing the warning. If the user chooses a different path, leave the checkpoint in place.
+If `<validate_checkpoint>` marked the checkpoint as stale, keep the same routing logic. The user may still choose to resume from the checkpoint after reviewing the warning. If the user chooses a different path, leave the checkpoint in place and continue without it.
 
 **Incomplete plan execution (PLAN without SUMMARY):**
 Route to `/gsdd-execute` for that phase.
