@@ -937,11 +937,40 @@ describe('I7 — Plan-Checker Dimension Integrity', () => {
     );
   });
 
+  test('plan.md documents runtime and assurance frontmatter', () => {
+    assert.ok(planWorkflowContent.includes('runtime:'), 'plan.md must document runtime frontmatter');
+    assert.ok(planWorkflowContent.includes('assurance:'), 'plan.md must document assurance frontmatter');
+  });
+
+  test('plan.md documents structured plan check block', () => {
+    assert.ok(planWorkflowContent.includes('<plan_check>'), 'plan.md must document <plan_check> block');
+    assert.ok(planWorkflowContent.includes('<checks>'), 'plan.md must document <checks> block');
+  });
+
   test('plan.md documents max revision cycles and escalation', () => {
     assert.ok(
       planWorkflowContent.includes('escalate'),
       'plan.md must document escalation when blockers remain after max revision cycles'
     );
+  });
+});
+
+describe('I6b — Cross-runtime artifact contract', () => {
+  test('execute.md documents handoff and delta contract', () => {
+    const content = readWorkflow('execute.md');
+    assert.ok(content.includes('<handoff>'), 'execute.md must document <handoff> block');
+    assert.ok(content.includes('<deltas>'), 'execute.md must document <deltas> block');
+    assert.ok(content.includes('factual_discovery'), 'execute.md must document factual_discovery mismatch class');
+    assert.ok(content.includes('intent_scope_change'), 'execute.md must document intent_scope_change mismatch class');
+    assert.ok(content.includes('architecture_risk_conflict'), 'execute.md must document architecture_risk_conflict mismatch class');
+  });
+
+  test('verify.md documents runtime-aware verification basis', () => {
+    const content = readWorkflow('verify.md');
+    assert.ok(content.includes('## Verification Basis'), 'verify.md must document verification basis section');
+    assert.ok(content.includes('runtime:'), 'verify.md must document runtime frontmatter');
+    assert.ok(content.includes('assurance:'), 'verify.md must document assurance frontmatter');
+    assert.ok(content.includes("SUMMARY `<handoff>` and `<deltas>`"), 'verify.md must require reviewing summary handoff and deltas');
   });
 });
 
@@ -1125,7 +1154,10 @@ describe('G3 — File Size Guards', () => {
   // past 400. Exempted with a higher limit rather than losing essential content.
   // plan.md ~453 lines after D29 approach exploration (research subagent prompt extracted to role contract)
   // plan.md ~478 lines after Phase 2 spec_quality_check section addition (D1 ambiguity gate)
-  const WORKFLOW_EXEMPT = { 'new-project.md': 430, 'plan.md': 480 };
+  // Phase 9 adds cross-runtime assurance-chain contract details to plan/execute.
+  // These workflows remain bounded but need a slightly higher ceiling to keep the
+  // contract in the canonical portable surface instead of scattering it elsewhere.
+  const WORKFLOW_EXEMPT = { 'new-project.md': 430, 'plan.md': 520, 'execute.md': 440 };
 
   for (const wf of getWorkflowFiles()) {
     const limit = WORKFLOW_EXEMPT[wf] || SIZE_LIMITS.workflow;

@@ -18,6 +18,20 @@ Before starting, read these files:
 Identify the target phase: the first phase with status `[ ]` or `[-]` in `ROADMAP.md`.
 </load_context>
 
+<runtime_contract>
+Use the `Runtime` and `Assurance` types from `.planning/SPEC.md`.
+Infer runtime from the launching surface when obvious: `.claude/` -> `claude-code`, `.codex/` or Codex portable skill -> `codex-cli`, `.opencode/` -> `opencode`, otherwise `other`.
+Assurance is ordered: `unreviewed` -> `self_checked` -> `cross_runtime_checked`.
+Same-runtime helpers never count as cross-runtime evidence.
+</runtime_contract>
+
+<assurance_check>
+After `<load_context>`, compare the current planning pass against the strongest upstream artifact available: same-phase prior plan first, otherwise prior completed phase SUMMARY or VERIFICATION.
+Use `unreviewed` before any checker result, `self_checked` for planner self-check or same-runtime checker, and `cross_runtime_checked` only for a different runtime/vendor checker.
+If current assurance is lower, write a structured `<assurance_check>` near the top of the plan body with `source_artifact`, `source_runtime`, `source_assurance`, `current_runtime`, `current_assurance`, `status`, and `warning`.
+If upstream runtime/assurance is missing, use `status: unknown`.
+</assurance_check>
+
 <context_fidelity>
 Before planning, acknowledge what is locked:
 
@@ -119,6 +133,8 @@ phase: 01-foundation
 plan: 01
 type: execute
 wave: 1
+runtime: claude-code
+assurance: self_checked
 depends_on: []
 files-modified:
   - src/lib/auth.ts
@@ -219,6 +235,8 @@ phase: 01-foundation
 plan: 01
 type: execute
 wave: 1
+runtime: claude-code
+assurance: self_checked
 depends_on: []
 files-modified:
   - src/routes/users.ts
@@ -253,6 +271,16 @@ must_haves:
 ## Must-Haves
 1. [Observable truth from ROADMAP.md]
 2. [Observable truth from ROADMAP.md]
+
+<checks>
+<plan_check>
+checker: self | cross_runtime
+checker_runtime: claude-code
+status: passed | issues_found | skipped
+blocking: false
+notes: [What the checker actually validated or why it was skipped]
+</plan_check>
+</checks>
 
 ## Tasks
 
@@ -401,6 +429,12 @@ After the planner produces a draft plan, an independent checker reviews it in fr
 7. Maximum 3 checker cycles total. If blockers remain after cycle 3, stop and escalate to the user instead of pretending the plan is ready.
 8. If no native checker agent is available in your runtime, perform the planner self-check below and explicitly report `reduced_assurance` rather than claiming an independent checker ran.
 
+When the checker outcome is finalized, write the result into the plan artifact:
+- checker ran in same runtime or planner self-check only -> set frontmatter `assurance: self_checked`
+- checker ran in a different runtime/vendor and passed -> set frontmatter `assurance: cross_runtime_checked`
+- draft exists before any checker result is recorded -> keep `assurance: unreviewed`
+- record the structured outcome in the plan's `<checks>` block; do not leave the checker result only in chat context
+
 ### Orchestration Summary
 
 After plan checking completes, report:
@@ -455,6 +489,8 @@ Planning is done when all of these are true:
 - [ ] Success criteria from `ROADMAP.md` are represented as must-haves
 - [ ] Goal-backward derivation from criteria to artifacts to key links to tasks is explicit
 - [ ] Every plan has frontmatter with `phase`, `plan`, `type`, `wave`, `depends_on`, `files-modified`, `autonomous`, `requirements`, and `must_haves`
+- [ ] Every plan frontmatter records `runtime` and `assurance`
+- [ ] Every plan records checker outcome in a structured `<checks>` block
 - [ ] Every task has XML structure with `id`, `type`, `files`, `action`, `verify`, and `done`
 - [ ] Every task has at least one runnable verify command
 - [ ] Plan sizing stays within 2-5 tasks, preferring 2-3

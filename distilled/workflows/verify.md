@@ -22,6 +22,20 @@ Establish your verification basis (must-have sources, requirement scope, previou
 If a previous `.planning/phases/{phase_dir}/{phase_num}-VERIFICATION.md` exists, read it first and treat this as re-verification.
 </load_context>
 
+<runtime_contract>
+Verification uses the same `Runtime` and `Assurance` types as planning and execution.
+Infer runtime from the launching surface when obvious: `.claude/` -> `claude-code`, `.codex/` or Codex portable skill -> `codex-cli`, `.opencode/` -> `opencode`, otherwise `other`.
+Assurance is ordered: `unreviewed` -> `self_checked` -> `cross_runtime_checked`.
+Use `cross_runtime_checked` only when the verifier runtime/vendor differs from the runtime that produced the artifact being verified.
+</runtime_contract>
+
+<assurance_check>
+Before code inspection, compare runtime provenance across PLAN, SUMMARY, and any prior VERIFICATION artifact.
+Treat the SUMMARY artifact's `<handoff>` and `<deltas>` blocks as first-class evidence, not optional commentary.
+When the current verification pass is weaker than the strongest prior artifact in the chain, emit a structured `<assurance_check>` with the chain runtimes/assurance values, `status`, and `warning`.
+If runtime/assurance is missing anywhere in the chain, record `status: unknown` and note the missing field as a verification concern.
+</assurance_check>
+
 <scope_boundary>
 This workflow verifies a single phase.
 
@@ -198,6 +212,8 @@ Write `.planning/phases/{phase_dir}/{phase_num}-VERIFICATION.md` with structured
 ```markdown
 ---
 phase: 01-foundation
+runtime: opencode
+assurance: cross_runtime_checked
 verified: 2026-03-11T12:00:00Z
 status: gaps_found
 score: 2/3 must-haves verified
@@ -232,6 +248,14 @@ human_verification:
 **Verified:** [timestamp]
 **Status:** [passed | gaps_found | human_needed]
 **Re-verification:** [Yes or No]
+
+## Verification Basis
+
+- Plan runtime / assurance: [runtime] / [assurance]
+- Summary runtime / assurance: [runtime] / [assurance]
+- Verification runtime / assurance: [runtime] / [assurance]
+- Handoff status: [clean | downgraded | unknown]
+- Deltas reviewed: [count and classes]
 
 ## Goal Achievement
 
@@ -278,10 +302,12 @@ Status rules:
 
 Frontmatter guidance:
 
-- `phase`, `verified`, `status`, and `score` are the minimal report fields
+- `phase`, `runtime`, `assurance`, `verified`, `status`, and `score` are the minimal report fields
 - when gaps or human checks exist, keep them machine-readable in frontmatter — do not collapse them into prose-only body text
 - keep `re_verification`, `gaps`, and `human_verification` structured when they materially help re-verification, gap closure, or explicit human handoff
 - use `severity: warning` in gaps when an artifact is missing but proof exists through other means; use `severity: blocker` only when the required proof type (`runtime-check`, `repo-test`, or `user-confirmation` where mandated) could not be satisfied by any available evidence
+- if verification runs in the same runtime/vendor as execution, cap frontmatter `assurance` at `self_checked`
+- if verification runs in a different runtime/vendor than execution, set frontmatter `assurance: cross_runtime_checked`
 </report_format>
 
 <next_steps>
@@ -330,6 +356,8 @@ Verification is done when all of these are true:
 - [ ] Requirements coverage was evaluated
 - [ ] Anti-pattern scan was run
 - [ ] `VERIFICATION.md` was written with structured frontmatter and a full report
+- [ ] `VERIFICATION.md` frontmatter records `runtime` and `assurance`
+- [ ] Verification explicitly reviewed SUMMARY `<handoff>` and `<deltas>` content
 - [ ] Status is one of `passed`, `gaps_found`, or `human_needed`
 - [ ] If status is `passed`, ROADMAP.md phase entry is `[x]`
 - [ ] The developer was informed of the result and recommended next step
