@@ -16,6 +16,20 @@ CRITICAL: Read every file below before performing any other actions. This is you
 6. `.planning/phases/*-SUMMARY.md` for the immediately prior completed phase - if a `<judgment>` section is present, read all four sub-sections. Honor `<anti_regression>` rules as execution constraints. Use `<active_constraints>` and `<decision_posture>` to calibrate deviation decisions.
 </load_context>
 
+<runtime_contract>
+Execution uses the same `Runtime` and `Assurance` types as planning and verification.
+Infer runtime from the launching surface when obvious: `.claude/` -> `claude-code`, `.codex/` or Codex portable skill -> `codex-cli`, `.opencode/` -> `opencode`, otherwise `other`.
+Assurance is ordered: `unreviewed` -> `self_checked` -> `cross_runtime_checked`.
+Same-runtime helpers never count as cross-runtime evidence.
+</runtime_contract>
+
+<assurance_check>
+Before executing tasks, read the plan artifact's `runtime`, `assurance`, and structured `<plan_check>` result.
+Use `unreviewed` before any executor check, `self_checked` for self/same-runtime checking, and `cross_runtime_checked` only for a different runtime/vendor checker.
+If execution begins from a stronger plan artifact into a weaker execution context, emit a structured `<assurance_check>` with `source_artifact`, `source_runtime`, `source_assurance`, `current_runtime`, `current_assurance`, `status`, and `warning`.
+If plan runtime/assurance is missing, use `status: unknown`.
+</assurance_check>
+
 <multi_plan_orchestration>
 A phase often contains multiple plans. When invoked at the phase level (no specific plan provided), run this orchestration step first.
 
@@ -169,6 +183,22 @@ Git rules:
 <deviation_rules>
 Reality rarely matches the plan perfectly. Handle deviations with these rules in priority order:
 
+### Structured mismatch taxonomy
+
+All execution-time deltas must be classified as one of:
+- `factual_discovery` - the repo/runtime reality differs from the plan in a concrete, local way (wrong path, stale API shape, moved module, outdated dependency assumption)
+- `intent_scope_change` - the requested outcome or scope needs to change
+- `architecture_risk_conflict` - the planned approach creates a structural or risk problem that needs a different design
+
+Treat only hard mismatches as blocking by default:
+- malformed or missing contract sections in the input artifact
+- unresolved blocking checker findings
+- any `intent_scope_change`
+- any `architecture_risk_conflict`
+- a `factual_discovery` that is not deterministically recoverable
+
+If a `factual_discovery` is local, deterministic, and recoverable, proceed with a recorded delta instead of bouncing immediately back to planning. That delta must be surfaced later in SUMMARY.md for downstream review and milestone audit.
+
 ### Rule 1: Auto-Fix Bugs
 
 **Trigger:** Code doesn't work as intended (broken behavior, errors, incorrect output)
@@ -249,6 +279,13 @@ If the phase is partially complete and more plans remain, use `[-]` instead of `
 Create `.planning/phases/{phase_dir}/{plan_id}-SUMMARY.md` with:
 
 ```markdown
+---
+phase: 01-foundation
+plan: 01
+runtime: codex-cli
+assurance: self_checked
+---
+
 # Phase {N}: {Name} - Plan {NN} Summary
 
 **Completed**: {date}
@@ -258,6 +295,33 @@ Create `.planning/phases/{phase_dir}/{plan_id}-SUMMARY.md` with:
 **Decisions Made**: {new decisions, if any}
 **Notes for Verification**: {anything the verifier should know}
 **Notes for Next Work**: {anything the next planner should know}
+
+<checks>
+<executor_check>
+checker: self | cross_runtime
+checker_runtime: codex-cli
+status: passed | issues_found | skipped
+blocking: false
+notes: [What the executor checker validated or why it was skipped]
+</executor_check>
+</checks>
+
+<handoff>
+plan_runtime: claude-code
+plan_assurance: cross_runtime_checked
+plan_check_status: passed
+execution_runtime: codex-cli
+execution_assurance: self_checked
+executor_check_status: passed
+hard_mismatches_open: false
+</handoff>
+
+<deltas>
+- class: factual_discovery | intent_scope_change | architecture_risk_conflict
+  impact: recoverable | blocking
+  disposition: proceeded | escalated
+  summary: [What changed and why]
+</deltas>
 
 <judgment>
 <active_constraints>
@@ -276,6 +340,12 @@ Create `.planning/phases/{phase_dir}/{plan_id}-SUMMARY.md` with:
 ```
 
 **Summary quality gate:** One-liner must be substantive (e.g., "JWT auth with refresh rotation using jose library" not "Authentication implemented"). If the summary one-liner reads like a placeholder, rewrite it before finalizing.
+
+Write the structured sections honestly:
+- `assurance: self_checked` if execution only received self-check or same-runtime checking
+- `assurance: cross_runtime_checked` only when a different runtime/vendor validated the execution artifact
+- include every execution delta in `<deltas>`; do not hide recoverable drift in prose-only notes
+- if a hard mismatch remains open, set `<handoff>.hard_mismatches_open: true` and stop rather than presenting the summary as clean handoff state
 
 Do not invent an inline PLAN task-state mutation scheme if the plan does not define one.
 Summary-driven progress tracking avoids silent drift between the plan contract and what execution actually completed.
@@ -340,6 +410,8 @@ Execution is done when all of these are true:
 - [ ] `.planning/SPEC.md` current state is updated accurately
 - [ ] `ROADMAP.md` uses `[ ]`, `[-]`, `[x]` consistently
 - [ ] `SUMMARY.md` is written
+- [ ] `SUMMARY.md` frontmatter records `runtime` and `assurance`
+- [ ] `SUMMARY.md` includes structured `<checks>`, `<handoff>`, and `<deltas>` sections
 - [ ] Self-check passed
 - [ ] Any git actions honor repo or user conventions and `.planning/config.json`
 </success_criteria>
