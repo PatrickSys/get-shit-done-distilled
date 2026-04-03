@@ -50,7 +50,7 @@ Read the relevant artifacts to pre-fill what you can:
 </gather_state>
 
 <write_checkpoint>
-Delete `.continue-here.bak` if it exists (cleanup from prior session backup).
+Delete `.planning/.continue-here.bak` if it exists (cleanup from prior session backup).
 
 Write `.planning/.continue-here.md` with the following structure:
 
