@@ -1,3 +1,10 @@
+# [0.10.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.9.0...v0.10.0) (2026-04-03)
+
+
+### Features
+
+* add runtime provenance to pause/resume checkpoint boundary ([#62](https://github.com/PatrickSys/get-shit-done-distilled/issues/62)) ([77b8a94](https://github.com/PatrickSys/get-shit-done-distilled/commit/77b8a9446deaeef63fd9de3c2e4e1edf9b66a364))
+
 # [0.9.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.8.0...v0.9.0) (2026-03-31)
 
 
