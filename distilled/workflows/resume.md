@@ -178,8 +178,8 @@ Wait for user selection.
 <cleanup_checkpoint>
 Immediately after the user confirms their action selection (before routing to the target workflow):
 - If the user chose to resume from `.continue-here.md`:
-  1. Copy `.continue-here.md` to `.continue-here.bak` (overwrite silently if `.continue-here.bak` already exists).
-  2. Delete `.continue-here.md`.
+  1. Copy `.planning/.continue-here.md` to `.planning/.continue-here.bak` (overwrite silently if `.planning/.continue-here.bak` already exists).
+  2. Delete `.planning/.continue-here.md`.
 - If the user chose a different action (not based on the checkpoint), leave `.continue-here.md` in place for a future resume.
 
 Copying before deleting ensures the checkpoint survives a session crash between deletion and dispatch. `.continue-here.bak` is cleaned up before the dispatch call below.
