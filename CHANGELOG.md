@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.10.0...v0.11.0) (2026-04-03)
+
+
+### Features
+
+* add checkpoint backup safety via .continue-here.bak (I29) ([#63](https://github.com/PatrickSys/get-shit-done-distilled/issues/63)) ([4798962](https://github.com/PatrickSys/get-shit-done-distilled/commit/4798962d847a098828f0cb9019eeb9654fe5b7bc))
+
 # [0.10.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.9.0...v0.10.0) (2026-04-03)
 
 
