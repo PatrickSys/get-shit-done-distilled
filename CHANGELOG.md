@@ -1,3 +1,10 @@
+# [0.13.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.12.0...v0.13.0) (2026-04-06)
+
+
+### Features
+
+* add cross-runtime fixture validation for OpenCode and Codex CLI ([8509a91](https://github.com/PatrickSys/get-shit-done-distilled/commit/8509a91e2aae746d38cc7d1dcc24f27c1d3e0b47))
+
 # [0.12.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.11.0...v0.12.0) (2026-04-05)
 
 
