@@ -1699,10 +1699,9 @@ describe('G34b - Branch Safety Invariants', () => {
   const pr91Title = 'feat: tighten search contract (Phase 8 - DISC-01 + SAFE-01)';
 
   test('execute.md wrong-branch check appears in git guidance section', () => {
-    const gitGuidance = executeWorkflow.slice(
-      executeWorkflow.indexOf('### Git Guidance'),
-      executeWorkflow.indexOf('</execution_loop>')
-    );
+    const gitGuidanceStart = executeWorkflow.indexOf('### Git Guidance');
+    assert.ok(gitGuidanceStart !== -1, 'execute.md must contain a "### Git Guidance" section — section marker not found.');
+    const gitGuidance = executeWorkflow.slice(gitGuidanceStart, executeWorkflow.indexOf('</execution_loop>'));
     assert.match(gitGuidance, /main/,
       'execute.md git guidance must name main in the wrong-branch check. FIX: Add main to the git guidance rule.');
     assert.match(gitGuidance, /master/,
@@ -1710,19 +1709,17 @@ describe('G34b - Branch Safety Invariants', () => {
   });
 
   test('complete-milestone.md advisory git guidance uses public-facing language only', () => {
-    const advisorySection = completeMilestoneWorkflow.slice(
-      completeMilestoneWorkflow.indexOf('## 11. Advisory: Git Tag'),
-      completeMilestoneWorkflow.indexOf('</process>')
-    );
+    const advisoryStart = completeMilestoneWorkflow.indexOf('## 11. Advisory: Git Tag');
+    assert.ok(advisoryStart !== -1, 'complete-milestone.md must contain a "## 11. Advisory: Git Tag" section — section marker not found.');
+    const advisorySection = completeMilestoneWorkflow.slice(advisoryStart, completeMilestoneWorkflow.indexOf('</process>'));
     assert.doesNotMatch(advisorySection, /phase-\d+|REQ-\d+|GIT-\d+|LAUNCH-\d+/,
       'complete-milestone.md advisory git guidance must avoid internal IDs. FIX: Use public-facing wording only in the Step 11 advisory.');
   });
 
   test('execute.md naming rule extends beyond phase/plan/task to requirement IDs and milestone labels', () => {
-    const gitGuidance = executeWorkflow.slice(
-      executeWorkflow.indexOf('Git rules:'),
-      executeWorkflow.indexOf('</execution_loop>')
-    );
+    const gitRulesStart = executeWorkflow.indexOf('Git rules:');
+    assert.ok(gitRulesStart !== -1, 'execute.md must contain a "Git rules:" section — section marker not found.');
+    const gitGuidance = executeWorkflow.slice(gitRulesStart, executeWorkflow.indexOf('</execution_loop>'));
     assert.match(gitGuidance, /requirement/,
       'execute.md naming rule must mention requirement IDs. FIX: Extend the naming rule to requirements.');
     assert.match(gitGuidance, /milestone/,

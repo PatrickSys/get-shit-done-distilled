@@ -2401,13 +2401,17 @@ describe('G35 - Milestone Lifecycle Workflows', () => {
 describe('G36 - Git Branch Safety', () => {
   const executeWorkflow = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'execute.md'), 'utf-8');
   const completeMilestoneWorkflow = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'complete-milestone.md'), 'utf-8');
-  const gitRulesSection = executeWorkflow.slice(
-    executeWorkflow.indexOf('Git rules:'),
-    executeWorkflow.indexOf('</execution_loop>')
-  );
+  const gitRulesStart = executeWorkflow.indexOf('Git rules:');
+  const gitRulesSection = gitRulesStart !== -1
+    ? executeWorkflow.slice(gitRulesStart, executeWorkflow.indexOf('</execution_loop>'))
+    : '';
   const pr67Title = 'chore: simplify agents.block.md to wildcard pointer + update G18 guards';
   const pr68Body = 'This branch also initializes the v1.0.0 Public Launch milestone locally';
   const pr91Title = 'feat: tighten search contract (Phase 8 - DISC-01 + SAFE-01)';
+
+  test('execute.md has a "Git rules:" section', () => {
+    assert.ok(gitRulesStart !== -1, 'execute.md must contain a "Git rules:" section — section marker not found.');
+  });
 
   test('execute.md warns before implementing on main or master', () => {
     assert.match(gitRulesSection, /main.*master|master.*main/i,
