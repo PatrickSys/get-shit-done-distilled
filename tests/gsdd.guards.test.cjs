@@ -2449,6 +2449,11 @@ describe('G36 - Git Branch Safety', () => {
       'execute.md naming hygiene must cover internal milestone labels. FIX: Extend the naming rule to milestone labels.');
   });
 
+  test('execute.md git rules require PR creation after committing on a feature branch', () => {
+    assert.match(gitRulesSection, /PR creation|create a PR/i,
+      'execute.md must instruct the executor to create a PR after committing on a feature branch. FIX: Add a PR creation rule to the git rules section.');
+  });
+
   test('recorded PR incidents remain explicit regression fixtures for public naming hygiene', () => {
     assert.match(pr67Title, /\bG18\b/,
       'PR #67 regression fixture must preserve the leaked internal tracker label. FIX: Keep the exact incident title in the test fixture.');
