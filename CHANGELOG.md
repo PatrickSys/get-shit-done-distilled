@@ -1,3 +1,10 @@
+## [0.13.3](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.13.2...v0.13.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* keep launch proof posture out of consumer governance ([#72](https://github.com/PatrickSys/get-shit-done-distilled/issues/72)) ([31155b2](https://github.com/PatrickSys/get-shit-done-distilled/commit/31155b211bde993c539b7109e1c30ea5afeed55d))
+
 ## [0.13.2](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.13.1...v0.13.2) (2026-04-09)
 
 
