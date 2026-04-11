@@ -1,3 +1,10 @@
+# [0.14.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.13.5...v0.14.0) (2026-04-11)
+
+
+### Features
+
+* framework health truth checks and self-health reconciliation (Phase 16) ([8bb1d01](https://github.com/PatrickSys/get-shit-done-distilled/commit/8bb1d017f8f7bc72c032e6388df49a3f3d67a211)), closes [pre-#74](https://github.com/pre-/issues/74)
+
 ## [0.13.5](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.13.4...v0.13.5) (2026-04-10)
 
 
