@@ -2515,3 +2515,62 @@ describe('G38 - I38 Approach-Exploration Hard Gate', () => {
       'plan-checker.md approach_alignment blocker must include a fix_hint directing the planner to run approach exploration. FIX: Add fix_hint to the discuss=true blocker case.');
   });
 });
+
+// ---------------------------------------------------------------------------
+// G39 - Health Check ID Consistency
+// Prevents silent W7 drift: if a developer adds a new check to health.mjs or
+// health-truth.mjs and forgets to update healthCheckIds / TRUTH_CHECK_IDS,
+// W7 silently skips the new ID when comparing against DESIGN.md.
+// ---------------------------------------------------------------------------
+describe('G39 - Health Check ID Consistency', () => {
+  const HEALTH_TRUTH_MODULE_PATH = path.join(ROOT, 'bin', 'lib', 'health-truth.mjs');
+
+  test('healthCheckIds array in health.mjs matches all implemented diagnostic IDs', () => {
+    const healthSource = fs.readFileSync(HEALTH_MODULE, 'utf-8');
+    const healthTruthSource = fs.readFileSync(HEALTH_TRUTH_MODULE_PATH, 'utf-8');
+
+    const truthMatch = healthTruthSource.match(/export const TRUTH_CHECK_IDS\s*=\s*\[([^\]]+)\]/);
+    assert.ok(truthMatch,
+      'health-truth.mjs must export TRUTH_CHECK_IDS as an array literal. FIX: Check export declaration.');
+    const truthIds = [...truthMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+
+    const declaredMatch = healthSource.match(/const healthCheckIds\s*=\s*\[([^\]]+)\]/);
+    assert.ok(declaredMatch,
+      'health.mjs must declare healthCheckIds as an array literal. FIX: Check healthCheckIds declaration.');
+    const rawDeclared = declaredMatch[1].replace('...TRUTH_CHECK_IDS', truthIds.map((id) => `'${id}'`).join(', '));
+    const declaredIds = new Set([...rawDeclared.matchAll(/'([^']+)'/g)].map((m) => m[1]));
+
+    const implementedIds = new Set();
+    for (const m of healthSource.matchAll(/\bid:\s*'([EWI]\d+)'/g)) implementedIds.add(m[1]);
+    for (const m of healthTruthSource.matchAll(/\bid:\s*'([EWI]\d+)'/g)) implementedIds.add(m[1]);
+
+    const missingFromDeclared = [...implementedIds].filter((id) => !declaredIds.has(id));
+    const extraInDeclared = [...declaredIds].filter((id) => !implementedIds.has(id));
+
+    assert.deepStrictEqual(missingFromDeclared, [],
+      `healthCheckIds is missing IDs implemented in source: ${missingFromDeclared.join(', ')}. FIX: Add the missing IDs to the healthCheckIds array in health.mjs.`);
+    assert.deepStrictEqual(extraInDeclared, [],
+      `healthCheckIds declares IDs with no matching diagnostic push: ${extraInDeclared.join(', ')}. FIX: Remove the extra IDs or add the missing push call.`);
+  });
+
+  test('TRUTH_CHECK_IDS matches the diagnostic IDs implemented in health-truth.mjs', () => {
+    const healthTruthSource = fs.readFileSync(HEALTH_TRUTH_MODULE_PATH, 'utf-8');
+
+    const truthMatch = healthTruthSource.match(/export const TRUTH_CHECK_IDS\s*=\s*\[([^\]]+)\]/);
+    assert.ok(truthMatch,
+      'health-truth.mjs must export TRUTH_CHECK_IDS as an array literal. FIX: Check export declaration.');
+    const declaredTruthIds = new Set([...truthMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]));
+
+    const implementedTruthIds = new Set(
+      [...healthTruthSource.matchAll(/\bid:\s*'([EWI]\d+)'/g)].map((m) => m[1])
+    );
+
+    const missing = [...implementedTruthIds].filter((id) => !declaredTruthIds.has(id));
+    const extra = [...declaredTruthIds].filter((id) => !implementedTruthIds.has(id));
+
+    assert.deepStrictEqual(missing, [],
+      `TRUTH_CHECK_IDS is missing IDs implemented in health-truth.mjs: ${missing.join(', ')}. FIX: Add the missing IDs to the TRUTH_CHECK_IDS export in health-truth.mjs.`);
+    assert.deepStrictEqual(extra, [],
+      `TRUTH_CHECK_IDS declares IDs with no matching warning push in health-truth.mjs: ${extra.join(', ')}. FIX: Remove the extra IDs or add the missing push call.`);
+  });
+});
