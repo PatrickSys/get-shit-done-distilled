@@ -2135,6 +2135,78 @@ describe('G34 - Git Delivery Visibility', () => {
   });
 });
 
+describe('Phase 18 deterministic CLI guards', () => {
+  const workflowsDir = path.join(ROOT, 'distilled', 'workflows');
+
+  test('bin/gsdd.mjs registers file-op and phase-status commands', () => {
+    const gsddContent = fs.readFileSync(GSDD_PATH, 'utf-8');
+    assert.match(gsddContent, /'file-op'\s*:/,
+      'bin/gsdd.mjs must register the file-op command. FIX: Add file-op to COMMANDS.');
+    assert.match(gsddContent, /'phase-status'\s*:/,
+      'bin/gsdd.mjs must register the phase-status command. FIX: Add phase-status to COMMANDS.');
+  });
+
+  test('bin/lib/file-ops.mjs exists and exports cmdFileOp', async () => {
+    const fileOpsPath = path.join(ROOT, 'bin', 'lib', 'file-ops.mjs');
+    assert.ok(fs.existsSync(fileOpsPath),
+      'bin/lib/file-ops.mjs must exist. FIX: Add the deterministic file-op helper module.');
+    const mod = await import(`file://${fileOpsPath.replace(/\\/g, '/')}`);
+    assert.strictEqual(typeof mod.cmdFileOp, 'function',
+      'bin/lib/file-ops.mjs must export cmdFileOp. FIX: Export the file-op command handler.');
+  });
+
+  test('init help text documents file-op and phase-status', async () => {
+    const mod = await import(`file://${INIT_MODULE.replace(/\\/g, '/')}`);
+    const previousLog = console.log;
+    let output = '';
+    console.log = (...parts) => { output += `${parts.join(' ')}\n`; };
+    try {
+      mod.cmdHelp();
+    } finally {
+      console.log = previousLog;
+    }
+
+    assert.match(output, /file-op <copy\|delete\|regex-sub>/,
+      'Help text must document file-op. FIX: Add file-op command to cmdHelp output.');
+    assert.match(output, /phase-status <N> <status>/,
+      'Help text must document phase-status. FIX: Add phase-status command to cmdHelp output.');
+  });
+
+  test('affected workflows route checkpoint file ops through gsdd file-op', () => {
+    const expectations = [
+      ['pause.md', /gsdd file-op delete \.planning\/\.continue-here\.bak --missing ok/],
+      ['resume.md', /gsdd file-op copy \.planning\/\.continue-here\.md \.planning\/\.continue-here\.bak/],
+      ['resume.md', /gsdd file-op delete \.planning\/\.continue-here\.md/],
+      ['plan.md', /gsdd file-op delete \.planning\/\.continue-here\.bak --missing ok/],
+      ['execute.md', /gsdd file-op delete \.planning\/\.continue-here\.bak --missing ok/],
+      ['verify.md', /gsdd file-op delete \.planning\/\.continue-here\.bak --missing ok/],
+      ['quick.md', /gsdd file-op delete \.planning\/\.continue-here\.bak --missing ok/],
+    ];
+
+    for (const [name, pattern] of expectations) {
+      const content = fs.readFileSync(path.join(workflowsDir, name), 'utf-8');
+      assert.match(content, pattern,
+        `${name} must route deterministic checkpoint file ops through gsdd file-op. FIX: Replace manual copy/delete instructions with gsdd file-op.`);
+    }
+  });
+
+  test('resume.md no longer describes manual checkpoint copy/delete prose', () => {
+    const content = fs.readFileSync(path.join(workflowsDir, 'resume.md'), 'utf-8');
+    assert.doesNotMatch(content, /(^|\n)\s*\d+\.\s*Copy `?\.planning\/\.continue-here\.md`? to `?\.planning\/\.continue-here\.bak`?/i,
+      'resume.md must not keep the old manual copy wording. FIX: Reference gsdd file-op copy only.');
+    assert.doesNotMatch(content, /(^|\n)\s*\d+\.\s*Delete `?\.planning\/\.continue-here\.md`?/i,
+      'resume.md must not keep the old manual delete wording. FIX: Reference gsdd file-op delete only.');
+  });
+
+  test('execute.md and verify.md route roadmap status changes through gsdd phase-status', () => {
+    for (const name of ['execute.md', 'verify.md']) {
+      const content = fs.readFileSync(path.join(workflowsDir, name), 'utf-8');
+      assert.match(content, /gsdd phase-status/,
+        `${name} must route ROADMAP phase status updates through gsdd phase-status. FIX: Replace manual checkbox mutation text.`);
+    }
+  });
+});
+
 describe('G31 - Evidence Index Completeness', () => {
   const designContent = fs.readFileSync(
     path.join(__dirname, '..', 'distilled', 'DESIGN.md'), 'utf-8'
@@ -2233,7 +2305,7 @@ describe('G33 - Phase 5 Success Criteria', () => {
       'bin/gsdd.mjs must not import dashboard or MCP packages (SC-1: no hidden services). FIX: Remove the import.');
   });
 
-  test('SC-2: all 8 CLI commands are registered', () => {
+  test('SC-2: all 10 CLI commands are registered', () => {
     // Commands appear as keys in the command registry object, e.g.: init: cmdInit, 'find-phase': cmdFindPhase
     const commandPatterns = [
       /\binit\s*:/,
@@ -2241,7 +2313,9 @@ describe('G33 - Phase 5 Success Criteria', () => {
       /\bhealth\s*:/,
       /\bverify\s*:/,
       /\bscaffold\s*:/,
+      /'file-op'\s*:/,
       /'find-phase'\s*:/,
+      /'phase-status'\s*:/,
       /\bmodels\s*:/,
       /\bhelp\s*:/,
     ];
@@ -2263,7 +2337,7 @@ describe('G33 - Phase 5 Success Criteria', () => {
       'bin/lib/manifest.mjs must export writeManifest (SC-2). FIX: Add the export.');
   });
 
-  test('SC-2: bin/lib/phase.mjs exports artifact verification functions', () => {
+  test('SC-2: bin/lib/phase.mjs exports artifact verification and roadmap-status functions', () => {
     const phaseContent = fs.readFileSync(path.join(__dirname, '..', 'bin', 'lib', 'phase.mjs'), 'utf-8');
     assert.ok(
       phaseContent.includes('cmdVerify') || phaseContent.includes('createCmdVerify'),
@@ -2271,6 +2345,9 @@ describe('G33 - Phase 5 Success Criteria', () => {
     assert.ok(
       phaseContent.includes('cmdScaffold') || phaseContent.includes('createCmdScaffold'),
       'bin/lib/phase.mjs must export a scaffold command (SC-2). FIX: Add the export.');
+    assert.ok(
+      phaseContent.includes('cmdPhaseStatus'),
+      'bin/lib/phase.mjs must export cmdPhaseStatus (SC-2). FIX: Add the roadmap phase-status helper export.');
   });
 
   test('SC-3: distilled/EVIDENCE-INDEX.md exists with entries', () => {

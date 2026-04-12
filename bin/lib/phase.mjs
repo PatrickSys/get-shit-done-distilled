@@ -7,6 +7,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from 
 import { join, basename } from 'path';
 import { output } from './cli-utils.mjs';
 
+const PHASE_STATUS_MARKERS = {
+  not_started: '[ ]',
+  todo: '[ ]',
+  in_progress: '[-]',
+  done: '[x]',
+};
+
 function findFiles(dir, prefix) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir).filter((f) => f.startsWith(prefix) || f.startsWith(prefix.replace(/^0+/, '')));
@@ -41,6 +48,72 @@ function parsePhaseStatuses(roadmap) {
     }
   }
   return phases;
+}
+
+function normalizePhaseToken(value) {
+  return String(value)
+    .trim()
+    .split('.')
+    .map((segment) => String(parseInt(segment, 10)))
+    .join('.');
+}
+
+export function updateRoadmapPhaseStatus(roadmap, phaseNumber, status) {
+  const marker = PHASE_STATUS_MARKERS[status];
+  if (!marker) {
+    throw new Error(`Unsupported phase status: ${status}`);
+  }
+
+  const normalizedTarget = normalizePhaseToken(phaseNumber);
+  let matchCount = 0;
+
+  const updated = roadmap
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(\s*-\s*)(\[[ x-]\])(\s*\*\*Phase\s+([0-9.]+):.*)$/i);
+      if (!match) return line;
+      if (normalizePhaseToken(match[4]) !== normalizedTarget) return line;
+      matchCount += 1;
+      return `${match[1]}${marker}${match[3]}`;
+    })
+    .join('\n');
+
+  if (matchCount === 0) {
+    throw new Error(`Phase ${phaseNumber} was not found in ROADMAP.md`);
+  }
+
+  if (matchCount > 1) {
+    throw new Error(`Phase ${phaseNumber} matched multiple ROADMAP.md entries`);
+  }
+
+  return updated;
+}
+
+export function cmdPhaseStatus(...args) {
+  const cwd = process.cwd();
+  const planningDir = join(cwd, '.planning');
+  const roadmapPath = join(planningDir, 'ROADMAP.md');
+  const [phaseNumber, status] = args;
+
+  if (!phaseNumber || !status) {
+    console.error('Usage: gsdd phase-status <phase-number> <not_started|in_progress|done>');
+    process.exit(1);
+  }
+
+  if (!existsSync(roadmapPath)) {
+    console.error('No ROADMAP.md found. Run the new-project workflow first.');
+    process.exit(1);
+  }
+
+  try {
+    const roadmap = readFileSync(roadmapPath, 'utf-8');
+    const updated = updateRoadmapPhaseStatus(roadmap, phaseNumber, status);
+    writeFileSync(roadmapPath, updated);
+    output({ phase: phaseNumber, status, roadmap: '.planning/ROADMAP.md', changed: true });
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
 }
 
 export function cmdFindPhase(...args) {
