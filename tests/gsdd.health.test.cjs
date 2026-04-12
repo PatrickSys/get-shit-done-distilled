@@ -515,10 +515,19 @@ const skipFrameworkSourceMode = !fs.existsSync(planningConfigPath)
   ? '.planning/ is gitignored and local-only — skip in CI'
   : false;
 
+function extractJsonPayload(output) {
+  const text = String(output).trim();
+  const start = text.indexOf('{');
+  if (start !== -1) {
+    return JSON.parse(text.slice(start));
+  }
+  throw new Error(`No JSON object found in CLI output:\n${output}`);
+}
+
 describe('Health — framework source mode', () => {
   test('gsdd health in framework repo suppresses E3-E8 and W1-W3', { skip: skipFrameworkSourceMode }, async () => {
     const result = await runCliAsMain(FRAMEWORK_ROOT, ['health', '--json']);
-    const parsed = JSON.parse(result.output);
+    const parsed = extractJsonPayload(result.output);
 
     for (const id of ['E3', 'E4', 'E5', 'E6', 'E7', 'E8']) {
       assert.ok(
