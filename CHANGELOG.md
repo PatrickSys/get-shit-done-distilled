@@ -1,3 +1,11 @@
+## [0.15.1](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.15.0...v0.15.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* **phase:** replace process.exit(1) with process.exitCode=1 in cmdVerify/cmdScaffold ([6254a35](https://github.com/PatrickSys/get-shit-done-distilled/commit/6254a35cdf27422f8c91efdd331be9c2f21d2b7f))
+* reset in-process cli exit state ([fe89796](https://github.com/PatrickSys/get-shit-done-distilled/commit/fe897965710e379afd730684bea3bbcb485cbc35))
+
 # [0.15.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.14.0...v0.15.0) (2026-04-12)
 
 
