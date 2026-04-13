@@ -1192,6 +1192,17 @@ describe('Phase 19 provenance helpers', () => {
     assert.strictEqual(status.dirty, true);
   });
 
+  test('parseGitStatusShort ignores git --ignored markers', async () => {
+    const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+    const status = mod.parseGitStatusShort('!! .env.local\n');
+
+    assert.strictEqual(status.stagedCount, 0);
+    assert.strictEqual(status.unstagedCount, 0);
+    assert.strictEqual(status.untrackedCount, 0);
+    assert.strictEqual(status.dirty, false);
+    assert.deepStrictEqual(status.files, []);
+  });
+
   test('buildProvenanceSnapshot requires acknowledgement for material checkpoint mismatch', async () => {
     const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
     const snapshot = mod.buildProvenanceSnapshot({

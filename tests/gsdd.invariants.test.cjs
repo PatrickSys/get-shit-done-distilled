@@ -1801,7 +1801,7 @@ describe('G34c - Launch Surface Invariants', () => {
   });
 });
 
-describe('G40 - Provenance And Transition-Safety Invariants', () => {
+describe('G41 - Provenance And Transition-Safety Invariants', () => {
   test('resume workflow keeps the three truth surfaces distinct', () => {
     const content = readWorkflow('resume.md');
     assert.match(content, /checkpoint narrative truth/i,

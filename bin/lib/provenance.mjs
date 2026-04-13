@@ -23,11 +23,13 @@ export function parseGitStatusShort(statusText = '') {
 
     const indexStatus = match[1];
     const worktreeStatus = match[2];
+    if (indexStatus === '!' && worktreeStatus === '!') continue;
+
     const filePath = match[3].replace(/\\/g, '/');
     files.push({
       path: filePath,
-      staged: indexStatus !== ' ' && indexStatus !== '?',
-      unstaged: worktreeStatus !== ' ' && worktreeStatus !== '?',
+      staged: indexStatus !== ' ' && indexStatus !== '?' && indexStatus !== '!',
+      unstaged: worktreeStatus !== ' ' && worktreeStatus !== '?' && worktreeStatus !== '!',
       untracked: indexStatus === '?' || worktreeStatus === '?',
     });
   }
