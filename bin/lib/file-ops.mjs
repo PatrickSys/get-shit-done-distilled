@@ -2,9 +2,11 @@ import { cpSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writ
 import { dirname, isAbsolute, relative, resolve } from 'path';
 import { output, parseFlagValue } from './cli-utils.mjs';
 
+class FileOpError extends Error {}
+
 function fail(message) {
   console.error(message);
-  process.exit(1);
+  throw new FileOpError(message);
 }
 
 function resolveWorkspacePath(cwd, target) {
@@ -135,17 +137,25 @@ export function cmdFileOp(...args) {
   const cwd = process.cwd();
   const [operation, ...rest] = args;
 
-  switch (operation) {
-    case 'copy':
-      cmdCopy(cwd, rest);
+  try {
+    switch (operation) {
+      case 'copy':
+        cmdCopy(cwd, rest);
+        return;
+      case 'delete':
+        cmdDelete(cwd, rest);
+        return;
+      case 'regex-sub':
+        cmdRegexSub(cwd, rest);
+        return;
+      default:
+        fail('Usage: gsdd file-op <copy|delete|regex-sub> ...');
+    }
+  } catch (error) {
+    if (error instanceof FileOpError) {
+      process.exitCode = 1;
       return;
-    case 'delete':
-      cmdDelete(cwd, rest);
-      return;
-    case 'regex-sub':
-      cmdRegexSub(cwd, rest);
-      return;
-    default:
-      fail('Usage: gsdd file-op <copy|delete|regex-sub> ...');
+    }
+    throw error;
   }
 }

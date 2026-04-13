@@ -178,6 +178,7 @@ Git rules:
 - `.planning/config.json -> gitProtocol` is advisory only.
 - **Stage only files listed in the plan's `files-modified` frontmatter.** Never use `git add .` or `git add -A`. If you need to stage a file not in `files-modified`, record it as a deviation.
 - **Wrong-branch check:** Before significant implementation begins, verify HEAD is not `main` or `master` if repo convention expects a feature branch; if it is, STOP and hard-warn the user before proceeding.
+- **Transition-safety warning pass:** Before significant implementation begins, inspect staged, unstaged, untracked, unpushed, PR-less, stale/spent, and mixed-scope branch signals. Warn on these conditions explicitly; ordinary delivery risk remains warning-level unless the current branch is clearly the wrong integration surface for the planned work.
 - Do not mention phase, plan, task, or requirement IDs, or internal milestone labels, in commit messages, PR titles, or PR bodies unless explicitly requested.
 - Do not force one commit per task unless the repo or user asked for that.
 - **PR creation:** After committing work on a feature branch, create a PR before reporting completion unless the user or plan explicitly says otherwise.

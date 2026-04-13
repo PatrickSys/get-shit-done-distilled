@@ -15,9 +15,18 @@ Before starting, read these files:
 6. Relevant source code - if this phase builds on existing code, read the key files
 7. `.planning/phases/*-SUMMARY.md` for the prior completed phase - if a `<judgment>` section is present, read all four sub-sections. The `<judgment>` carries forward active constraints, unresolved uncertainty, decision posture, and anti-regression rules from the prior phase. Honor these as input context alongside SPEC.md decisions and APPROACH.md choices.
 8. **Session-boundary fallback:** If no prior completed phase SUMMARY.md with a `<judgment>` section was found in step 7, check whether `.planning/.continue-here.bak` exists. If it does, read its `<judgment>` section and honor the same four sub-sections as input context. After reading, run `gsdd file-op delete .planning/.continue-here.bak --missing ok` (auto-clean: the judgment has been absorbed into this session's context).
-
 Identify the target phase: the first phase with status `[ ]` or `[-]` in `ROADMAP.md`.
 </load_context>
+
+<integration_surface_check>
+Before planning roadmap work, inspect the live integration surface separately from checkpoint or planning artifacts:
+- current branch name
+- divergence from `main` when available
+- staged, unstaged, and untracked local truth
+- whether the current branch appears stale/spent or mixed-scope
+
+If the planning truth says "next phase is X" but the git/worktree truth says the current branch is a stale or mixed execution surface, warn explicitly and treat the dirty branch as evidence only. Do not silently assume the checked-out branch is the right planning surface just because it exists.
+</integration_surface_check>
 
 <runtime_contract>
 Use the `Runtime` and `Assurance` types from `.planning/SPEC.md`.
@@ -35,7 +44,6 @@ If upstream runtime/assurance is missing, use `status: unknown`.
 
 <context_fidelity>
 Before planning, acknowledge what is locked:
-
 - Decisions in `.planning/SPEC.md` "Key Decisions" - do not revisit them.
 - Decisions in APPROACH.md "Implementation Decisions" - these are user-validated choices. Implement the chosen approaches, not alternatives. "Agent's Discretion" items give you flexibility.
 - Patterns from previous phases - match existing conventions. Do not introduce new patterns without cause.
@@ -396,9 +404,7 @@ After the planner produces a draft plan, an independent checker reviews it in fr
 7. `context_compliance` - locked decisions are honored and deferred ideas stay out of scope
 8. `goal_achievement` - the plan, if executed perfectly, actually achieves the stated phase goal: goal addressed (tasks deliver the goal), success criteria reachable (each criterion traceable to a task verify output), and outcome observable (a human or automated check can confirm the goal was met)
 9. `approach_alignment` - when APPROACH.md exists, plans implement the chosen approaches, not alternatives. Blocker if plan contradicts an explicit user choice. Warning if plan drifts from recommendation without justification. Skipped when no APPROACH.md is provided.
-
 ### Invoking the Checker
-
 1. If `.planning/config.json` has `workflow.planCheck: false`, skip the independent checker. Perform the planner self-check below and report `reduced_assurance`.
 2. If plan checking is enabled, check if your runtime provides a `gsdd-plan-checker` agent.
 3. If a native checker agent is available, invoke it in a fresh context with only these explicit inputs:
@@ -429,15 +435,12 @@ After the planner produces a draft plan, an independent checker reviews it in fr
 6. If the checker returns `issues_found`, revise the existing plan files only where needed, then invoke the checker again.
 7. Maximum 3 checker cycles total. If blockers remain after cycle 3, stop and escalate to the user instead of pretending the plan is ready.
 8. If no native checker agent is available in your runtime, perform the planner self-check below and explicitly report `reduced_assurance` rather than claiming an independent checker ran.
-
 When the checker outcome is finalized, write the result into the plan artifact:
 - checker ran in same runtime or planner self-check only -> set frontmatter `assurance: self_checked`
 - checker ran in a different runtime/vendor and passed -> set frontmatter `assurance: cross_runtime_checked`
 - draft exists before any checker result is recorded -> keep `assurance: unreviewed`
 - record the structured outcome in the plan's `<checks>` block; do not leave the checker result only in chat context
-
 ### Orchestration Summary
-
 After plan checking completes, report:
 - target phase
 - whether independent plan checking ran
@@ -461,7 +464,6 @@ For every success criterion from `ROADMAP.md`:
 - [ ] At least one task produces an artifact that satisfies it
 - [ ] The task's `<verify>` section checks it specifically
 - [ ] The criterion is covered explicitly, not only implied
-
 ### Check Task Completeness
 For each task:
 - [ ] The `<files>` section lists every file to create or modify

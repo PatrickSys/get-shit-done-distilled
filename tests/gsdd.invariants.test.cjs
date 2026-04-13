@@ -1800,3 +1800,45 @@ describe('G34c - Launch Surface Invariants', () => {
       'agents.block.md must not duplicate launch proof posture. FIX: Keep runtime evidence wording in docs/help/package metadata instead.');
   });
 });
+
+describe('G40 - Provenance And Transition-Safety Invariants', () => {
+  test('resume workflow keeps the three truth surfaces distinct', () => {
+    const content = readWorkflow('resume.md');
+    assert.match(content, /checkpoint narrative truth/i,
+      'resume.md must keep checkpoint narrative truth explicit. FIX: Add the term to provenance reconciliation.');
+    assert.match(content, /planning\/artifact truth/i,
+      'resume.md must keep planning/artifact truth explicit. FIX: Add the term to provenance reconciliation.');
+    assert.match(content, /git\/worktree truth/i,
+      'resume.md must keep git/worktree truth explicit. FIX: Add the term to provenance reconciliation.');
+  });
+
+  test('pause workflow preserves draft-first and evidence-only continuity language', () => {
+    const content = readWorkflow('pause.md');
+    assert.match(content, /draft checkpoint from artifact truth/i,
+      'pause.md must preserve draft-first checkpointing. FIX: Add the artifact-truth draft wording.');
+    assert.match(content, /evidence-only/i,
+      'pause.md must preserve evidence-only branch/worktree wording when applicable. FIX: Add explicit evidence-only continuity language.');
+  });
+
+  test('transition-sensitive workflows separate artifact truth from live integration-surface truth', () => {
+    const expectations = [
+      ['plan.md', /integration_surface_check|stale\/spent|mixed-scope/i],
+      ['quick.md', /live branch\/worktree surface separately/i],
+      ['new-milestone.md', /Do not flatten local draft planning truth into committed repo truth/i],
+      ['complete-milestone.md', /Integration-surface warning pass/i],
+      ['execute.md', /Transition-safety warning pass/i],
+    ];
+
+    for (const [file, pattern] of expectations) {
+      assert.match(readWorkflow(file), pattern,
+        `${file} must keep the integration-surface safety wording. FIX: Restore the warning pass or truth-separation language.`);
+    }
+  });
+
+  test('verify and audit workflow contracts keep fail-closed terminal write gates', () => {
+    assert.match(readWorkflow('verify.md'), /Before any ROADMAP closure.*SUMMARY\.md.*still exists on disk/i,
+      'verify.md must keep the summary existence gate before ROADMAP closure. FIX: Restore the fail-closed summary check.');
+    assert.match(readWorkflow('audit-milestone.md'), /results shown inline anyway/i,
+      'audit-milestone.md must keep the no-inline-fallback warning. FIX: Preserve the fail-closed audit write gate wording.');
+  });
+});

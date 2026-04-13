@@ -2655,3 +2655,55 @@ describe('G39 - Health Check ID Consistency', () => {
       `TRUTH_CHECK_IDS declares IDs with no matching warning push in health-truth.mjs: ${extra.join(', ')}. FIX: Remove the extra IDs or add the missing push call.`);
   });
 });
+
+describe('G40 - Provenance And Write-Gate Contracts', () => {
+  const workflowsDir = path.join(ROOT, 'distilled', 'workflows');
+
+  test('pause.md enforces draft-first checkpointing with a three-question cap', () => {
+    const content = fs.readFileSync(path.join(workflowsDir, 'pause.md'), 'utf-8');
+    assert.match(content, /Build a draft checkpoint from artifact truth/i,
+      'pause.md must require draft-first checkpointing. FIX: Add artifact-derived draft wording to <gather_state>.');
+    assert.match(content, /Ask at most 3 high-signal questions total/i,
+      'pause.md must cap checkpoint corrections at 3 questions. FIX: Add the three-question cap to <gather_state>.');
+  });
+
+  test('resume.md reconciles checkpoint, planning, and git/worktree truth with explicit mismatch acknowledgement', () => {
+    const content = fs.readFileSync(path.join(workflowsDir, 'resume.md'), 'utf-8');
+    assert.match(content, /checkpoint narrative truth/i,
+      'resume.md must name checkpoint narrative truth. FIX: Add it to provenance reconciliation.');
+    assert.match(content, /planning\/artifact truth/i,
+      'resume.md must name planning/artifact truth. FIX: Add it to provenance reconciliation.');
+    assert.match(content, /git\/worktree truth/i,
+      'resume.md must name git/worktree truth. FIX: Add it to provenance reconciliation.');
+    assert.match(content, /require explicit acknowledgement/i,
+      'resume.md must require explicit acknowledgement on material mismatch. FIX: Add acknowledgement gating to determine_action/present_options.');
+    assert.match(content, /bare "continue" skip the warning/i,
+      'resume.md must forbid bare "continue" on material mismatch. FIX: Keep the mismatch acknowledgement warning in present_options.');
+  });
+
+  test('transition-sensitive workflows reuse stale-branch and mixed-scope warning language', () => {
+    const checks = [
+      ['plan.md', /stale\/spent|mixed-scope/i],
+      ['quick.md', /stale\/spent|mixed-scope/i],
+      ['new-milestone.md', /stale\/spent|mixed-scope/i],
+      ['complete-milestone.md', /mixed-scope|stale branch/i],
+      ['execute.md', /stale\/spent|mixed-scope/i],
+    ];
+
+    for (const [file, pattern] of checks) {
+      const content = fs.readFileSync(path.join(workflowsDir, file), 'utf-8');
+      assert.match(content, pattern,
+        `${file} must preserve transition-safety warning language. FIX: Add stale/mixed integration-surface warnings.`);
+    }
+  });
+
+  test('verify and audit-milestone fail closed on missing terminal artifacts', () => {
+    const verify = fs.readFileSync(path.join(workflowsDir, 'verify.md'), 'utf-8');
+    const audit = fs.readFileSync(path.join(workflowsDir, 'audit-milestone.md'), 'utf-8');
+
+    assert.match(verify, /Before any ROADMAP closure.*SUMMARY\.md.*still exists on disk/i,
+      'verify.md must confirm SUMMARY.md exists before ROADMAP closure. FIX: Add the fail-closed summary existence gate.');
+    assert.match(audit, /Do NOT downgrade a write failure into "results shown inline anyway\."/i,
+      'audit-milestone.md must not present durable results when the audit file was not written. FIX: Keep the fail-closed write gate wording.');
+  });
+});

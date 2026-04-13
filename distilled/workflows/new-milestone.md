@@ -23,6 +23,16 @@ Before starting, read these files:
 4. `.planning/config.json` — `workflow.research`, `researchDepth`, `gitProtocol`
 </load_context>
 
+<integration_surface_check>
+Before mutating milestone truth, inspect the current branch/worktree as a separate provenance surface:
+- current branch
+- divergence from `main`
+- staged / unstaged / untracked local truth
+- whether the branch appears stale/spent or mixed-scope
+
+If milestone truth on disk is local-only or AI-generated draft truth, or if the checked-out branch is clearly not the intended integration surface, say so explicitly before continuing. Do not flatten local draft planning truth into committed repo truth.
+</integration_surface_check>
+
 <process>
 
 ## 1. Present What Shipped Last
