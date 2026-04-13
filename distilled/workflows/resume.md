@@ -61,7 +61,38 @@ Scan `.planning/phases/` for:
 
 **Quick task log:**
 If `.planning/quick/LOG.md` exists, read the last entry. Check if it has a non-terminal status (not `done`/`passed`).
+
+**Git/worktree truth:**
+Collect the live integration-surface facts separately from checkpoint narrative truth:
+- current branch name
+- branch divergence from `main` (and tracked remote when available)
+- staged pending truth
+- unstaged local edits
+- untracked local files
+- PR presence/state when available
+- whether the current branch appears stale/spent or the dirty tree appears mixed-scope
 </load_artifacts>
+
+<provenance_reconciliation>
+Before routing, reconstruct and compare these truth buckets explicitly:
+
+1. **Checkpoint narrative truth** — what `.planning/.continue-here.md` claims was happening
+2. **Planning/artifact truth** — what ROADMAP, SPEC, phase files, and quick-task logs say
+3. **Git/worktree truth** — what the live branch and working tree say now
+
+Treat them as separate inputs. Do not flatten them into one continuity story.
+
+Material mismatch signals include:
+- checkpoint narrative describes only a narrow slice of a broader dirty tree
+- current branch is stale/spent relative to the next intended integration surface
+- dirty files suggest overlapping write sets or mixed phase scope
+
+If git/worktree truth materially disagrees with checkpoint narrative truth:
+- record a mismatch flag
+- keep ordinary git risk warning-level by default
+- require explicit user acknowledgement before routing onward
+- do not allow a quick "continue" shortcut to skip that acknowledgement
+</provenance_reconciliation>
 
 <validate_checkpoint>
 Only run this step when `.planning/.continue-here.md` was found in `<load_artifacts>`. If no checkpoint exists, skip this step entirely.
@@ -122,6 +153,21 @@ Checkpoint found: [workflow type] — [phase name or task description]
     Anti-regression:
 [Full content of <anti_regression>]
 
+[If git/worktree truth was collected:]
+Git/worktree truth:
+  Branch: [current branch]
+  Divergence: [ahead/behind or unknown]
+  Staged: [count]
+  Unstaged: [count]
+  Untracked: [count]
+  PR: [open|closed|merged|none|unknown]
+  Integration surface: [clean | warning | stale/spent | mixed-scope]
+
+[If material checkpoint/worktree mismatch flag set:]
+⚠ Checkpoint/worktree mismatch
+  The checkpoint narrative no longer matches the live branch/worktree scope.
+  Review both truth surfaces before choosing the next action.
+
 [If incomplete phase execution found:]
 Incomplete execution: Phase [N] has a PLAN but no SUMMARY
 
@@ -144,6 +190,8 @@ Route based on the `workflow` frontmatter:
 - `generic` — present the next_action and let the user decide
 
 If `<validate_checkpoint>` marked the checkpoint as stale, keep the same routing logic. The user may still choose to resume from the checkpoint after reviewing the warning. If the user chooses a different path, leave the checkpoint in place and continue without it.
+
+If `<provenance_reconciliation>` marked a material checkpoint/worktree mismatch, keep the same routing logic but require explicit acknowledgement before continuing. The workflow should not silently route onward from a materially misleading checkpoint narrative.
 
 **Incomplete plan execution (PLAN without SUMMARY):**
 Route to `/gsdd-execute` for that phase.
@@ -170,7 +218,9 @@ What would you like to do?
 4. Something else
 ```
 
-**Quick-resume shortcut:** If the user says "continue", "go", or "resume" without further input, skip the options and execute the primary action directly.
+**Quick-resume shortcut:** If there is no stale-checkpoint banner and no material checkpoint/worktree mismatch, the user may say "continue", "go", or "resume" without further input to execute the primary action directly.
+
+**Mismatch acknowledgement:** If material checkpoint/worktree mismatch was detected, require an explicit acknowledgement such as "continue despite mismatch" or a different selected path. Do not let a bare "continue" skip the warning.
 
 Wait for user selection.
 </present_options>

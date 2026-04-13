@@ -722,3 +722,43 @@ describe('S6 — Branch Safety Propagation', () => {
       'PR #91 regression fixture must preserve the leaked phase and requirement labels.');
   });
 });
+
+describe('S7 — Provenance Propagation', () => {
+  let tmpDir;
+
+  beforeEach(async () => {
+    tmpDir = createTempProject();
+    await initProject(tmpDir, '--auto', '--tools', 'claude');
+  });
+
+  afterEach(() => { cleanup(tmpDir); });
+
+  test('pause skill preserves draft-first checkpointing and three-question cap', () => {
+    const content = readSkill(tmpDir, 'gsdd-pause');
+    assert.match(content, /Build a draft checkpoint from artifact truth/i,
+      'generated pause skill must preserve draft-first checkpointing.');
+    assert.match(content, /Ask at most 3 high-signal questions total/i,
+      'generated pause skill must preserve the three-question cap.');
+  });
+
+  test('resume skill preserves provenance truth split and mismatch acknowledgement', () => {
+    const content = readSkill(tmpDir, 'gsdd-resume');
+    assert.match(content, /checkpoint narrative truth/i,
+      'generated resume skill must preserve checkpoint narrative truth.');
+    assert.match(content, /planning\/artifact truth/i,
+      'generated resume skill must preserve planning/artifact truth.');
+    assert.match(content, /git\/worktree truth/i,
+      'generated resume skill must preserve git/worktree truth.');
+    assert.match(content, /continue despite mismatch/i,
+      'generated resume skill must preserve explicit mismatch acknowledgement examples.');
+  });
+
+  test('verify and audit skills preserve fail-closed terminal artifact gates', () => {
+    const verify = readSkill(tmpDir, 'gsdd-verify');
+    const audit = readSkill(tmpDir, 'gsdd-audit-milestone');
+    assert.match(verify, /Before any ROADMAP closure.*SUMMARY\.md.*still exists on disk/i,
+      'generated verify skill must preserve the SUMMARY.md existence gate.');
+    assert.match(audit, /results shown inline anyway/i,
+      'generated audit skill must preserve the no-inline-fallback write gate wording.');
+  });
+});

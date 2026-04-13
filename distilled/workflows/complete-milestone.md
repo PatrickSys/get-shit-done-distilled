@@ -33,6 +33,7 @@ Check:
 - **Phase completion**: Are all ROADMAP.md phases for this milestone marked `[x]`? List any that are not.
 - **Audit status**: Does a MILESTONE-AUDIT.md exist and have status `passed`? If it has status `gaps_found`, the milestone has open gaps.
 - **Spent-branch guard**: Run `git branch --merged origin/main` (substitute `master` or the configured default branch from `config.json → gitProtocol.branch` if different) and verify HEAD is not a spent/already-merged branch. If the current branch already backs a merged PR, STOP - do not instruct any commit or tag operations. Prompt the user to check out a fresh active branch before continuing.
+- **Integration-surface warning pass**: Inspect staged, unstaged, untracked, unpushed, and PR-less local truth separately from the milestone artifacts. Warn if the archive is being attempted from a mixed-scope or stale branch even when the milestone documents themselves look complete.
 
 **If phases incomplete or audit not passed:**
 

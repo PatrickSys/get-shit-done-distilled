@@ -344,6 +344,8 @@ This is non-negotiable. Verification output that exists only in chat context wil
 
 If you cannot write the file (permissions, path issue), STOP and report the blocker to the user. Do NOT silently skip the write.
 
+Before any ROADMAP closure step, confirm the required phase `SUMMARY.md` still exists on disk. If `SUMMARY.md` is missing, STOP and report the blocker — do NOT treat verification as terminally successful and do NOT close ROADMAP state from conversation context alone.
+
 After writing VERIFICATION.md, if `status: passed`, run `gsdd phase-status {phase_num} done` to close the phase entry in `.planning/ROADMAP.md`. Execute is the primary owner of ROADMAP status, but execute can be interrupted before its state_updates run. Verify is the terminal workflow and must close the ROADMAP entry when it confirms the phase is complete. If the helper cannot update ROADMAP.md (path issue, missing phase, invalid state), STOP and report the blocker — do NOT complete verification without closing the phase.
 </persistence>
 
@@ -362,6 +364,7 @@ Verification is done when all of these are true:
 - [ ] `VERIFICATION.md` frontmatter records git delivery metadata for the current branch
 - [ ] Verification explicitly reviewed SUMMARY `<handoff>` and `<deltas>` content
 - [ ] Status is one of `passed`, `gaps_found`, or `human_needed`
+- [ ] The required phase `SUMMARY.md` still exists before any ROADMAP closure on passed status
 - [ ] If status is `passed`, ROADMAP.md phase entry is `[x]` via `gsdd phase-status`
 - [ ] The developer was informed of the result and recommended next step
 - [ ] Related failures grouped by concern, not returned as a flat symptom list

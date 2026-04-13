@@ -6,6 +6,7 @@ const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { runGsdTools, createTempProject, cleanup } = require('./helpers.cjs');
 const {
   createTempProject: createGsddTempProject,
@@ -1177,6 +1178,52 @@ describe('Phase 18 deterministic CLI mechanics', () => {
     } finally {
       process.chdir(previousCwd);
     }
+  });
+});
+
+describe('Phase 19 provenance helpers', () => {
+  test('parseGitStatusShort separates staged, unstaged, and untracked files', async () => {
+    const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+    const status = mod.parseGitStatusShort('M  README.md\n M distilled/workflows/resume.md\n?? bin/lib/provenance.mjs\n');
+
+    assert.strictEqual(status.stagedCount, 1);
+    assert.strictEqual(status.unstagedCount, 1);
+    assert.strictEqual(status.untrackedCount, 1);
+    assert.strictEqual(status.dirty, true);
+  });
+
+  test('parseGitStatusShort ignores git --ignored markers', async () => {
+    const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+    const status = mod.parseGitStatusShort('!! .env.local\n');
+
+    assert.strictEqual(status.stagedCount, 0);
+    assert.strictEqual(status.unstagedCount, 0);
+    assert.strictEqual(status.untrackedCount, 0);
+    assert.strictEqual(status.dirty, false);
+    assert.deepStrictEqual(status.files, []);
+  });
+
+  test('buildProvenanceSnapshot requires acknowledgement for material checkpoint mismatch', async () => {
+    const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+    const snapshot = mod.buildProvenanceSnapshot({
+      checkpoint: { workflow: 'generic', runtime: 'codex-cli', hasNarrative: true },
+      planning: { currentPhase: '19', nextPhase: '20', completedPhaseCount: 21 },
+      git: {
+        branch: 'feat/example',
+        prState: 'none',
+        commitsAheadOfMain: 2,
+        commitsAheadOfRemote: 1,
+        statusShort: 'M  README.md\n?? tests/new.test.cjs\n',
+        staleBranch: true,
+        mixedScope: true,
+        materialCheckpointMismatch: true,
+      },
+    });
+
+    assert.strictEqual(snapshot.requiresAcknowledgement, true);
+    assert.ok(snapshot.warnings.some((warning) => warning.id === 'checkpoint_mismatch'));
+    assert.ok(snapshot.warnings.some((warning) => warning.id === 'stale_branch'));
+    assert.strictEqual(snapshot.git.untrackedCount, 1);
   });
 });
 

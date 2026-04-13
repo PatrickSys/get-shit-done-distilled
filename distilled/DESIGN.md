@@ -1841,6 +1841,97 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 
 ---
 
+## D43 - Resume Provenance Truth Split
+
+**Decision (2026-04-13):** `resume.md` must reconcile three truth surfaces explicitly instead of treating a structurally valid checkpoint as sufficient truth on its own.
+
+**Context:**
+- The 2026-04-12 failure chain showed that a generic checkpoint can be structurally valid while materially understating the live branch/worktree scope.
+- The continuity boundary from D40/D41/D42 solved judgment persistence, but it did not yet distinguish checkpoint narrative truth from live git/worktree truth when the checked-out branch is stale, mixed-scope, or otherwise not the intended execution surface.
+- Phase 19 required resume UX hardening for `LAUNCH-09` and provenance/trust separation for `LAUNCH-10`.
+
+**Decision:**
+- `resume.md` must surface and reconcile three truth buckets:
+  - **checkpoint narrative truth**
+  - **planning/artifact truth**
+  - **git/worktree truth**
+- `pause.md` must build a checkpoint draft from artifact truth first, then ask only bounded correction questions rather than asking the user to reconstruct obvious repo state from scratch.
+- Material mismatch between checkpoint narrative truth and git/worktree truth must become a first-class warning with explicit acknowledgement before continuing.
+- Ordinary git risk remains warning-level by default. The stronger acknowledgement gate is reserved for material mismatch, not generic dirtiness.
+
+**Why this fits the codebase:**
+- GSDD already treats repo truth as authoritative when docs and repo disagree. This decision extends that hierarchy to session continuity by preventing `.continue-here.md` from silently outranking the live integration surface.
+- The change keeps the product file-based and workflow-driven. It does not add a new public command or a new project-scoped state file.
+- The shared helper stays internal because the user-facing behavior belongs in workflows, while the classification logic belongs in reusable library code.
+
+**Evidence:**
+- `.internal-research/gaps.md` items `I29` and `I30`
+- `.internal-research/TODO.md` notes on stale checkpoints, worktree drift, and parallel worktree rules
+- `.internal-research/consumer-audits/worktree-provenance-and-checkpoint-drift-2026-04-12.md`
+- `distilled/workflows/pause.md` (draft-first checkpointing, 3-question cap, evidence-only language)
+- `distilled/workflows/resume.md` (`<provenance_reconciliation>`, explicit mismatch acknowledgement)
+- `bin/lib/provenance.mjs`
+- `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.invariants.test.cjs`
+- External: GitHub Docs on checking branch divergence and working tree state; OpenAI/Anthropic guidance on grounding agent actions in current tool-observed state rather than conversational assumptions
+
+**Consequences:**
+- Resume is now conservative by design when a checkpoint narrative is stale relative to the live branch/worktree.
+- Future workflows that route from checkpoint state must preserve the same truth separation instead of flattening narrative, planning, and git state into one status line.
+- Phase 22 must replay the 2026-04-12 incident and prove this separation holds end-to-end.
+
+**GSD comparison:** GSD's flow relies more heavily on the operator and commit discipline to keep resume context aligned with branch truth. GSDD keeps the lighter-weight continuity surface, but compensates by making the truth split explicit inside the resume workflow.
+
+**GSDD implementation:** `distilled/workflows/pause.md`, `distilled/workflows/resume.md`, `bin/lib/provenance.mjs`, `.planning/SPEC.md`, `.planning/ROADMAP.md`, `.internal-research/TODO.md`, `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.invariants.test.cjs`
+
+---
+
+## D44 - Warning-First Transition Safety And Fail-Closed Terminal Writes
+
+**Decision (2026-04-13):** GSDD uses one warning-first provenance pattern across transition-sensitive workflows, while terminal artifact gates fail closed when the required durable output does not exist on disk.
+
+**Context:**
+- Phase 20 needed a single transition-safety posture for `pause`, `resume`, `plan`, `execute`, `new-milestone`, `quick`, and `complete-milestone` instead of each workflow inventing its own git-risk language.
+- The same failure chain also exposed a different class of problem: terminal workflows could present closure-like outcomes even when the required durable artifact was missing.
+- D38 previously accepted retroactive artifact enforcement for an older closure gap. The new failure mode is narrower and higher leverage: terminal verification and milestone audit must not present durable completion outcomes without their mandatory artifacts.
+
+**Decision:**
+- Transition-sensitive workflows share one warning pattern for:
+  - staged, unstaged, and untracked work
+  - unpushed commits
+  - PR-less integration surfaces
+  - stale/spent branches relative to `main`
+  - mixed-scope working trees
+- These conditions are warning-first by default. They should inform routing and user acknowledgement, not become blanket hard blockers.
+- Two terminal write gates fail closed under `LAUNCH-13`:
+  - `verify.md` must not advance ROADMAP closure on a passed result unless the required `SUMMARY.md` still exists on disk
+  - `audit-milestone.md` must not present a durable audit result unless `MILESTONE-AUDIT.md` was written successfully
+- This slice does not introduce managed worktree orchestration or a new public provenance command.
+
+**Why this fits the codebase:**
+- Warning-first delivery preserves GSDD's portable, advisory git stance instead of turning the kernel into an intrusive branch manager.
+- Fail-closed write gates are justified here because verification and milestone audit are terminal state transitions. If their durable artifact is missing, the claimed state transition is not trustworthy.
+- Keeping the gate narrow avoids reopening D38 into a broad CLI policy layer.
+
+**Evidence:**
+- `.planning/SPEC.md` `LAUNCH-12` and `LAUNCH-13`
+- `.planning/ROADMAP.md` Phase 20 and Phase 22 scope notes
+- `distilled/workflows/plan.md`, `execute.md`, `quick.md`, `new-milestone.md`, `complete-milestone.md`
+- `distilled/workflows/verify.md`, `distilled/workflows/audit-milestone.md`
+- `bin/lib/provenance.mjs`
+- `tests/gsdd.guards.test.cjs`, `tests/gsdd.invariants.test.cjs`, `tests/gsdd.scenarios.test.cjs`
+- External: NIST detective vs preventive control framing; GitHub guidance on protected branches and review signals as advisory integration metadata rather than direct truth
+
+**Consequences:**
+- Workflow routing can warn consistently about risky integration surfaces without forcing managed branch behavior before launch.
+- Terminal audit/verification claims now depend on durable write success, not just conversational success.
+- Phase 22 proof scope expands to cover both provenance warnings and fail-closed terminal writes.
+
+**GSD comparison:** GSD relies more on explicit commit and CLI discipline for transition safety. GSDD continues to strip that rigidity from the portable core, but adds explicit warning reuse and narrow fail-closed gates where launch trust depends on artifact presence.
+
+**GSDD implementation:** `distilled/workflows/plan.md`, `distilled/workflows/execute.md`, `distilled/workflows/quick.md`, `distilled/workflows/new-milestone.md`, `distilled/workflows/complete-milestone.md`, `distilled/workflows/verify.md`, `distilled/workflows/audit-milestone.md`, `bin/lib/provenance.mjs`, `.planning/SPEC.md`, `.planning/ROADMAP.md`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.invariants.test.cjs`, `tests/gsdd.scenarios.test.cjs`
+
+---
+
 ## Maintenance
 
 This document is updated when:

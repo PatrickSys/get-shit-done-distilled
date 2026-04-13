@@ -33,6 +33,8 @@ Store the detected work type as `$WORK_TYPE` (one of: `phase`, `quick`, `generic
 </detect_work>
 
 <gather_state>
+Build a draft checkpoint from artifact truth before asking the user to restate work. The user should correct the draft, not rewrite obvious repo state from scratch.
+
 Ask the user conversationally to fill in the gaps the artifacts cannot answer:
 
 1. **What was completed** this session
@@ -43,14 +45,21 @@ Ask the user conversationally to fill in the gaps the artifacts cannot answer:
 6. **What to do first** when resuming
 7. **Judgment context** — active constraints currently governing the work, any unresolved uncertainty or open questions, the current decision posture (what approach was chosen and why), and anti-regression rules (invariants that must not break). Pre-fill from SPEC.md constraints and APPROACH.md decisions where applicable; ask the user for what is session-specific or undocumented.
 
-Read the relevant artifacts to pre-fill what you can:
+Read the relevant artifacts and current integration surface to pre-fill what you can:
 - For phase work: read the PLAN file and any partial SUMMARY — use these to pre-fill remaining_work and decisions where possible; only ask the user for gaps
 - For quick tasks: read the quick task PLAN and LOG.md entry — same pre-fill approach
-- For generic work: all six points must come from the user (no artifacts to derive from); ask all six explicitly
+- For generic work: derive everything you can from repo state first, then ask only for what remains unknown
+
+Question budget:
+- Ask at most 3 high-signal questions total
+- Prefer confirmation/correction prompts over open-ended recap prompts
+- If repo/artifact truth already answers a point, do not ask the user to repeat it
 </gather_state>
 
 <write_checkpoint>
 Before writing the new checkpoint, run `gsdd file-op delete .planning/.continue-here.bak --missing ok` to clear the prior session backup. This is cleanup-only and should no-op safely if the backup is absent.
+
+When the current branch/worktree is known to be evidence-only, stale/spent, or otherwise not the next intended execution surface, say that explicitly in `<current_state>`, `<remaining_work>`, and `<anti_regression>`. Do not flatten evidence-only local state into the same continuity story as the next execution surface.
 
 Write `.planning/.continue-here.md` with the following structure:
 

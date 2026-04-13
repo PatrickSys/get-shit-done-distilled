@@ -39,6 +39,7 @@ Store the response as `$DESCRIPTION`. If empty, re-prompt.
 4. Create `.planning/quick/$NEXT_NUM-$SLUG/`.
 5. If `.planning/codebase/` exists, read `.planning/codebase/ARCHITECTURE.md` and `.planning/codebase/STACK.md`. Summarize key findings in <=500 words as `$CODEBASE_CONTEXT`. If `.planning/codebase/` does not exist, set `$CODEBASE_CONTEXT` to empty.
 6. **Session-boundary fallback:** If `.planning/.continue-here.bak` exists, read its `<judgment>` section. Use `<active_constraints>` and `<anti_regression>` rules as task-scoping context (do not violate active constraints; do not regress on listed invariants). After reading, run `gsdd file-op delete .planning/.continue-here.bak --missing ok` (auto-clean).
+7. Inspect the live branch/worktree surface separately from checkpoint or planning artifacts. If the current branch appears stale/spent, PR-less with overlapping write scope, or otherwise like the wrong execution surface, warn before proceeding. This is advisory for quick tasks unless the mismatch makes the task description materially misleading.
 
 If `.planning/quick/` does not exist, create it along with an empty `LOG.md`:
 
