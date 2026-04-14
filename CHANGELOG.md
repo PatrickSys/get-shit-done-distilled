@@ -1,3 +1,10 @@
+## [0.16.1](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.16.0...v0.16.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* keep launch-surface guards on tracked files ([3186d92](https://github.com/PatrickSys/get-shit-done-distilled/commit/3186d92311a4317345e6ca9d259fafb1693e07f2))
+
 # [0.16.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.15.1...v0.16.0) (2026-04-13)
 
 
