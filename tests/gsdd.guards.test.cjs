@@ -22,6 +22,12 @@ function lineCount(filePath) {
   return fs.readFileSync(filePath, 'utf-8').split('\n').length;
 }
 
+function introBeforeWhatThisIs(markdown) {
+  const marker = '\n## What This Is';
+  const idx = markdown.indexOf(marker);
+  return idx === -1 ? markdown : markdown.slice(0, idx);
+}
+
 describe('G9 - Generation Manifest Contract', () => {
   test('bin/lib/manifest.mjs exists', () => {
     assert.ok(fs.existsSync(MANIFEST_MODULE),
@@ -2552,6 +2558,46 @@ describe('G37 - Launch Surface Consistency', () => {
       'README.md must describe GSDD as a repo-native workflow kernel. FIX: Use the kernel framing in the public intro.');
     assert.match(distilledReadme, /repo-native workflow kernel/i,
       'distilled/README.md must describe GSDD as a repo-native workflow kernel. FIX: Align the distilled intro with the launch framing.');
+  });
+
+  test('lead launch copy is product-first instead of origin-first', () => {
+    const rootIntro = introBeforeWhatThisIs(fs.readFileSync(README_MD, 'utf-8'));
+    const distilledIntro = introBeforeWhatThisIs(fs.readFileSync(DISTILLED_README_MD, 'utf-8'));
+    assert.match(rootIntro, /planning, execution, verification, and handoff spine/i,
+      'README.md must lead with what Northline does. FIX: Make the first explanatory paragraph describe the planning/execution/verification/handoff spine.');
+    assert.doesNotMatch(rootIntro, /Distilled from|Get Shit Done/i,
+      'README.md lead copy must not foreground origin-story wording. FIX: Move GSD attribution out of the lead intro.');
+    assert.match(distilledIntro, /planning, execution, verification, and handoff/i,
+      'distilled/README.md must lead with what Northline does. FIX: Make the first explanatory paragraph describe the repo spine before any origin context.');
+    assert.doesNotMatch(distilledIntro, /Distilled from|from GSD/i,
+      'distilled/README.md lead copy must not foreground GSD origin wording. FIX: Move origin context out of the lead intro.');
+  });
+
+  test('public launch surfaces use Northline as the product brand while keeping gsdd-cli as the package', () => {
+    const rootReadme = fs.readFileSync(README_MD, 'utf-8');
+    const distilledReadme = fs.readFileSync(DISTILLED_README_MD, 'utf-8');
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
+    assert.match(rootReadme, /# Northline/i,
+      'README.md must lead with the Northline product name. FIX: Rename the public title to Northline.');
+    assert.match(distilledReadme, /# Northline/i,
+      'distilled/README.md must lead with the Northline product name. FIX: Rename the distilled public title to Northline.');
+    assert.match(pkg.description, /Northline/i,
+      'package.json description must mention Northline. FIX: Align package metadata with the public brand.');
+    assert.strictEqual(pkg.name, 'gsdd-cli',
+      'package.json name must remain gsdd-cli. FIX: Keep the package name stable while the public product brand changes.');
+  });
+
+  test('planning truth surfaces use qualified_support instead of governance_only', () => {
+    const planningSpec = fs.readFileSync(path.join(ROOT, '.planning', 'SPEC.md'), 'utf-8');
+    const planningResearch = fs.readFileSync(path.join(ROOT, '.planning', 'research', '09-RESEARCH.md'), 'utf-8');
+    assert.doesNotMatch(planningSpec, /governance_only/i,
+      '.planning/SPEC.md must not expose governance_only after Phase 21. FIX: Use qualified_support wording in the runtime matrix.');
+    assert.match(planningSpec, /qualified_support/i,
+      '.planning/SPEC.md must describe the non-parity launch tier as qualified_support. FIX: Update the runtime matrix wording.');
+    assert.doesNotMatch(planningResearch, /governance_only/i,
+      '.planning/research/09-RESEARCH.md must not expose governance_only after Phase 21. FIX: Replace the tier wording.');
+    assert.match(planningResearch, /qualified_support/i,
+      '.planning/research/09-RESEARCH.md must describe the launch-facing non-parity tier as qualified_support. FIX: Update the tier table and runtime entries.');
   });
 
   test('README install command and package metadata stay aligned', () => {
