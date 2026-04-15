@@ -2624,17 +2624,19 @@ describe('G37 - Launch Surface Consistency', () => {
       'package.json name must remain gsdd-cli. FIX: Keep the package name stable while the public product name is still only locked in planning truth.');
   });
 
-  test('phase 23 posture lock keeps later v1.2.0 work explicit after the naming lock', () => {
+  test('v1.2.0 archive preserves the posture-lock handoff without reverting naming truth', () => {
     const planningSpec = fs.readFileSync(PLANNING_SPEC_MD, 'utf-8');
     const roadmap = fs.readFileSync(PLANNING_ROADMAP_MD, 'utf-8');
-    assert.match(planningSpec, /release packaging truth|milestone-close verification|\/gsdd-verify 27/i,
-      '.planning/SPEC.md must keep the remaining v1.2.0 work explicit after the posture lock. FIX: Do not imply that the naming lock finished the whole fork-honest hardening milestone.');
+    assert.match(planningSpec, /v1\.2\.0 Fork-Honest Launch Hardening — SHIPPED|\/gsdd-new-milestone/i,
+      '.planning/SPEC.md must reflect the shipped v1.2.0 state after archive. FIX: Update Current State instead of restoring active-milestone wording.');
     assert.match(roadmap, /Phase 24: Naming Contract Reconciliation/i,
-      '.planning/ROADMAP.md must keep Phase 24 active after the posture lock. FIX: Preserve naming-surface reconciliation as later work.');
+      '.planning/ROADMAP.md must preserve the archived naming-surface reconciliation path. FIX: Keep the v1.2.0 phase chain visible after collapse.');
     assert.match(roadmap, /Phase 25: Public Proof Export/i,
-      '.planning/ROADMAP.md must keep Phase 25 active after the posture lock. FIX: Preserve proof export as later work.');
+      '.planning/ROADMAP.md must preserve the archived proof-export path. FIX: Keep the v1.2.0 phase chain visible after collapse.');
     assert.match(roadmap, /Phase 27: Release Packaging Audit/i,
-      '.planning/ROADMAP.md must keep Phase 27 active after the posture lock. FIX: Preserve release-surface packaging work as later work.');
+      '.planning/ROADMAP.md must preserve the archived release-packaging path. FIX: Keep the v1.2.0 phase chain visible after collapse.');
+    assert.match(roadmap, /Workspine/i,
+      '.planning/ROADMAP.md must keep the Workspine handoff visible after archive. FIX: Preserve the posture-lock summary in the collapsed milestone block.');
     assert.doesNotMatch(roadmap, /Northline/,
       '.planning/ROADMAP.md must not keep Northline as the active public-name target after the Workspine lock. FIX: Remove stale Northline-specific phase wording.');
   });
