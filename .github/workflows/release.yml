@@ -29,6 +29,9 @@ jobs:
       - name: Run tests
         run: npm run test:gsdd
 
+      - name: Audit packed tarball surface
+        run: npm pack --dry-run --json
+
       - name: Authenticate to npm via OIDC trusted publisher
         run: |
           OIDC_TOKEN=$(curl -fsSL \

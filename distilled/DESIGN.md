@@ -1932,6 +1932,91 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 
 ---
 
+## D45 - Fork-Honest Launch Posture Before Identity Migration
+
+**Decision (2026-04-15):** GSDD keeps a fork-honest launch posture until package, workspace, help, proof, and release surfaces are migrated together. `Workspine` is the active public-name target in planning truth, but do not present an independent product identity as already complete while the operative contracts remain `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/`.
+
+**Context:**
+- The v1.1 launch jury split repo truth into two layers: the core delivery kernel is real, but the public release surface still over-relied on internal and gitignored proof.
+- The next-milestone challenge pass found that `.planning/` is not a cheap cosmetic constant. It is a deep runtime, workflow, template, and test contract across the framework repo.
+- The same pass also found that a split public-name story layered on top of `gsdd-cli` / `gsdd` / `.planning` made the product look more independent than the install, workspace, and proof surfaces could honestly support.
+
+**Decision:**
+- v1.2.0 is scoped as **fork-honest launch hardening**, not as an independent rename milestone.
+- `Workspine` is the primary public product name in planning truth for v1.2.0, but it is not yet a full package/workspace/help contract migration.
+- Keep `.planning`, `gsdd-cli`, `gsdd`, and `gsdd-*` intentionally in the active launch contract.
+- Remove or demote independent-brand assumptions from planning and public-surface truth until a dedicated migration milestone proves the full blast radius is handled.
+- Treat identity migration as real engineering work across code, docs, help text, generated surfaces, tests, and release packaging — not as copy cleanup.
+- Keep the release-floor packaging story repo-tracked and inspectable: package metadata, tarball audit, `SECURITY.md`, and repo-owned release automation must align without relying on unpublished release artifacts or broader runtime-parity claims.
+
+**Why this fits the codebase:**
+- It preserves the already-shipped repo-native kernel and avoids turning a launch-hardening milestone into a hidden workspace/package migration.
+- It keeps product truth aligned with what the repo can actually prove today.
+- It narrows the next milestone to the highest-leverage launch debt: public identity coherence, public proof export, packaging truth, and post-archive routing integrity.
+
+**Evidence:**
+- `.planning/SPEC.md` v1.2.0 active requirements and current-state posture
+- `.planning/ROADMAP.md` v1.2.0 Phase 23-27 ownership
+- `.internal-research/TODO.md` active milestone notes
+- `.internal-research/gaps.md` `I39`
+- `.internal-research/release-jury-verdict-2026-04-15.md`
+- `.internal-research/release-jury-public-truth-drift-2026-04-15.md`
+- `.internal-research/public-release-two-layer-brief-2026-04-15.md`
+- `get-shit-done/workflows/progress.md` (GSD's archived-state heuristic still assumes ROADMAP removal, which is one reason GSDD must be explicit when it diverges)
+
+**Consequences:**
+- Public launch work must make proof inspectable from tracked/public artifacts instead of citing `.planning/` or `.internal-research/`.
+- `Northline` is retired as the default launch-facing brand direction; `Workspine` is the only active public-name target in planning truth until later phases prove the tracked public surface can support it honestly.
+- If a future session wants independent identity, it should open a dedicated migration milestone rather than sneaking the blast radius into generic launch cleanup.
+- Release packaging and repo-owner surfaces must stay aligned to current repo truth. If a package/help/release workflow change would reintroduce stale owner residue or parity overstatement, treat that as fork-honest launch drift rather than as harmless metadata cleanup.
+
+**GSD comparison:** GSD keeps identity and workflow contracts coupled; its archived-state routing still assumes the active roadmap disappears. GSDD is diverging on archive-state persistence, so it must also stay explicit and conservative about identity/proof claims rather than layering a cosmetic product rename on top of unresolved contract differences.
+
+**GSDD implementation:** `.planning/SPEC.md`, `.planning/ROADMAP.md`, `.internal-research/TODO.md`, `.internal-research/gaps.md`, `.internal-research/lessons-learned.md`
+
+---
+
+## D46 - Archived Milestone Routing With Retained ROADMAP
+
+**Decision (2026-04-15):** `gsdd-progress` must treat a retained `ROADMAP.md` as historical archive state when the current roadmap milestone/version has both a shipped ledger entry in `.planning/MILESTONES.md` and the matching archived milestone audit artifact. In that state, the workflow routes to `/gsdd-new-milestone` rather than back to `/gsdd-audit-milestone`.
+
+**Context:**
+- GSDD now retains `ROADMAP.md` after milestone completion as a historical shipped-summary surface instead of deleting it at archive time.
+- The older `progress.md` logic still treated "between milestones" as equivalent to "SPEC exists while ROADMAP is absent", which matched the stricter GSD archive model but no longer matched current repo truth.
+- That created I39: the same archived milestone could satisfy "all phases complete" and get routed back into audit even though `.planning/SPEC.md` and `.internal-research/TODO.md` already treated the milestone as archived.
+
+**Decision:**
+- Keep the audit-ready branch for milestones whose phases are all complete but which do not yet have archive evidence.
+- Detect the archived-with-`ROADMAP.md` state from the current roadmap milestone/version plus:
+  - a shipped ledger entry for that same milestone in `.planning/MILESTONES.md`
+  - the matching archived milestone audit artifact for that same milestone/version
+- Only when both pieces of archive evidence exist does `progress.md` route to `/gsdd-new-milestone`.
+- Earlier archived milestones in the ledger must not satisfy the route for the current roadmap milestone/version.
+
+**Why this fits the codebase:**
+- It preserves the retained `ROADMAP.md` design without pretending that "all phases complete" always means "run audit again".
+- It keeps the routing decision grounded in durable truth surfaces that already exist, rather than inventing a new milestone-state file.
+- It narrows the change to the high-frequency handoff seam and leaves milestone audit behavior intact for not-yet-archived milestones.
+
+**Evidence:**
+- `.internal-research/gaps.md` `I39`
+- `.planning/MILESTONES.md`
+- `.planning/v1.1-MILESTONE-AUDIT.md`
+- `distilled/workflows/progress.md`
+- `tests/gsdd.guards.test.cjs`
+- `tests/gsdd.scenarios.test.cjs`
+- `tests/gsdd.health.test.cjs`
+- GSD comparison source: `get-shit-done/workflows/progress.md` (between-milestones routing still tied to ROADMAP absence)
+
+**Consequences:**
+- Post-archive progress routing now depends on explicit archive evidence, not on `ROADMAP.md` deletion.
+- Health truth can stay strict: W9/W10 clear because repo truth is aligned, not because the checker semantics were weakened.
+- Future milestone-lifecycle changes that retain or restore historical roadmap files must preserve the current-milestone archive-evidence check.
+
+**GSDD implementation:** `distilled/workflows/progress.md`, `.planning/MILESTONES.md`, `.planning/v1.1-MILESTONE-AUDIT.md`, `.internal-research/gaps.md`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.scenarios.test.cjs`, `tests/gsdd.health.test.cjs`
+
+---
+
 ## Maintenance
 
 This document is updated when:

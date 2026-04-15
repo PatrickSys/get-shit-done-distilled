@@ -4,7 +4,13 @@
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to: **security@gsd.build** (or DM @glittercowboy on Discord/Twitter if email bounces)
+Preferred path:
+
+- use GitHub private vulnerability reporting for `PatrickSys/get-shit-done-distilled` when it is available for this repository
+
+Fallback path if private reporting is unavailable:
+
+- contact the maintainer directly through [@PatrickSys](https://github.com/PatrickSys) instead of opening a public issue
 
 Include:
 - Description of the vulnerability
@@ -23,7 +29,7 @@ Include:
 
 ## Scope
 
-Security issues in the GSD codebase that could:
+Security issues in the Workspine / `gsdd-cli` codebase that could:
 - Execute arbitrary code on user machines
 - Expose sensitive data (API keys, credentials)
 - Compromise the integrity of generated plans/code

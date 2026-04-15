@@ -1,21 +1,26 @@
-# Northline
+# Workspine
 
-A repo-native workflow kernel for long-horizon AI software delivery.
+A portable multi-runtime software delivery framework for long-horizon AI-assisted work.
 
-Northline gives long-horizon AI-assisted software work a durable repo spine for planning, execution, verification, and handoff. The package and CLI remain `gsdd-cli` / `gsdd`.
+Workspine gives long-horizon AI-assisted work a durable repo-native contract for planning, checking, execution, verification, and handoff. The retained package and CLI contracts remain `gsdd-cli` / `gsdd`.
 
 ## What This Is
 
-Northline is a small set of workflow sources plus a CLI (`gsdd`) that:
+Workspine is a small set of workflow sources plus a CLI (`gsdd`) that:
 - scaffolds a project planning workspace (`.planning/`)
 - generates portable workflow entrypoints as skills (`.agents/skills/gsdd-*/SKILL.md`)
 - optionally generates tool-specific adapters for runtimes that need extra native surfaces (root `AGENTS.md`, Claude skills + plan-command alias + native agents, OpenCode commands + native agents)
 
-It gives serious AI-assisted software work one durable repo workflow spine for planning, execution, verification, and handoff without pretending to be a hosted orchestration layer.
+It gives serious AI-assisted work one durable repo workflow spine for planning, checking, execution, verification, and handoff without pretending to be a hosted orchestration layer.
+
+Workspine is the public product name for this milestone. The package, command, workflow names, and workspace stay `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/` as retained technical contracts.
+
+Workspine started by distilling ideas from Get Shit Done and earlier GSDD work because the long-horizon workflow spine was genuinely strong. This repo keeps that lineage explicit while taking a different path on purpose: lower token burn, fewer public workflow surfaces, less runtime-specific coupling, and a stronger multi-runtime posture.
 
 Launch proof posture:
 - Directly validated in repo truth: Claude Code, Codex CLI, OpenCode
 - Qualified support only: Cursor, Copilot, Gemini CLI via the shared `.agents/skills/` surface plus optional governance
+- Public proof entrypoints: `docs/BROWNFIELD-PROOF.md`, `docs/proof/consumer-node-cli/README.md`, `docs/RUNTIME-SUPPORT.md`, `docs/VERIFICATION-DISCIPLINE.md`
 
 ## Quick Start
 

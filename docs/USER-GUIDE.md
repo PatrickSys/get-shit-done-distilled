@@ -1,6 +1,6 @@
-# Northline User Guide
+# Workspine User Guide
 
-A detailed reference for Northline workflows, troubleshooting, and configuration. The package and CLI remain `gsdd-cli` and `gsdd`. For quick-start setup, see the [README](../README.md).
+A detailed reference for Workspine workflows, troubleshooting, and configuration. Workspine is the public product name; the package, CLI, workflow names, and workspace remain `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/` as retained technical contracts. For quick-start setup and the public proof pack, start with the [README](../README.md).
 
 ---
 
@@ -245,8 +245,8 @@ Supported runtimes: `claude`, `opencode`, `codex`.
 
 Runtime behavior:
 - **Claude** translates semantic tiers to native aliases (`opus`/`sonnet`/`haiku`) for the checker agent
-- **OpenCode** inherits its runtime model by default; GSDD only injects a model when you set an explicit runtime override
-- **Codex** inherits its session model by default; GSDD only injects a model in the TOML when you set an explicit runtime override
+- **OpenCode** inherits its runtime model by default; Workspine only injects a model when you set an explicit runtime override
+- **Codex** inherits its session model by default; Workspine only injects a model in the TOML when you set an explicit runtime override
 
 ### Git Protocol
 
@@ -258,7 +258,7 @@ Advisory defaults — repository and team conventions take precedence:
 | `gitProtocol.commit` | Logical grouping, no framework-imposed format |
 | `gitProtocol.pr` | Follow existing review workflow |
 
-GSDD does not impose commit formats, branch naming, or one-commit-per-task rules.
+Workspine does not impose commit formats, branch naming, or one-commit-per-task rules.
 
 ---
 
@@ -270,8 +270,7 @@ GSDD does not impose commit formats, branch naming, or one-commit-per-task rules
 
 - `Claude/OpenCode`: `/gsdd-new-project -> /gsdd-plan -> /gsdd-execute -> /gsdd-verify -> /gsdd-audit-milestone`
 - `Codex`: `$gsdd-new-project -> $gsdd-plan -> $gsdd-execute -> $gsdd-verify -> $gsdd-audit-milestone`
-- `Cursor / Copilot`: `/gsdd-new-project -> /gsdd-plan -> /gsdd-execute -> /gsdd-verify -> /gsdd-audit-milestone` from the slash command menu once the skill is installed
-- `Gemini CLI`: mirror the workflow into `.gemini/commands/*.toml` if you want a native command surface
+- `Cursor / Copilot / Gemini`: `/gsdd-new-project -> /gsdd-plan -> /gsdd-execute -> /gsdd-verify -> /gsdd-audit-milestone` from the slash command menu once the skill is installed
 
 ### Existing Codebase
 
@@ -279,29 +278,25 @@ GSDD does not impose commit formats, branch naming, or one-commit-per-task rules
 
 - `Claude/OpenCode`: `/gsdd-map-codebase -> /gsdd-new-project`
 - `Codex`: `$gsdd-map-codebase -> $gsdd-new-project`
-- `Cursor / Copilot`: `/gsdd-map-codebase -> /gsdd-new-project` from the slash command menu once the skills are installed
-- `Gemini CLI`: mirror the workflow into `.gemini/commands/*.toml` if you want a native command surface
+- `Cursor / Copilot / Gemini`: `/gsdd-map-codebase -> /gsdd-new-project` from the slash command menu once the skills are installed
 
 ### Quick Bug Fix
 
 - `Claude/OpenCode`: `/gsdd-quick`
 - `Codex`: `$gsdd-quick`
-- `Cursor / Copilot`: `/gsdd-quick` from the slash command menu once the skill is installed
-- `Gemini CLI`: use a matching custom command if you mirror the workflow into `.gemini/commands/*.toml`
+- `Cursor / Copilot / Gemini`: `/gsdd-quick` from the slash command menu once the skill is installed
 
 ### Resuming After a Break
 
 - `Claude/OpenCode`: `/gsdd-progress` or `/gsdd-resume`
 - `Codex`: `$gsdd-progress` or `$gsdd-resume`
-- `Cursor / Copilot`: use the matching skill from the slash command menu once installed
-- `Gemini CLI`: mirror the workflow into `.gemini/commands/*.toml` if you want a native command surface
+- `Cursor / Copilot / Gemini`: use the matching skill from the slash command menu once installed
 
 ### Pausing Mid-Work
 
 - `Claude/OpenCode`: `/gsdd-pause`
 - `Codex`: `$gsdd-pause`
-- `Cursor / Copilot`: `/gsdd-pause` from the slash command menu once the skill is installed
-- `Gemini CLI`: use a matching custom command if you mirror the workflow into `.gemini/commands/*.toml`
+- `Cursor / Copilot / Gemini`: `/gsdd-pause` from the slash command menu once the skill is installed
 
 ### Speed vs Quality Presets
 
@@ -324,7 +319,7 @@ npx gsdd-cli init --auto --tools claude --brief path/to/PRD.md  # Seed from exis
 
 ### Context Degradation During Long Sessions
 
-Clear your context window between major workflows. GSDD is designed around fresh contexts — every delegate gets a clean context window. If quality drops in the main session, clear and use `gsdd-resume` or `gsdd-progress` to restore state.
+Clear your context window between major workflows. Workspine is designed around fresh contexts — every delegate gets a clean context window. If quality drops in the main session, clear and use `gsdd-resume` or `gsdd-progress` to restore state.
 
 ### Plans Seem Wrong or Misaligned
 

@@ -90,6 +90,31 @@ function writeAlignedTruthFixtures() {
   writeFile('.planning/ROADMAP.md', '- [ ] **Phase 16: Framework Health & Truth Reconciliation** — [LAUNCH-07]\n');
 }
 
+function writeForkHonestAlignmentFixtures() {
+  writeFile('.internal-research/gaps.md', [
+    'Historical checkpoint evidence is recorded against the active checkpoint file rather than a stale missing repo path.',
+    '',
+    '### Gap I39 - archived routing seam',
+    '',
+    '- Status: CLOSED',
+    '- Closure evidence: archived-with-ROADMAP routing now depends on the shipped ledger and matching archived audit artifact.',
+  ].join('\n'));
+  writeFile('.planning/SPEC.md', [
+    '- [x] **[IDENT-01]**: Identity\n',
+    '- [x] **[IDENT-02]**: Retained contracts\n',
+    '- [x] **[PROOF-01]**: Public proof\n',
+    '- [x] **[FLOW-04]**: Archive routing and health integrity\n',
+  ].join(''));
+  writeFile('.planning/ROADMAP.md', [
+    '- [x] **Phase 23: Launch Posture Lock** — [IDENT-01]',
+    '- [x] **Phase 24: Naming Contract Reconciliation** — [IDENT-02]',
+    '- [x] **Phase 25: Public Proof Export** — [PROOF-01]',
+    '- [x] **Phase 26: Routing And Health Integrity** — [FLOW-04]',
+    '- [ ] **Phase 27: Release Packaging Audit** — [PACK-01]',
+    '',
+  ].join('\n'));
+}
+
 describe('Health — pre-init guard', () => {
   test('no .planning/ → pre-init error with exit code 1', async () => {
     const result = await runCliAsMain(tmpDir, ['health']);
@@ -398,6 +423,16 @@ describe('Health — WARN: adapter and truth drift detection', () => {
     const json = JSON.parse(result.output);
     for (const id of ['W7', 'W8', 'W9', 'W10']) {
       assert.ok(!json.warnings.some((w) => w.id === id), `${id} should not be present when truth files align`);
+    }
+  });
+
+  test('fork-honest v1.2.0 truth alignment clears W9 and W10', async () => {
+    await initWorkspace();
+    writeForkHonestAlignmentFixtures();
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+    for (const id of ['W9', 'W10']) {
+      assert.ok(!json.warnings.some((w) => w.id === id), `${id} should not be present when v1.2.0 truth aligns`);
     }
   });
 });

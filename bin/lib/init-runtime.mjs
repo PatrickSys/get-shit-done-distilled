@@ -161,8 +161,8 @@ export function getPostInitRoutingLines(selectedRuntimes) {
 
 export function getHelpText() {
   return `
-gsdd - GSD Distilled CLI
-Spec-Driven Development for AI coding agents.
+gsdd - Workspine CLI
+Portable multi-runtime software delivery framework for AI coding agents.
 
 Usage: gsdd <command> [args]
 
@@ -193,6 +193,7 @@ Platforms (for --tools):
 
 Notes:
   - init always generates open-standard skills at .agents/skills/gsdd-* (portable workflow entrypoints)
+  - Workspine is the public product name; the retained package, command, workflow, and workspace contracts stay gsdd-cli, gsdd, gsdd-*, and .planning/
   - running plain \`gsdd init\` in a terminal opens the guided runtime-selection wizard
   - the wizard lets you pick runtimes first, then separately decide whether repo-wide AGENTS.md governance is worth installing
   - directly validated launch surfaces in this repo are Claude Code, OpenCode, and Codex CLI

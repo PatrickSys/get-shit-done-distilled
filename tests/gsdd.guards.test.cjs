@@ -4,6 +4,7 @@
 
 const { test, describe } = require('node:test');
 const assert = require('node:assert');
+const { execFileSync } = require('node:child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -17,9 +18,25 @@ const INIT_RUNTIME_MODULE = path.join(ROOT, 'bin', 'lib', 'init-runtime.mjs');
 const TEMPLATES_MODULE = path.join(ROOT, 'bin', 'lib', 'templates.mjs');
 const README_MD = path.join(ROOT, 'README.md');
 const DISTILLED_README_MD = path.join(ROOT, 'distilled', 'README.md');
+const DESIGN_MD = path.join(ROOT, 'distilled', 'DESIGN.md');
+const PLANNING_SPEC_MD = path.join(ROOT, '.planning', 'SPEC.md');
+const PLANNING_ROADMAP_MD = path.join(ROOT, '.planning', 'ROADMAP.md');
+const INTERNAL_TODO_MD = path.join(ROOT, '.internal-research', 'TODO.md');
 
 function lineCount(filePath) {
   return fs.readFileSync(filePath, 'utf-8').split('\n').length;
+}
+
+function isGitTracked(relativePath) {
+  try {
+    execFileSync('git', ['ls-files', '--error-unmatch', relativePath], {
+      cwd: ROOT,
+      stdio: 'ignore',
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function introBeforeWhatThisIs(markdown) {
@@ -938,6 +955,23 @@ describe('G20 - Session Continuity Contracts', () => {
     assert.match(section, /Branch D/i, 'route_action must have Branch D (verify). FIX: Add Branch D.');
     assert.match(section, /Branch E/i, 'route_action must have Branch E (audit-milestone). FIX: Add Branch E.');
     assert.match(section, /Branch F/i, 'route_action must have Branch F (between milestones). FIX: Add Branch F.');
+  });
+
+  test('progress.md distinguishes audit-ready from archived-with-ROADMAP state', () => {
+    const content = fs.readFileSync(PROGRESS_PATH, 'utf-8');
+    const derive = content.slice(content.indexOf('<derive_status>'), content.indexOf('</derive_status>'));
+    const route = content.slice(content.indexOf('<route_action>'), content.indexOf('</route_action>'));
+
+    assert.match(derive, /MILESTONES\.md/,
+      'derive_status must inspect .planning/MILESTONES.md before treating an all-complete roadmap as archived. FIX: Add shipped-ledger check.');
+    assert.match(derive, /MILESTONE-AUDIT\.md|archived milestone audit artifact/i,
+      'derive_status must require the matching archived milestone audit artifact. FIX: Add audit-artifact check.');
+    assert.match(route, /archived-with-`?ROADMAP\.md`?|retained `?ROADMAP\.md`?/i,
+      'route_action must name the archived-with-ROADMAP state explicitly. FIX: Add retained-ROADMAP wording.');
+    assert.match(route, /Branch E[\s\S]*not yet archived/i,
+      'Branch E must stay limited to audit-ready, not-yet-archived milestones. FIX: Narrow Branch E condition.');
+    assert.match(route, /Branch F[\s\S]*\/gsdd-new-milestone/i,
+      'Branch F must route archived milestones to /gsdd-new-milestone. FIX: Add archived milestone routing.');
   });
 
   test('progress.md <edge_cases> section exists and documents compound states', () => {
@@ -2551,40 +2585,99 @@ describe('G36 - Git Branch Safety', () => {
 });
 
 describe('G37 - Launch Surface Consistency', () => {
-  test('README and distilled README use repo-native workflow kernel framing', () => {
+  test('README and distilled README use portable multi-runtime software delivery framework framing', () => {
     const rootReadme = fs.readFileSync(README_MD, 'utf-8');
     const distilledReadme = fs.readFileSync(DISTILLED_README_MD, 'utf-8');
-    assert.match(rootReadme, /repo-native workflow kernel/i,
-      'README.md must describe GSDD as a repo-native workflow kernel. FIX: Use the kernel framing in the public intro.');
-    assert.match(distilledReadme, /repo-native workflow kernel/i,
-      'distilled/README.md must describe GSDD as a repo-native workflow kernel. FIX: Align the distilled intro with the launch framing.');
+    assert.match(rootReadme, /portable multi-runtime software delivery framework/i,
+      'README.md must describe GSDD as a portable multi-runtime software delivery framework. FIX: Use the portable framework framing in the public intro.');
+    assert.match(distilledReadme, /portable multi-runtime software delivery framework/i,
+      'distilled/README.md must describe GSDD as a portable multi-runtime software delivery framework. FIX: Align the distilled intro with the portable framework launch framing.');
   });
 
   test('lead launch copy is product-first instead of origin-first', () => {
     const rootIntro = introBeforeWhatThisIs(fs.readFileSync(README_MD, 'utf-8'));
     const distilledIntro = introBeforeWhatThisIs(fs.readFileSync(DISTILLED_README_MD, 'utf-8'));
-    assert.match(rootIntro, /planning, execution, verification, and handoff spine/i,
-      'README.md must lead with what Northline does. FIX: Make the first explanatory paragraph describe the planning/execution/verification/handoff spine.');
+    assert.match(rootIntro, /planning, checking, execution, verification, and handoff/i,
+      'README.md must lead with what the product does. FIX: Make the first explanatory paragraph describe the planning/checking/execution/verification/handoff contract.');
     assert.doesNotMatch(rootIntro, /Distilled from|Get Shit Done/i,
       'README.md lead copy must not foreground origin-story wording. FIX: Move GSD attribution out of the lead intro.');
-    assert.match(distilledIntro, /planning, execution, verification, and handoff/i,
-      'distilled/README.md must lead with what Northline does. FIX: Make the first explanatory paragraph describe the repo spine before any origin context.');
+    assert.match(distilledIntro, /planning, checking, execution, verification, and handoff/i,
+      'distilled/README.md must lead with what the product does. FIX: Make the first explanatory paragraph describe the repo-native contract before any origin context.');
     assert.doesNotMatch(distilledIntro, /Distilled from|from GSD/i,
       'distilled/README.md lead copy must not foreground GSD origin wording. FIX: Move origin context out of the lead intro.');
   });
 
-  test('public launch surfaces use Northline as the product brand while keeping gsdd-cli as the package', () => {
+  test('phase 23 planning truth locks Workspine while retaining gsdd-cli and .planning contracts', () => {
+    const planningSpec = fs.readFileSync(PLANNING_SPEC_MD, 'utf-8');
+    const design = fs.readFileSync(DESIGN_MD, 'utf-8');
+    const todo = fs.readFileSync(INTERNAL_TODO_MD, 'utf-8');
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
+    assert.match(planningSpec, /Workspine/i,
+      '.planning/SPEC.md must name Workspine as the active public-name target in planning truth. FIX: Record the Workspine posture explicitly.');
+    assert.match(design, /Workspine/i,
+      'distilled/DESIGN.md must preserve the Workspine posture rationale. FIX: Record Workspine in D45.');
+    assert.match(todo, /Workspine/i,
+      '.internal-research/TODO.md must carry forward the Workspine posture. FIX: Update the active milestone notes.');
+    assert.match(planningSpec, /`gsdd-cli`, `gsdd`, `gsdd-\*`, and `\.planning\/`/i,
+      '.planning/SPEC.md must keep the retained gsdd/.planning contracts explicit. FIX: Keep the launch posture honest about the operative contracts.');
+    assert.strictEqual(pkg.name, 'gsdd-cli',
+      'package.json name must remain gsdd-cli. FIX: Keep the package name stable while the public product name is still only locked in planning truth.');
+  });
+
+  test('phase 23 posture lock keeps later v1.2.0 work explicit after the naming lock', () => {
+    const planningSpec = fs.readFileSync(PLANNING_SPEC_MD, 'utf-8');
+    const roadmap = fs.readFileSync(PLANNING_ROADMAP_MD, 'utf-8');
+    assert.match(planningSpec, /release packaging truth|milestone-close verification|\/gsdd-verify 27/i,
+      '.planning/SPEC.md must keep the remaining v1.2.0 work explicit after the posture lock. FIX: Do not imply that the naming lock finished the whole fork-honest hardening milestone.');
+    assert.match(roadmap, /Phase 24: Naming Contract Reconciliation/i,
+      '.planning/ROADMAP.md must keep Phase 24 active after the posture lock. FIX: Preserve naming-surface reconciliation as later work.');
+    assert.match(roadmap, /Phase 25: Public Proof Export/i,
+      '.planning/ROADMAP.md must keep Phase 25 active after the posture lock. FIX: Preserve proof export as later work.');
+    assert.match(roadmap, /Phase 27: Release Packaging Audit/i,
+      '.planning/ROADMAP.md must keep Phase 27 active after the posture lock. FIX: Preserve release-surface packaging work as later work.');
+    assert.doesNotMatch(roadmap, /Northline/,
+      '.planning/ROADMAP.md must not keep Northline as the active public-name target after the Workspine lock. FIX: Remove stale Northline-specific phase wording.');
+  });
+
+  test('phase 24 public naming surfaces are Workspine-led and retire Northline', async () => {
     const rootReadme = fs.readFileSync(README_MD, 'utf-8');
     const distilledReadme = fs.readFileSync(DISTILLED_README_MD, 'utf-8');
+    const userGuide = fs.readFileSync(path.join(ROOT, 'docs', 'USER-GUIDE.md'), 'utf-8');
+    const brownfieldProof = fs.readFileSync(path.join(ROOT, 'docs', 'BROWNFIELD-PROOF.md'), 'utf-8');
+    const runtimeSupport = fs.readFileSync(path.join(ROOT, 'docs', 'RUNTIME-SUPPORT.md'), 'utf-8');
+    const verificationDiscipline = fs.readFileSync(path.join(ROOT, 'docs', 'VERIFICATION-DISCIPLINE.md'), 'utf-8');
+    const security = fs.readFileSync(path.join(ROOT, 'SECURITY.md'), 'utf-8');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
-    assert.match(rootReadme, /# Northline/i,
-      'README.md must lead with the Northline product name. FIX: Rename the public title to Northline.');
-    assert.match(distilledReadme, /# Northline/i,
-      'distilled/README.md must lead with the Northline product name. FIX: Rename the distilled public title to Northline.');
-    assert.match(pkg.description, /Northline/i,
-      'package.json description must mention Northline. FIX: Align package metadata with the public brand.');
-    assert.strictEqual(pkg.name, 'gsdd-cli',
-      'package.json name must remain gsdd-cli. FIX: Keep the package name stable while the public product brand changes.');
+    const mod = await import(`file://${INIT_RUNTIME_MODULE.replace(/\\/g, '/')}`);
+    const helpText = mod.getHelpText();
+
+    for (const [label, content] of [
+      ['README.md', rootReadme],
+      ['distilled/README.md', distilledReadme],
+      ['docs/USER-GUIDE.md', userGuide],
+      ['docs/BROWNFIELD-PROOF.md', brownfieldProof],
+      ['docs/RUNTIME-SUPPORT.md', runtimeSupport],
+      ['docs/VERIFICATION-DISCIPLINE.md', verificationDiscipline],
+      ['SECURITY.md', security],
+    ]) {
+      assert.match(content, /Workspine/i,
+        `${label} must lead with Workspine after Phase 24. FIX: Reconcile the public naming layer to the Workspine posture.`);
+      assert.doesNotMatch(content, /Northline/i,
+        `${label} must not keep Northline as the active public brand after Phase 24. FIX: Remove stale Northline wording from the tracked public surface.`);
+    }
+
+    assert.match(rootReadme, /retained technical contracts/i,
+      'README.md must explain that gsdd-cli/gsdd/gsdd-* /.planning remain deliberate retained contracts. FIX: Add the retained-contract explanation near the top-level intro.');
+    assert.match(userGuide, /retained technical contracts/i,
+      'docs/USER-GUIDE.md must explain the retained naming stack explicitly. FIX: Tell users that gsdd-cli/gsdd/gsdd-* /.planning are intentional retained contracts.');
+    assert.match(rootReadme, /started by distilling ideas from Get Shit Done and earlier GSDD work/i,
+      'README.md must keep one brief appreciative lineage note. FIX: Add a concise lineage note that acknowledges GSD/GSDD without making it the active product identity.');
+    assert.match(distilledReadme, /started by distilling ideas from Get Shit Done and earlier GSDD work/i,
+      'distilled/README.md must keep the same brief appreciative lineage note. FIX: Mirror the concise lineage note in the distilled public surface.');
+    assert.match(helpText, /Workspine is the public product name; the retained package, command, workflow, and workspace contracts stay gsdd-cli, gsdd, gsdd-\*, and \.planning\//i,
+      'init-runtime help text must explain the retained technical contracts explicitly. FIX: Add the Workspine-plus-retained-contract note to the help text.');
+    assert.match(pkg.description, /^Workspine\b/,
+      'package.json description must be Workspine-led after Phase 24. FIX: Align package metadata with the public product name.');
   });
 
   test('tracked public launch surfaces preserve the qualified support proof split', () => {
@@ -2637,6 +2730,122 @@ describe('G38 - I38 Approach-Exploration Hard Gate', () => {
       'plan-checker.md approach_alignment must emit a blocker when workflow.discuss=true and no APPROACH.md is provided. FIX: Add discuss-config-aware fail-closed language to the approach_alignment dimension.');
     assert.match(content, /fix_hint/,
       'plan-checker.md approach_alignment blocker must include a fix_hint directing the planner to run approach exploration. FIX: Add fix_hint to the discuss=true blocker case.');
+  });
+});
+
+describe('G42 - Public Proof Export', () => {
+  test('public proof and support entrypoints are git-tracked before repo truth advertises them', () => {
+    const requiredTrackedPaths = [
+      'docs/BROWNFIELD-PROOF.md',
+      'docs/RUNTIME-SUPPORT.md',
+      'docs/VERIFICATION-DISCIPLINE.md',
+      'docs/proof/consumer-node-cli/README.md',
+      'docs/proof/consumer-node-cli/brief.md',
+      'docs/proof/consumer-node-cli/SPEC.md',
+      'docs/proof/consumer-node-cli/ROADMAP.md',
+      'docs/proof/consumer-node-cli/phases/01-foundation/01-01-PLAN.md',
+      'docs/proof/consumer-node-cli/phases/01-foundation/01-01-SUMMARY.md',
+      'docs/proof/consumer-node-cli/phases/01-foundation/01-VERIFICATION.md',
+    ];
+
+    for (const relativePath of requiredTrackedPaths) {
+      assert.ok(isGitTracked(relativePath),
+        `${relativePath} must be git-tracked before the public proof boundary claims repo-alone truth. FIX: git add the proof/support artifact or remove the tracked-proof claim.`);
+    }
+  });
+
+  test('reader-facing proof docs do not cite local-only or internal proof paths', () => {
+    const publicProofSurfaces = [
+      ['README.md', fs.readFileSync(path.join(ROOT, 'README.md'), 'utf-8')],
+      ['distilled/README.md', fs.readFileSync(path.join(ROOT, 'distilled', 'README.md'), 'utf-8')],
+      ['docs/BROWNFIELD-PROOF.md', fs.readFileSync(path.join(ROOT, 'docs', 'BROWNFIELD-PROOF.md'), 'utf-8')],
+      ['docs/RUNTIME-SUPPORT.md', fs.readFileSync(path.join(ROOT, 'docs', 'RUNTIME-SUPPORT.md'), 'utf-8')],
+      ['docs/VERIFICATION-DISCIPLINE.md', fs.readFileSync(path.join(ROOT, 'docs', 'VERIFICATION-DISCIPLINE.md'), 'utf-8')],
+    ];
+    const forbidden = [
+      /\.planning\/live-proof/i,
+      /22-launch-proof/i,
+      /v1\.1-MILESTONE-AUDIT/i,
+      /\.internal-research/i,
+    ];
+
+    for (const [label, content] of publicProofSurfaces) {
+      for (const pattern of forbidden) {
+        assert.doesNotMatch(content, pattern,
+          `${label} must not cite local-only or internal proof surfaces. FIX: Route readers through tracked public proof docs only.`);
+      }
+    }
+  });
+
+  test('tracked proof pack preserves provenance notes and concrete greeting evidence', () => {
+    const proofReadme = fs.readFileSync(path.join(ROOT, 'docs', 'proof', 'consumer-node-cli', 'README.md'), 'utf-8');
+    const proofBrief = fs.readFileSync(path.join(ROOT, 'docs', 'proof', 'consumer-node-cli', 'brief.md'), 'utf-8');
+    const verification = fs.readFileSync(path.join(ROOT, 'docs', 'proof', 'consumer-node-cli', 'phases', '01-foundation', '01-VERIFICATION.md'), 'utf-8');
+
+    assert.match(proofReadme, /Phase 22/i,
+      'docs/proof/consumer-node-cli/README.md must keep Phase 22 provenance. FIX: Add the export provenance note.');
+    assert.match(proofReadme, /evidence-only/i,
+      'docs/proof/consumer-node-cli/README.md must explain that the local live-proof tree is evidence-only. FIX: Add the evidence-only note.');
+    assert.match(proofReadme, /release-floor/i,
+      'docs/proof/consumer-node-cli/README.md must frame the pack as release-floor proof. FIX: Add the release-floor wording.');
+    assert.match(proofBrief, /--name Ada/i,
+      'docs/proof/consumer-node-cli/brief.md must preserve the named-greeting requirement. FIX: Keep the original brief requirement.');
+    assert.match(verification, /Hello, world!/i,
+      'docs/proof/consumer-node-cli/phases/01-foundation/01-VERIFICATION.md must preserve the failed default-greeting output. FIX: Keep the initial verification evidence.');
+    assert.match(verification, /Hello, Ada!/i,
+      'docs/proof/consumer-node-cli/phases/01-foundation/01-VERIFICATION.md must preserve the successful named-greeting output. FIX: Keep the re-verification evidence.');
+  });
+});
+
+describe('G43 - Release Packaging Audit', () => {
+  test('package metadata stays on the verified release floor and trims internal tarball drift', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
+
+    assert.match(pkg.description, /^Workspine\b.*Claude Code, Codex CLI, and OpenCode/i,
+      'package.json description must stay Workspine-led and name only the directly validated runtimes. FIX: Keep the description on the release-floor proof boundary.');
+    for (const keyword of ['cursor', 'copilot', 'gemini', 'gemini-cli']) {
+      assert.ok(!pkg.keywords.includes(keyword),
+        `package.json keywords must not imply parity for ${keyword}. FIX: Keep unvalidated runtimes out of package-facing metadata.`);
+    }
+    for (const requiredKeyword of ['workspine', 'claude-code', 'codex-cli', 'opencode', 'multi-runtime']) {
+      assert.ok(pkg.keywords.includes(requiredKeyword),
+        `package.json keywords must include ${requiredKeyword}. FIX: Keep the package metadata aligned with the verified release-floor story.`);
+    }
+    assert.ok(!pkg.files.includes('distilled/'),
+      'package.json files must not publish the entire distilled/ tree wholesale. FIX: Enumerate only the runtime-required distilled surfaces.');
+    for (const requiredPath of ['distilled/DESIGN.md', 'distilled/README.md', 'distilled/templates/', 'distilled/workflows/']) {
+      assert.ok(pkg.files.includes(requiredPath),
+        `package.json files must include ${requiredPath}. FIX: Keep the runtime-required distilled surfaces in the published package.`);
+    }
+  });
+
+  test('security and repo-owner surfaces point to the current maintainer', () => {
+    const security = fs.readFileSync(path.join(ROOT, 'SECURITY.md'), 'utf-8');
+    const codeowners = fs.readFileSync(path.join(ROOT, '.github', 'CODEOWNERS'), 'utf-8');
+
+    assert.match(security, /GitHub private vulnerability reporting/i,
+      'SECURITY.md must preserve GitHub private vulnerability reporting as the preferred path. FIX: Keep the preferred reporting path explicit.');
+    assert.match(security, /@PatrickSys|https:\/\/github\.com\/PatrickSys/i,
+      'SECURITY.md must point the fallback path to the current maintainer. FIX: Replace vague or stale owner wording with the current maintainer handle.');
+    assert.doesNotMatch(security, /security@gsd\.build|@glittercowboy/i,
+      'SECURITY.md must not retain upstream owner/reporting residue. FIX: Remove stale upstream reporting details.');
+    assert.match(codeowners, /^# All changes require review from project owner\r?\n\* @PatrickSys\r?$/m,
+      '.github/CODEOWNERS must align with the current repository owner. FIX: Replace stale upstream ownership in CODEOWNERS.');
+  });
+
+  test('release workflow audits the tarball before semantic-release publishes', () => {
+    const releaseWorkflow = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'release.yml'), 'utf-8');
+
+    assert.match(releaseWorkflow, /Run tests[\s\S]*npm run test:gsdd/i,
+      'release.yml must run the full GSDD test suite before publishing. FIX: Keep npm run test:gsdd in the release workflow.');
+    assert.match(releaseWorkflow, /Audit packed tarball surface[\s\S]*npm pack --dry-run --json/i,
+      'release.yml must audit the packed tarball before publishing. FIX: Add an npm pack --dry-run --json step before release.');
+    assert.match(releaseWorkflow, /Authenticate to npm via OIDC trusted publisher/i,
+      'release.yml must keep the OIDC trusted-publisher authentication step. FIX: Preserve the npm OIDC auth step.');
+    assert.match(releaseWorkflow, /NPM_CONFIG_PROVENANCE: "true"/i,
+      'release.yml must keep npm provenance enabled for semantic-release. FIX: Preserve NPM_CONFIG_PROVENANCE in the release env.');
+    assert.match(releaseWorkflow, /run: npx semantic-release/i,
+      'release.yml must continue to publish via semantic-release. FIX: Keep semantic-release as the release entrypoint.');
   });
 });
 

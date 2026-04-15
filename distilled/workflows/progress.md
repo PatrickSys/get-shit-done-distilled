@@ -20,7 +20,7 @@ Check for project artifacts in order:
 1. **No `.planning/` directory** — tell the user to run `gsdd init`. Stop.
 2. **No `.planning/ROADMAP.md` AND no `.planning/SPEC.md`** — project has no artifacts. Suggest running the `/gsdd-new-project` workflow. Stop.
 3. **No `.planning/ROADMAP.md` BUT `.planning/SPEC.md` exists** — this is a between-milestones state (milestone was completed and archived). Go to Branch F.
-4. **Both exist** — proceed to derive status.
+4. **Both exist** — proceed to derive status, including whether a retained `ROADMAP.md` already represents an archived milestone rather than an audit-ready one.
 </check_existence>
 
 <derive_status>
@@ -40,6 +40,14 @@ Determine:
 - Completed phase count (`[x]`)
 - Current phase: first `[-]` phase, or first `[ ]` if none in progress
 - Current phase name
+
+**Archived milestone evidence:**
+If `ROADMAP.md` exists and all phases in the current milestone are `[x]`, determine whether this is still audit-ready or already archived-with-`ROADMAP.md`:
+- derive the current milestone/version from the active milestone heading in `ROADMAP.md`
+- check `.planning/MILESTONES.md` for a shipped entry matching that same milestone/version
+- check for the matching archived milestone audit artifact for that same milestone/version (for example `.planning/v1.1-MILESTONE-AUDIT.md`)
+- if both the shipped ledger entry and the matching archived audit artifact exist, treat the retained `ROADMAP.md` as archived milestone evidence and route to Branch F instead of Branch E
+- if either one is missing, keep the milestone in the audit-ready Branch E state
 
 **Checkpoint:**
 Check if `.planning/.continue-here.md` exists. If yes, note the `workflow` and `phase` frontmatter and the `next_action` section.
@@ -102,8 +110,11 @@ Unmerged commits: [N] commit(s) on this branch not yet merged to main
   → Merge or push this branch before closing the milestone, or verify
     these commits are intentional working-branch state.
 
-[If all phases [x]:]
+[If all phases [x] and the current milestone is not yet archived:]
 All phases complete — ready for milestone audit
+
+[If all phases [x] and the current milestone is already archived-with-`ROADMAP.md`: ]
+All phases complete — archived milestone retained on disk; ready for the next milestone
 ```
 
 **Filled-in example** (fabricated but realistic):
@@ -166,8 +177,8 @@ Suggested next action:
   Also available: /gsdd-execute (continue to next phase), /gsdd-plan (plan next phase)
 ```
 
-**Branch E: Audit milestone (all phases [x])**
-Condition: All phases in ROADMAP.md are marked `[x]`.
+**Branch E: Audit milestone (all phases [x], not yet archived)**
+Condition: All phases in the current milestone are marked `[x]`, and the current roadmap milestone/version does **not** yet have both a shipped entry in `.planning/MILESTONES.md` and the matching archived milestone audit artifact.
 
 ```
 Suggested next action:
@@ -175,8 +186,10 @@ Suggested next action:
   Also available: /gsdd-verify (re-verify a specific phase), /gsdd-quick (sub-hour task)
 ```
 
-**Branch F: Between milestones (SPEC.md exists, ROADMAP.md absent)**
-Condition: `.planning/SPEC.md` exists but `.planning/ROADMAP.md` does not — a milestone was completed and archived.
+**Branch F: Between milestones (SPEC.md exists, no active milestone)**
+Condition:
+- `.planning/SPEC.md` exists but `.planning/ROADMAP.md` does not, **or**
+- `.planning/ROADMAP.md` still exists, but the current roadmap milestone/version already has both a shipped entry in `.planning/MILESTONES.md` and the matching archived milestone audit artifact — this is the archived-with-`ROADMAP.md` state, not a second trip through audit
 
 Check `.planning/MILESTONES.md`:
 - If MILESTONES.md exists and has at least one milestone entry → this is a subsequent milestone

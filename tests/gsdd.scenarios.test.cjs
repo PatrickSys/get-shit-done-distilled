@@ -174,6 +174,20 @@ describe('S1 — Greenfield Golden Path (init → new-project → plan → execu
     assert.ok(content.includes('Unmerged commits: [N] commit(s) on this branch not yet merged to main'), 'progress skill must preserve the conditional warning text');
   });
 
+  test('progress skill preserves archived-with-ROADMAP routing split', () => {
+    const content = readSkill(tmpDir, 'gsdd-progress');
+    assert.match(content, /archived-with-`?ROADMAP\.md`?|retained `?ROADMAP\.md`?/i,
+      'progress skill must preserve the archived-with-ROADMAP routing language.');
+    assert.match(content, /MILESTONES\.md/,
+      'progress skill must preserve the shipped-ledger check.');
+    assert.match(content, /MILESTONE-AUDIT\.md|archived milestone audit artifact/i,
+      'progress skill must preserve the matching archived-audit check.');
+    assert.match(content, /\/gsdd-new-milestone/,
+      'progress skill must preserve the archived-state route to /gsdd-new-milestone.');
+    assert.match(content, /\/gsdd-audit-milestone/,
+      'progress skill must preserve the audit-ready route to /gsdd-audit-milestone.');
+  });
+
   // --- verify → audit-milestone chain ---
 
   test('audit-milestone load_context references verify outputs (VERIFICATION.md, SUMMARY.md)', () => {
