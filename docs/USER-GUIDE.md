@@ -115,6 +115,10 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
          └── Concern Mapper   -> codebase/CONCERNS.md
                 │
         ┌───────┴───────────────┐
+        │                       │
+ if bounded change        otherwise
+ is already concrete      use the canonical initializer
+        │                       │
         ▼                       ▼
   gsdd-quick              gsdd-new-project
   bounded feature work    full lifecycle setup
@@ -147,12 +151,12 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
 | Workflow | Purpose | When to Use |
 |----------|---------|-------------|
 | `gsdd-new-project` | Full project init: questioning, codebase audit, research, spec, roadmap | Start of a new project |
-| `gsdd-map-codebase` | Map existing codebase for reusable brownfield context | Before `gsdd-new-project`, or before `gsdd-quick` when you already know the bounded change you want |
+| `gsdd-map-codebase` | Map existing codebase for reusable brownfield context | Before `gsdd-new-project`, or before `gsdd-quick` only when you already know the bounded change you want |
 | `gsdd-plan` | Research + plan + adversarial check for current phase | Before executing a phase |
 | `gsdd-execute` | Execute phase plans in parallel waves | After planning is complete |
 | `gsdd-verify` | 3-level verification gate + anti-pattern scan | After execution completes |
 | `gsdd-audit-milestone` | Cross-phase integration, requirements coverage, E2E flows | When all phases are done |
-| `gsdd-quick` | Plan and execute sub-hour work outside the phase cycle | Bug fixes, small features, config changes |
+| `gsdd-quick` | Plan and execute sub-hour work outside the phase cycle | Bug fixes, small features, config changes when the bounded change is already concrete |
 | `gsdd-pause` | Save session context to checkpoint | Stopping mid-phase |
 | `gsdd-resume` | Restore context from checkpoint and route to next action | Starting a new session |
 | `gsdd-progress` | Show project status and route to next action | "Where am I?" |
