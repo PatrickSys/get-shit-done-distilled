@@ -114,9 +114,14 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
          ├── Convention Mapper -> codebase/CONVENTIONS.md
          └── Concern Mapper   -> codebase/CONCERNS.md
                 │
-        ┌───────▼──────────────┐
-        │ gsdd-new-project     │  <- Questions focus on what you're ADDING
-        └──────────────────────┘
+        ┌───────┴───────────────┐
+        │                       │
+ if bounded change        otherwise
+ is already concrete      use the canonical initializer
+        │                       │
+        ▼                       ▼
+  gsdd-quick              gsdd-new-project
+  bounded feature work    full lifecycle setup
 ```
 
 ### Verification Gate
@@ -146,12 +151,12 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
 | Workflow | Purpose | When to Use |
 |----------|---------|-------------|
 | `gsdd-new-project` | Full project init: questioning, codebase audit, research, spec, roadmap | Start of a new project |
-| `gsdd-map-codebase` | Analyze existing codebase with 4 parallel mappers | Before `gsdd-new-project` on existing code |
+| `gsdd-map-codebase` | Map existing codebase for reusable brownfield context | Before `gsdd-new-project`, or before `gsdd-quick` only when you already know the bounded change you want |
 | `gsdd-plan` | Research + plan + adversarial check for current phase | Before executing a phase |
 | `gsdd-execute` | Execute phase plans in parallel waves | After planning is complete |
 | `gsdd-verify` | 3-level verification gate + anti-pattern scan | After execution completes |
 | `gsdd-audit-milestone` | Cross-phase integration, requirements coverage, E2E flows | When all phases are done |
-| `gsdd-quick` | Plan and execute sub-hour work outside the phase cycle | Bug fixes, small features, config changes |
+| `gsdd-quick` | Plan and execute sub-hour work outside the phase cycle | Bug fixes, small features, config changes when the bounded change is already concrete |
 | `gsdd-pause` | Save session context to checkpoint | Stopping mid-phase |
 | `gsdd-resume` | Restore context from checkpoint and route to next action | Starting a new session |
 | `gsdd-progress` | Show project status and route to next action | "Where am I?" |
@@ -276,9 +281,9 @@ Workspine does not impose commit formats, branch naming, or one-commit-per-task 
 
 `npx gsdd-cli init`
 
-- `Claude/OpenCode`: `/gsdd-map-codebase -> /gsdd-new-project`
-- `Codex`: `$gsdd-map-codebase -> $gsdd-new-project`
-- `Cursor / Copilot / Gemini`: `/gsdd-map-codebase -> /gsdd-new-project` from the slash command menu once the skills are installed
+- `Claude/OpenCode`: `/gsdd-map-codebase -> /gsdd-quick` for bounded brownfield work you can already name, or `/gsdd-map-codebase -> /gsdd-new-project` for full lifecycle setup
+- `Codex`: `$gsdd-map-codebase -> $gsdd-quick` for bounded brownfield work you can already name, or `$gsdd-map-codebase -> $gsdd-new-project`
+- `Cursor / Copilot / Gemini`: `/gsdd-map-codebase -> /gsdd-quick` or `/gsdd-map-codebase -> /gsdd-new-project` from the slash command menu once the skills are installed
 
 ### Quick Bug Fix
 
