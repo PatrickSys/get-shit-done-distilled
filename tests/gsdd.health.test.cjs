@@ -495,6 +495,30 @@ describe('Health — INFO: phase completion count', () => {
     const json = JSON.parse(result.output);
     assert.ok(json.info.some((i) => i.id === 'I2' && i.message.includes('1/2')));
   });
+
+  test('I2 counts only the active milestone phases, not archived phases nested in details', async () => {
+    await initWorkspace();
+    writeFile('.planning/ROADMAP.md', [
+      '# Roadmap',
+      '',
+      '<details>',
+      '<summary>✅ v1.2.0 Fork-Honest Launch Hardening</summary>',
+      '',
+      '- [x] **Phase 23: Launch Posture Lock**',
+      '- [x] **Phase 24: Naming Contract Reconciliation**',
+      '</details>',
+      '',
+      '### v1.3.0 Engine Contract Hardening',
+      '',
+      '- [x] **Phase 29: Contract Inventory And Claim Narrowing** — [ENGINE-01]',
+      '- [ ] **Phase 30: Deterministic Lifecycle Gates** — [ENGINE-02]',
+    ].join('\n'));
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+    assert.ok(json.info.some((i) => i.id === 'I2' && i.message.includes('1/2')),
+      'I2 should report only the active milestone phase count');
+  });
 });
 
 describe('Health — JSON output mode', () => {

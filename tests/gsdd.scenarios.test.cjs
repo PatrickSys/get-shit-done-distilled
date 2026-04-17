@@ -742,6 +742,22 @@ describe('S18 — Deterministic mechanics workflow surface', () => {
     assert.ok(content.includes('downstream mutating workflow must rerun its own `gsdd lifecycle-preflight ...` gate before acting.'),
       'gsdd-progress must route downstream lifecycle transitions back through gsdd lifecycle-preflight.');
   });
+
+  test('generated resume/progress skills preserve the non-looping generic-checkpoint rule', () => {
+    const resume = readSkill(tmpDir, 'gsdd-resume');
+    const progress = readSkill(tmpDir, 'gsdd-progress');
+
+    assert.match(resume, /generic.*next_action.*user decide/i,
+      'gsdd-resume must keep generic checkpoints user-routed through next_action.');
+    assert.match(resume, /informational context rather than an automatic blocker/i,
+      'gsdd-resume must explain that generic checkpoints stay informational for downstream progress routing.');
+    assert.match(progress, /`?generic`? checkpoints? (?:are|stay) informational-only/i,
+      'gsdd-progress must keep generic checkpoints informational-only.');
+    assert.match(progress, /keep evaluating Branch B-F/i,
+      'gsdd-progress must continue routing to the real next action after showing an informational generic checkpoint.');
+    assert.match(progress, /`?phase`? and `?quick`?.*blocking resume-owned surfaces/i,
+      'gsdd-progress must preserve blocking routing for phase and quick checkpoints.');
+  });
 });
 
 // ============================================================

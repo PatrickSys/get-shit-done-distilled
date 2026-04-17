@@ -1220,6 +1220,29 @@ describe('Phase 19 provenance helpers', () => {
     assert.deepStrictEqual(status.files, []);
   });
 
+  test('classifyCheckpointRouting keeps generic checkpoints informational for progress', async () => {
+    const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+
+    assert.deepStrictEqual(mod.classifyCheckpointRouting('phase'), {
+      workflow: 'phase',
+      routingClass: 'blocking',
+      progressBlocks: true,
+      resumeOwnsCleanup: true,
+    });
+    assert.deepStrictEqual(mod.classifyCheckpointRouting('quick'), {
+      workflow: 'quick',
+      routingClass: 'blocking',
+      progressBlocks: true,
+      resumeOwnsCleanup: true,
+    });
+    assert.deepStrictEqual(mod.classifyCheckpointRouting('generic'), {
+      workflow: 'generic',
+      routingClass: 'informational',
+      progressBlocks: false,
+      resumeOwnsCleanup: true,
+    });
+  });
+
   test('buildProvenanceSnapshot requires acknowledgement for material checkpoint mismatch', async () => {
     const mod = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'provenance.mjs')).href}?t=${Date.now()}-${Math.random()}`);
     const snapshot = mod.buildProvenanceSnapshot({
@@ -1241,6 +1264,12 @@ describe('Phase 19 provenance helpers', () => {
     assert.ok(snapshot.warnings.some((warning) => warning.id === 'checkpoint_mismatch'));
     assert.ok(snapshot.warnings.some((warning) => warning.id === 'stale_branch'));
     assert.strictEqual(snapshot.git.untrackedCount, 1);
+    assert.deepStrictEqual(snapshot.checkpoint.routing, {
+      workflow: 'generic',
+      routingClass: 'informational',
+      progressBlocks: false,
+      resumeOwnsCleanup: true,
+    });
   });
 });
 

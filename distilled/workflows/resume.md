@@ -200,7 +200,7 @@ Evaluate in priority order and present the primary recommendation:
 Route based on the `workflow` frontmatter:
 - `phase` — route to `/gsdd-execute` (or `/gsdd-plan`/`/gsdd-verify` based on checkpoint context)
 - `quick` — route to `/gsdd-quick` to complete the task
-- `generic` — present the next_action and let the user decide
+- `generic` — present the checkpoint `next_action` and let the user decide. This workflow still owns checkpoint cleanup only if the user explicitly resumes from that checkpoint, but downstream read-only `progress` routing must treat the surviving generic checkpoint as informational context rather than an automatic blocker.
 
 If `<validate_checkpoint>` marked the checkpoint as stale, keep the same routing logic. The user may still choose to resume from the checkpoint after reviewing the warning. If the user chooses a different path, leave the checkpoint in place and continue without it.
 

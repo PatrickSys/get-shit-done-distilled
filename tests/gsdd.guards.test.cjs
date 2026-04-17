@@ -2738,8 +2738,8 @@ describe('G37 - Launch Surface Consistency', () => {
 
     const planningSpec = fs.readFileSync(PLANNING_SPEC_MD, 'utf-8');
     const roadmap = fs.readFileSync(PLANNING_ROADMAP_MD, 'utf-8');
-    assert.match(planningSpec, /v1\.2\.0 Fork-Honest Launch Hardening — SHIPPED|\/gsdd-new-milestone/i,
-      '.planning/SPEC.md must reflect the shipped v1.2.0 state after archive. FIX: Update Current State instead of restoring active-milestone wording.');
+    assert.match(planningSpec, /v1\.2\.0 Fork-Honest Launch Hardening — SHIPPED|\/gsdd-new-milestone|v1\.3\.0 Engine Contract Hardening|\/gsdd-verify 29/i,
+      '.planning/SPEC.md must reflect honest milestone state after the v1.2.0 archive handoff, whether still between milestones or already in the next milestone. FIX: Keep Current State aligned to repo truth.');
     assert.match(roadmap, /Phase 24: Naming Contract Reconciliation/i,
       '.planning/ROADMAP.md must preserve the archived naming-surface reconciliation path. FIX: Keep the v1.2.0 phase chain visible after collapse.');
     assert.match(roadmap, /Phase 25: Public Proof Export/i,
@@ -2972,11 +2972,9 @@ describe('G43 - Release Packaging Audit', () => {
 // W7 silently skips the new ID when comparing against DESIGN.md.
 // ---------------------------------------------------------------------------
 describe('G39 - Health Check ID Consistency', () => {
-  const HEALTH_TRUTH_MODULE_PATH = path.join(ROOT, 'bin', 'lib', 'health-truth.mjs');
-
   test('healthCheckIds array in health.mjs matches all implemented diagnostic IDs', () => {
     const healthSource = fs.readFileSync(HEALTH_MODULE, 'utf-8');
-    const healthTruthSource = fs.readFileSync(HEALTH_TRUTH_MODULE_PATH, 'utf-8');
+    const healthTruthSource = fs.readFileSync(HEALTH_TRUTH_MODULE, 'utf-8');
 
     // Extract TRUTH_CHECK_IDS literal from health-truth.mjs
     const truthMatch = healthTruthSource.match(/export const TRUTH_CHECK_IDS\s*=\s*\[([\s\S]*?)\]/);
@@ -3006,7 +3004,7 @@ describe('G39 - Health Check ID Consistency', () => {
   });
 
   test('TRUTH_CHECK_IDS matches the diagnostic IDs implemented in health-truth.mjs', () => {
-    const healthTruthSource = fs.readFileSync(HEALTH_TRUTH_MODULE_PATH, 'utf-8');
+    const healthTruthSource = fs.readFileSync(HEALTH_TRUTH_MODULE, 'utf-8');
 
     const truthMatch = healthTruthSource.match(/export const TRUTH_CHECK_IDS\s*=\s*\[([\s\S]*?)\]/);
     assert.ok(truthMatch,
@@ -3062,6 +3060,29 @@ describe('G44 - Engine Contract Hardening', () => {
       'health-truth.mjs must import lifecycle-state.mjs. FIX: Route requirement/lifecycle truth checks through the shared evaluator.');
     assert.match(truthSource, /requirementAlignment\.mismatches/,
       'health-truth.mjs must consume requirementAlignment from the shared evaluator. FIX: Remove the duplicate ROADMAP/SPEC parser.');
+  });
+
+  test('internal truth surfaces preserve the dual-canonical runtime story and engine-only deferral boundary', () => {
+    const planningSpec = fs.readFileSync(PLANNING_SPEC_MD, 'utf-8');
+    const roadmap = fs.readFileSync(PLANNING_ROADMAP_MD, 'utf-8');
+    const todo = fs.readFileSync(INTERNAL_TODO_MD, 'utf-8');
+    const gaps = fs.readFileSync(path.join(ROOT, '.internal-research', 'gaps.md'), 'utf-8');
+    const design = fs.readFileSync(DESIGN_MD, 'utf-8');
+
+    assert.match(planningSpec, /dual-canonical/i,
+      '.planning/SPEC.md must describe the runtime contract as dual-canonical. FIX: Narrow ENGINE-05 and milestone wording to the authoring/runtime-consumed split.');
+    assert.match(planningSpec, /owned artifacts.*distinct from lifecycle-state mutation|artifact ownership.*lifecycle-state mutation/i,
+      '.planning/SPEC.md must distinguish owned artifact writes from lifecycle-state mutation. FIX: Tighten ENGINE-01 wording.');
+    assert.match(roadmap, /dual-canonical/i,
+      '.planning/ROADMAP.md must carry the dual-canonical runtime wording into Phase 29/32. FIX: Update the phase success criteria.');
+    assert.match(todo, /dual-canonical/i,
+      '.internal-research/TODO.md must carry the dual-canonical runtime story into the next-session handoff. FIX: Update the active milestone notes.');
+    assert.match(gaps, /claim contradiction narrowed|dual-canonical|freshness enforcement remains Phase 32/i,
+      '.internal-research/gaps.md must narrow I42 to the remaining freshness/enforcement seam. FIX: Re-scope I42 after Phase 29 claim narrowing.');
+    assert.match(design, /dual-canonical/i,
+      'distilled/DESIGN.md must record the Phase 29 dual-canonical/runtime contract decision. FIX: Add a durable design decision for the shared evaluator and runtime-story split.');
+    assert.match(todo, /launch identity\/naming audit explicitly deferred|launch identity.*deferred/i,
+      '.internal-research/TODO.md must keep the launch identity follow-up deferred. FIX: Preserve the engine-only milestone boundary in the handoff.');
   });
 
   test('transition-sensitive workflow contracts route through lifecycle-preflight while progress stays read-only', () => {
@@ -3173,6 +3194,22 @@ describe('G40 - Provenance And Write-Gate Contracts', () => {
       'resume.md must require explicit acknowledgement on material mismatch. FIX: Add acknowledgement gating to determine_action/present_options.');
     assert.match(content, /bare "continue" skip the warning/i,
       'resume.md must forbid bare "continue" on material mismatch. FIX: Keep the mismatch acknowledgement warning in present_options.');
+  });
+
+  test('resume and progress share the generic-checkpoint ownership split', () => {
+    const resume = fs.readFileSync(path.join(workflowsDir, 'resume.md'), 'utf-8');
+    const progress = fs.readFileSync(path.join(workflowsDir, 'progress.md'), 'utf-8');
+
+    assert.match(resume, /generic.*next_action.*user decide/i,
+      'resume.md must keep generic checkpoints resume-readable instead of auto-consuming them. FIX: Preserve the generic next_action routing.');
+    assert.match(resume, /downstream read-only `?progress`? routing.*informational context rather than an automatic blocker/i,
+      'resume.md must state that post-resume generic checkpoints are informational to progress. FIX: Add the shared ownership split.');
+    assert.match(progress, /`?generic`? checkpoints? (?:are|stay) informational-only/i,
+      'progress.md must treat generic checkpoints as informational-only. FIX: Keep the explicit informational rule.');
+    assert.match(progress, /do \*\*not\*\* route back through Branch A|keep evaluating Branch B-F/i,
+      'progress.md must route past informational generic checkpoints instead of bouncing back to /gsdd-resume. FIX: Keep the non-looping routing note.');
+    assert.match(progress, /`?phase`? and `?quick`?.*blocking resume-owned surfaces/i,
+      'progress.md must preserve stronger routing for phase and quick checkpoints. FIX: Keep the blocking checkpoint wording.');
   });
 
   test('transition-sensitive workflows reuse stale-branch and mixed-scope warning language', () => {

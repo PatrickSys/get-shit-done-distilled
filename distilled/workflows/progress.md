@@ -70,6 +70,9 @@ If `ROADMAP.md` exists and all phases in the current milestone are `[x]`, determ
 
 **Checkpoint:**
 Check if `.planning/.continue-here.md` exists. If yes, note the `workflow` and `phase` frontmatter and the `next_action` section.
+- Treat checkpoint routing classes explicitly:
+  - `phase` and `quick` checkpoints remain blocking resume-owned surfaces for routing.
+  - `generic` checkpoints are informational-only for this read-only reporter: show the checkpoint and its `next_action`, but keep evaluating the real lifecycle recommendation instead of routing Branch A back through `/gsdd-resume`.
 
 **Incomplete work:**
 If `.planning/phases/` exists, scan it for:
@@ -117,7 +120,7 @@ Recent Work:
 - Phase [Y]: [one-liner from SUMMARY.md]
 
 [If .continue-here.md exists:]
-Checkpoint: paused work found — run /gsdd-resume to restore context
+Checkpoint: paused work found — `phase`/`quick` checkpoints still route through /gsdd-resume; `generic` checkpoints stay visible as informational context only
 
 [If PLAN without SUMMARY found:]
 Incomplete execution: Phase [N] has PLAN but no SUMMARY
@@ -165,13 +168,15 @@ No ASCII art, no progress bars. Keep it scannable.
 Evaluate in priority order. Present the single best next step as a suggestion with a formatted output block. Do not wait for user selection, do not present numbered menus, do not clean up files. This is purely informational.
 
 **Branch A: Resume checkpoint**
-Condition: `.continue-here.md` exists.
+Condition: `.continue-here.md` exists and its `workflow` is `phase` or `quick`.
 
 ```
 Suggested next action:
   Run /gsdd-resume to restore paused session context
   Also available: /gsdd-execute (ignore checkpoint, continue current phase), /gsdd-progress (refresh)
 ```
+
+If `.continue-here.md` exists and its `workflow` is `generic`, do **not** route back through Branch A from this read-only reporter. Show the checkpoint in the status block, surface its `next_action`, and keep evaluating Branch B-F so the primary recommendation can advance toward the real next phase, verification, or milestone-close action.
 
 **Branch B: Execute (PLAN without SUMMARY in current phase)**
 Condition: Current phase has a PLAN file but no matching SUMMARY.
@@ -249,7 +254,8 @@ If none of the above conditions match, report that the project is in a clean sta
 Handle compound states:
 
 - **Checkpoint + unexecuted plan:** Both `.continue-here.md` exists and a PLAN lacks a SUMMARY. Prioritize checkpoint (Branch A) but mention the unexecuted plan in the status block.
-- **All phases complete + checkpoint:** All phases `[x]` but a checkpoint exists. Mention both — suggest clearing the stale checkpoint via `/gsdd-resume`, then routing to milestone audit.
+- **Generic checkpoint + current phase work:** A `workflow: generic` checkpoint may coexist with an incomplete plan, unverified phase, or completed milestone. Keep the checkpoint visible in the status block, but let Branch B-F supply the primary recommendation instead of bouncing back to `/gsdd-resume`.
+- **All phases complete + checkpoint:** All phases `[x]` but a checkpoint exists. If the checkpoint is `phase` or `quick`, mention both and suggest `/gsdd-resume` before continuing. If the checkpoint is `generic`, keep it visible as informational context and still route the primary recommendation to milestone audit.
 - **Phase done but next unplanned:** Current phase has both PLAN and SUMMARY, but the next phase has no PLAN. Show the current phase as complete and suggest planning the next phase (Branch C targeting the next phase).
 - **No matching condition:** If the project state does not match any branch, report it clearly and suggest the user inspect `.planning/` manually.
 </edge_cases>
