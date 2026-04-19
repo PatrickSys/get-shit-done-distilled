@@ -1,3 +1,28 @@
+# [0.18.0](https://github.com/PatrickSys/workspine/compare/v0.17.0...v0.18.0) (2026-04-19)
+
+Milestone: **v1.4.0 — Launch Surface Coherence**
+
+### Features
+
+* rewrite README identity, lineage paragraph, and product story for launch ([04c0b15](https://github.com/PatrickSys/workspine/commit/04c0b15))
+* add CREDITS.md with fork lineage and upstream attribution ([46c1cd8](https://github.com/PatrickSys/workspine/commit/46c1cd8))
+* session reconciliation guard with planning-state drift detection (W12) ([0f8d323](https://github.com/PatrickSys/workspine/commit/0f8d323))
+* public surface reconciliation — proof-split wording, lifecycle phrase, retained contracts ([e83004d](https://github.com/PatrickSys/workspine/commit/e83004d))
+
+### Bug Fixes
+
+* nested phase artifact classification and plan discovery ([0a1d821](https://github.com/PatrickSys/workspine/commit/0a1d821))
+* DESIGN.md health check table missing W10 row ([0f8d323](https://github.com/PatrickSys/workspine/commit/0f8d323))
+* design decision count 51→52 across README and distilled/README ([04c0b15](https://github.com/PatrickSys/workspine/commit/04c0b15))
+
+### Housekeeping
+
+* package.json version 0.18.0, repository URL updated to workspine
+* .mailmap for contributor identity consolidation
+* FUNDING.yml and SECURITY.md references updated
+* FRAMEWORK_VERSION bumped to v1.4
+* framework state: 52 design decisions, 14 workflows, 1880+ structural assertions
+
 # [0.17.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.16.1...v0.17.0) (2026-04-16)
 
 
