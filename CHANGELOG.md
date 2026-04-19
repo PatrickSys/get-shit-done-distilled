@@ -21,7 +21,7 @@ Milestone: **v1.4.0 — Launch Surface Coherence**
 * .mailmap for contributor identity consolidation
 * FUNDING.yml and SECURITY.md references updated
 * FRAMEWORK_VERSION bumped to v1.4
-* framework state: 52 design decisions, 14 workflows, 1880+ structural assertions
+* framework state: 52 design decisions, 14 workflows, 1,415 tests across 13 suites
 
 # [0.17.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.16.1...v0.17.0) (2026-04-16)
 

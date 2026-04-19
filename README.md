@@ -58,7 +58,7 @@ Verification is a separate workflow with a separate context window, not a checkb
 
 ### Rules that must be consistent are enforced by code, not by memory
 
-1,228 structural assertions across 10 test files guard properties that PRs repeatedly broke: delegate-role reference integrity, workflow vendor-API cleanliness, artifact schema consistency, plan-checker dimension coverage, and cross-document drift.
+1,415 tests across 13 test files guard properties that PRs repeatedly broke: delegate-role reference integrity, workflow vendor-API cleanliness, artifact schema consistency, plan-checker dimension coverage, and cross-document drift.
 
 <details>
 <summary>How it works</summary>
@@ -353,6 +353,7 @@ Workspine consolidates GSD's agent surface into 10 roles with durable contracts:
 | **Verifier** | Phase verification — Exists/Substantive/Wired gate |
 | **Roadmapper** | Roadmap generation from spec |
 | **Integration Checker** | Cross-phase wiring, API coverage, auth protection, E2E flows |
+| **Approach Explorer** | Implementation approach alignment before planning begins |
 | **Debugger** | Utility role for systematic debugging |
 
 ### Two-Layer Architecture
@@ -519,7 +520,7 @@ Key choices:
 
 ## Testing
 
-The framework has 1228 structural assertions across 10 test files — named suites that guard properties PRs repeatedly fixed manually. These are not unit tests for application code; they are invariant checks on the specification itself.
+The framework has 1,415 tests across 13 test files — named suites that guard properties PRs repeatedly fixed manually. These are not unit tests for application code; they are invariant checks on the specification itself.
 
 ### Invariant Suites (I-series)
 
