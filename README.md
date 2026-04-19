@@ -58,7 +58,7 @@ Verification is a separate workflow with a separate context window, not a checkb
 
 ### Rules that must be consistent are enforced by code, not by memory
 
-1,415 tests across 13 test files guard properties that PRs repeatedly broke: delegate-role reference integrity, workflow vendor-API cleanliness, artifact schema consistency, plan-checker dimension coverage, and cross-document drift.
+1,381 tests across 13 test files guard properties that PRs repeatedly broke: delegate-role reference integrity, workflow vendor-API cleanliness, artifact schema consistency, plan-checker dimension coverage, and cross-document drift.
 
 <details>
 <summary>How it works</summary>
@@ -222,7 +222,7 @@ Run `gsdd-plan` for the current phase. The system:
 2. **Plans** — creates atomic task plans with XML structure
 3. **Checks** — a separate agent in a fresh context window reviews the plan against 7 dimensions (requirement coverage, task completeness, dependency correctness, key-link completeness, scope sanity, must-have quality, context compliance). If the plan fails, it revises and re-checks — up to 3 cycles before escalating to the human. Output is typed JSON so orchestration is machine-parseable, not prompt-dependent.
 
-Each plan is small enough to execute in a fresh context window. The checker runs in a separate context from the planner — this is the [ICLR-validated](https://arxiv.org/abs/2310.12397) pattern for catching blind spots the planner inherits from its own reasoning.
+Each plan is small enough to execute in a fresh context window. The checker runs in a separate context from the planner — this is the [ICLR-validated](https://arxiv.org/abs/2310.01798) pattern for catching blind spots the planner inherits from its own reasoning.
 
 `gsdd-plan` is terminal for the current run: it writes planning artifacts only. Execution begins only after an explicit `gsdd-execute` / `/gsdd-execute` / `$gsdd-execute` transition, depending on the runtime.
 
@@ -520,7 +520,7 @@ Key choices:
 
 ## Testing
 
-The framework has 1,415 tests across 13 test files — named suites that guard properties PRs repeatedly fixed manually. These are not unit tests for application code; they are invariant checks on the specification itself.
+The framework has 1,381 tests across 13 test files — named suites that guard properties PRs repeatedly fixed manually. These are not unit tests for application code; they are invariant checks on the specification itself.
 
 ### Invariant Suites (I-series)
 

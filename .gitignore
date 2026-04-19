@@ -44,3 +44,5 @@ MILESTONES.md
 
 # Local temp files (slides, previews, scratch)
 tmp/
+distilled.zip
+test-gsdd/

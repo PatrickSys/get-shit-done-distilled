@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// gsdd - GSD Distilled CLI
+// gsdd - Workspine CLI
 
 import { realpathSync } from 'fs';
 import { join, dirname } from 'path';

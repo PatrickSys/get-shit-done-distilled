@@ -83,7 +83,7 @@ A detailed reference for Workspine workflows, troubleshooting, and configuration
          └── Done
 ```
 
-The plan checker runs in a **separate context window** from the planner. This prevents the checker from inheriting the planner's blind spots — the same reasoning error that produced the plan cannot suppress the review of that plan. This is the [ICLR-validated](https://arxiv.org/abs/2310.12397) pattern for LLM self-refinement.
+The plan checker runs in a **separate context window** from the planner. This prevents the checker from inheriting the planner's blind spots — the same reasoning error that produced the plan cannot suppress the review of that plan. This is the [ICLR-validated](https://arxiv.org/abs/2310.01798) pattern for LLM self-refinement.
 
 The 7 check dimensions: requirement coverage, task completeness, dependency correctness, key-link completeness, scope sanity, must-have quality, context compliance.
 

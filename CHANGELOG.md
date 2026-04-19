@@ -21,7 +21,7 @@ Milestone: **v1.4.0 — Launch Surface Coherence**
 * .mailmap for contributor identity consolidation
 * FUNDING.yml and SECURITY.md references updated
 * FRAMEWORK_VERSION bumped to v1.4
-* framework state: 52 design decisions, 14 workflows, 1,415 tests across 13 suites
+* framework state: 52 design decisions, 14 workflows, 1,381 tests across 13 suites
 
 # [0.17.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.16.1...v0.17.0) (2026-04-16)
 
@@ -83,7 +83,7 @@ Milestone: **v1.4.0 — Launch Surface Coherence**
 
 ### Features
 
-* framework health truth checks and self-health reconciliation (Phase 16) ([8bb1d01](https://github.com/PatrickSys/get-shit-done-distilled/commit/8bb1d017f8f7bc72c032e6388df49a3f3d67a211)), closes [pre-#74](https://github.com/pre-/issues/74)
+* framework health truth checks and self-health reconciliation ([8bb1d01](https://github.com/PatrickSys/get-shit-done-distilled/commit/8bb1d017f8f7bc72c032e6388df49a3f3d67a211))
 
 ## [0.13.5](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.13.4...v0.13.5) (2026-04-10)
 
@@ -300,7 +300,7 @@ Current framework state: 39 design decisions documented in `distilled/DESIGN.md`
 
 # Changelog
 
-All notable changes to GSDD will be documented in this file.
+All notable changes to Workspine will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 

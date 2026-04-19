@@ -77,7 +77,7 @@ Use the same three-way routing everywhere:
 - `gsdd-quick` is the bounded brownfield lane when the change is already concrete. It uses existing codebase maps when present and otherwise builds a just-enough inline baseline.
 - `gsdd-map-codebase` is the deeper orientation pass for unfamiliar or higher-risk repos before choosing between `quick` and `new-project`.
 
-## Current Status (updated 2026-04-17)
+## Current Status (updated 2026-04-19)
 
 | Workflow | Status | Notes |
 |----------|--------|-------|
@@ -193,6 +193,7 @@ distilled/
       mapper-quality.md
       mapper-concerns.md
       plan-checker.md
+      approach-explorer.md
       researcher-stack.md
       researcher-features.md
       researcher-architecture.md

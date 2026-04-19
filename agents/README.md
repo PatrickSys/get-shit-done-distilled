@@ -1,6 +1,6 @@
 # Canonical Role Library
 
-Vendor-agnostic role contracts for GSDD's agent architecture.
+Vendor-agnostic role contracts for Workspine's agent architecture.
 
 ## Two-Layer Architecture
 
