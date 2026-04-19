@@ -2,9 +2,7 @@
 
 # Workspine
 
-**A portable multi-runtime software delivery framework for long-horizon AI-assisted work.**
-
-Workspine gives long-horizon AI-assisted work one repo-native contract for planning, checking, execution, verification, and handoff so progress survives runtime switching and session loss. The retained package and CLI contracts remain `gsdd-cli` / `gsdd`.
+**AI development that stays consistent across agents and sessions.** Plans are checked, work is verified, and progress is tracked in the repo.
 
 [![npm version](https://img.shields.io/npm/v/gsdd-cli?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/gsdd-cli)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
@@ -13,9 +11,8 @@ Workspine gives long-horizon AI-assisted work one repo-native contract for plann
 npx gsdd-cli init
 ```
 
-**Directly validated today:** Claude Code, Codex CLI, and OpenCode.  
-**Qualified support:** Cursor, Copilot, and Gemini CLI use the same portable workflow surfaces, but this release does not claim equal proof or equal runtime ergonomics.
-**Generated-surface trust:** When `.agents/skills/`, `.claude/`, `.opencode/`, or `.codex/` exist locally, `gsdd health` compares them against current render output and `gsdd update` repairs drift.
+**Directly validated:** Claude Code, Codex CLI, and OpenCode.
+**Qualified support:** Cursor, Copilot, and Gemini CLI use the same portable workflow surfaces but do not have equal proof or equal runtime ergonomics.
 
 </div>
 
@@ -23,30 +20,63 @@ npx gsdd-cli init
 
 ## What This Is
 
-Workspine is a portable multi-runtime software delivery framework. It keeps the same repo-native contract for planning, checking, execution, verification, and handoff even when teams use different coding runtimes.
+Workspine is a repo-native delivery spine for long-horizon AI-assisted software work. It keeps planning, execution, verification, handoff, and progress state in the repo so work survives cold starts, runtime switches, and session loss.
 
-Workspine is the public product name for this milestone. The package, command, workflow names, and workspace stay `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/` as retained technical contracts, not half-finished rename residue.
+Workspine is the product name. The package, CLI commands, workflow prefixes, and workspace directory remain `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/` — these are stable technical contracts, not rename residue.
 
-Workspine started by distilling ideas from Get Shit Done and earlier GSDD work because the long-horizon delivery spine was genuinely strong. This release keeps that lineage explicit while taking a different path on purpose: lower token burn, fewer public workflow surfaces, less runtime-specific coupling, and a stronger multi-runtime posture.
+### Lineage
 
-What stays portable in this release:
+Workspine began as a fork of [Get Shit Done](https://github.com/gsd-build/get-shit-done), whose long-horizon delivery spine proved the problem was real. Since the fork, upstream GSD has continued evolving into a broad multi-runtime framework — as of April 2026, GSD v1 documents 81 commands and 78 workflows across 33 agents. Workspine took a different path: 14 public workflow surfaces, generated runtime adapters from a portable core, evidence-gated closure, and provenance-aware continuity. The trade-off is deliberate: a narrower surface with stricter closure and fewer moving parts for the human operator.
 
-- **Planning** — durable project and phase artifacts
-- **Checks** — plan-review loops with explicit assurance boundaries
-- **Execution discipline** — scoped execution from persisted plan artifacts
-- **Verification** — Exists/Substantive/Wired gate plus anti-pattern scanning
-- **Handoff** — repo-local continuity and milestone state instead of session-only memory
+---
 
-What it does **not** claim for this release:
+## What's Different
 
-- equal ergonomics on every runtime
-- parity validation on Cursor, Copilot, or Gemini CLI
-- orchestration-control-plane behavior
-- a pure spec-only framework in the OpenSpec / LeanSpec lane
+### Context survives cold starts, tool switches, and session loss
 
-What it strips from GSD: broader operator surface, heavier ceremony, and more runtime-specific assumptions than this release needs.
+Planning, phase artifacts, verification reports, and handoff checkpoints live in `.planning/`. When you switch runtimes or come back after a week, the repo still knows what was planned, what was executed, what was verified, and where you stopped.
 
-**Target user:** Developer or small team that wants one durable delivery framework across coding runtimes, with explicit checks and repo-native proof instead of a dashboard or orchestration control plane.
+<details>
+<summary>How it works</summary>
+
+Three-layer continuity model: durable project truth (SPEC, ROADMAP, design decisions), live workflow state (phase plans, summaries, checkpoints), and compressed judgment (active constraints, anti-regression rules). Pause/resume workflows write and read these layers explicitly. No session memory required.
+
+</details>
+
+### Done means verified, not merely generated
+
+Verification is a separate workflow with a separate context window, not a checkbox at the end of execution. It checks three levels — do the files exist, is the code substantive (not stubs), and is it actually wired into the system — plus an anti-pattern scan.
+
+<details>
+<summary>How it works</summary>
+
+`gsdd-verify` runs after execution and produces a typed verification report. `gsdd-audit-milestone` checks cross-phase integration, requirement coverage, and end-to-end flows. Evidence-gated closure prevents marking work done without the right evidence kinds (code, test, runtime, delivery, human).
+
+</details>
+
+### Rules that must be consistent are enforced by code, not by memory
+
+1,228 structural assertions across 10 test files guard properties that PRs repeatedly broke: delegate-role reference integrity, workflow vendor-API cleanliness, artifact schema consistency, plan-checker dimension coverage, and cross-document drift.
+
+<details>
+<summary>How it works</summary>
+
+Invariant suites (I-series), guard suites (G-series), and scenario suites (S-series) run on every change. Each assertion includes a `FIX:` instruction so failures are actionable. 52 documented design decisions in `distilled/DESIGN.md` record the rationale with evidence trails.
+
+</details>
+
+### Smaller surface, stricter closure
+
+14 workflows. 10 roles. One CLI. Lifecycle progression goes through deterministic preflight gates — not conversational inference. Plans are checked by a separate agent in a separate context before execution begins. Closure requires evidence, not just file existence.
+
+<details>
+<summary>How it works</summary>
+
+`gsdd-plan` is terminal: it writes planning artifacts and stops. Execution requires an explicit `gsdd-execute` transition. `lifecycle-preflight` evaluates eligibility from repo artifacts before allowing state changes. `phase-status` is the only explicit ROADMAP mutator. `progress` is read-only.
+
+</details>
+
+**Target user:** Developer or small team that wants one durable delivery spine across coding runtimes, with explicit checks and repo-native proof instead of a dashboard or orchestration control plane.
 
 ---
 
@@ -75,8 +105,8 @@ When those generated surfaces exist locally, `gsdd health` checks them against c
 
 ### Launch Proof Status
 
-- **Directly validated in this repo:** Claude Code, Codex CLI, and OpenCode have recorded `plan -> execute -> verify` evidence for the core lifecycle.
-- **Qualified support:** Cursor, Copilot, and Gemini CLI use the shared `.agents/skills/` surface plus optional governance, but this release does not describe them as equally proven native runtimes or equally ergonomic native surfaces.
+- **Directly validated:** Claude Code, Codex CLI, and OpenCode have recorded `plan -> execute -> verify` evidence for the core lifecycle.
+- **Qualified support:** Cursor, Copilot, and Gemini CLI use the shared `.agents/skills/` surface plus optional governance, but are not described as equally proven or equally ergonomic.
 - **Runtime-surface freshness:** Installed generated skills and native adapters are renderer-checked locally; repair stays deterministic through `npx gsdd-cli update`.
 
 Start with the public proof pack:
@@ -469,7 +499,7 @@ For detailed troubleshooting and recovery procedures, see the [User Guide](docs/
 
 ## Design Decisions
 
-This repo records 51 documented design decisions relative to GSD, each with evidence from source files and external research. See [`distilled/DESIGN.md`](distilled/DESIGN.md) for the full rationale.
+This repo records 52 documented design decisions relative to GSD, each with evidence from source files and external research. See [`distilled/DESIGN.md`](distilled/DESIGN.md) for the full rationale.
 
 Key choices:
 - **4-file codebase standard** — drop state that rots (STRUCTURE, INTEGRATIONS, TESTING), keep rules that don't
@@ -564,15 +594,9 @@ npm test
 
 ---
 
-## Lineage
-
-Workspine grew out of a distilled fork of [Get Shit Done](https://github.com/gsd-build/get-shit-done). It is **not** a full replacement for current upstream GSD, and it does not recreate the full upstream operator surface. The trade-off is deliberate: fewer moving parts for the human operator, cleaner role contracts, and a simpler artifact model, with some operator-comfort and control-plane features left out. Health diagnostics remain available via `gsdd health`.
-
----
-
 ## Credits
 
-Workspine is maintained in this repository as a distilled fork of [Get Shit Done](https://github.com/gsd-build/get-shit-done) by [Lex Christopherson](https://github.com/glittercowboy), licensed under MIT.
+Workspine is a fork of [Get Shit Done](https://github.com/gsd-build/get-shit-done) by [Lex Christopherson](https://github.com/glittercowboy), licensed under MIT. Original git history is retained for attribution.
 
 ---
 
