@@ -3,6 +3,7 @@ import { join } from 'path';
 import { output } from './cli-utils.mjs';
 import { describeEvidenceSurface } from './evidence-contract.mjs';
 import { evaluateLifecycleState, normalizePhaseToken } from './lifecycle-state.mjs';
+import { checkDrift } from './session-fingerprint.mjs';
 
 const SURFACE_POLICIES = {
   progress: {
@@ -119,6 +120,19 @@ export function evaluateLifecyclePreflight({
     blockers.push(blocker('missing_checkpoint', 'resume requires .planning/.continue-here.md to exist.', ['.planning/.continue-here.md']));
   }
 
+  const warnings = [];
+
+  if (existsSync(planningDir)) {
+    const drift = checkDrift(planningDir);
+    if (drift.drifted) {
+      warnings.push({
+        code: 'planning_state_drift',
+        message: `Planning state has drifted since the last recorded session: ${drift.details.join('; ')}`,
+        artifacts: ['.planning/ROADMAP.md', '.planning/SPEC.md', '.planning/config.json'],
+      });
+    }
+  }
+
   return {
     surface,
     phase: normalizedPhase,
@@ -131,6 +145,7 @@ export function evaluateLifecyclePreflight({
     status: blockers.length === 0 ? 'allowed' : 'blocked',
     reason: blockers[0]?.code ?? null,
     blockers,
+    warnings,
     lifecycle: {
       currentMilestone: lifecycle.currentMilestone,
       currentPhase: lifecycle.currentPhase ? lifecycle.currentPhase.number : null,

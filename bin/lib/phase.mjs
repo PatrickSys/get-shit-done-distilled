@@ -6,6 +6,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from 'fs';
 import { join, basename } from 'path';
 import { output } from './cli-utils.mjs';
+import { writeFingerprint } from './session-fingerprint.mjs';
 
 const PHASE_STATUS_MARKERS = {
   not_started: '[ ]',
@@ -174,6 +175,7 @@ export function cmdPhaseStatus(...args) {
     const changed = updated !== roadmap;
     if (changed) {
       writeFileSync(roadmapPath, updated);
+      try { writeFingerprint(planningDir); } catch { /* best-effort */ }
     }
     output({ phase: phaseNumber, status, roadmap: '.planning/ROADMAP.md', changed });
   } catch (error) {

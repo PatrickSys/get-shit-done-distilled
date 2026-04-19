@@ -955,7 +955,9 @@ Implementation lives under `bin/lib/`:
 | W7 | WARN | `distilled/DESIGN.md` health check table differs from implemented check IDs |
 | W8 | WARN | `distilled/README.md` workflow inventory differs from `distilled/workflows/` |
 | W9 | WARN | `.internal-research/gaps.md` references missing repo-local paths |
+| W10 | WARN | ROADMAP/SPEC requirement status drift |
 | W11 | WARN | Installed generated runtime surfaces drift from current render output |
+| W12 | WARN | Planning state drifted since last recorded session (fingerprint mismatch) |
 | I1 | INFO | Generation manifest `frameworkVersion` differs from current `FRAMEWORK_VERSION` |
 | I2 | INFO | Phase completion count from ROADMAP |
 | I3 | INFO | Which adapters are installed |
@@ -985,7 +987,7 @@ Implementation lives under `bin/lib/`:
 
 **What was removed vs GSD:**
 - `--repair` flag and associated repair actions
-- Error codes E001-E005/W001-W007 (replaced with simpler E1-E8/W1-W10/I1-I3)
+- Error codes E001-E005/W001-W007 (replaced with simpler E1-E8/W1-W12/I1-I3)
 - STATE.md checks (GSDD has no STATE.md per D7)
 - PROJECT.md checks (GSDD uses SPEC.md, not checked by health — it's workflow-authored)
 - Phase directory naming format checks (GSDD uses flat numbered files, not NN-name directories)

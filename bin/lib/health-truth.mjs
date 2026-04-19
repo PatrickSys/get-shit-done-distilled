@@ -5,8 +5,9 @@ import {
   getRuntimeFreshnessRepairGuidance,
   summarizeRuntimeFreshnessIssues,
 } from './runtime-freshness.mjs';
+import { checkDrift } from './session-fingerprint.mjs';
 
-export const TRUTH_CHECK_IDS = ['W7', 'W8', 'W9', 'W10', 'W11'];
+export const TRUTH_CHECK_IDS = ['W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
 
 export function runTruthChecks(planningDir, frameworkDir, actualCheckIds, options = {}) {
   const warnings = [];
@@ -92,6 +93,16 @@ export function runTruthChecks(planningDir, frameworkDir, actualCheckIds, option
       severity: 'WARN',
       message: `Installed generated runtime surfaces drift from current render output (${summarizeRuntimeFreshnessIssues(options.runtimeFreshnessReport)})`,
       fix: getRuntimeFreshnessRepairGuidance(options.runtimeFreshnessReport),
+    });
+  }
+
+  const drift = checkDrift(planningDir);
+  if (drift.drifted) {
+    warnings.push({
+      id: 'W12',
+      severity: 'WARN',
+      message: `Planning state drifted since last recorded session (${drift.details.join('; ')})`,
+      fix: 'Review the changes, then run a lifecycle workflow to update the fingerprint',
     });
   }
 

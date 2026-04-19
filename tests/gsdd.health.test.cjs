@@ -57,6 +57,7 @@ function writeAlignedTruthFixtures() {
 | W9 | WARN | x |
 | W10 | WARN | x |
 | W11 | WARN | x |
+| W12 | WARN | x |
 | I1 | INFO | x |
 | I2 | INFO | x |
 | I3 | INFO | x |
