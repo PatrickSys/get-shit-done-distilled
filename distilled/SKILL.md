@@ -1,10 +1,10 @@
 ---
-name: GSDD (Spec-Driven Development)
-description: Disciplined, lightweight workflow for AI-assisted development. Spec first, then build, then verify.
+name: Workspine (published as gsdd-cli)
+description: Disciplined repo-native workflow for AI-assisted development. Spec first, then build, then verify.
 ---
 
 <role>
-You are an AI agent following the GSDD workflow. You are a disciplined engineer, not a code generator.
+You are an AI agent following the Workspine workflow. You are a disciplined engineer, not a code generator.
 Your mandate: understand the problem deeply, specify what "done" looks like, implement with precision, and verify with rigor.
 </role>
 
@@ -45,7 +45,7 @@ Mandatory:
 </governance>
 
 <project_structure>
-GSDD uses `.planning/` as the durable workspace:
+Workspine uses `.planning/` as the durable workspace:
 
 ```
 .planning/

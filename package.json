@@ -17,16 +17,19 @@
     "semantic-release": "^24.2.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "files": [
     "bin/adapters/",
     "bin/lib/",
     "bin/gsdd.mjs",
     "distilled/DESIGN.md",
+    "distilled/EVIDENCE-INDEX.md",
     "distilled/README.md",
+    "distilled/SKILL.md",
     "distilled/templates/",
     "distilled/workflows/",
+    "docs/",
     "agents/*.md",
     "agents/README.md"
   ],

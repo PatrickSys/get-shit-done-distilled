@@ -12,7 +12,7 @@ npx gsdd-cli init
 ```
 
 **Directly validated today:** Claude Code, Codex CLI, and OpenCode.
-**Qualified support:** Cursor, Copilot, and Gemini CLI use the same portable workflow surfaces but do not have equal proof or equal runtime ergonomics.
+**Qualified support:** Cursor, Copilot, and Gemini CLI support the same core workflow through the shared `.agents/skills/` surface; this release does not claim the same runtime proof or ergonomics.
 
 </div>
 
@@ -108,7 +108,7 @@ When those generated surfaces exist locally, `gsdd health` checks them against c
 ### Launch Proof Status
 
 - **Directly validated:** Claude Code, Codex CLI, and OpenCode have recorded `plan -> execute -> verify` evidence for the core lifecycle.
-- **Qualified support:** Cursor, Copilot, and Gemini CLI use the shared `.agents/skills/` surface plus optional governance, but are not described as equally proven or equally ergonomic.
+- **Qualified support:** Cursor, Copilot, and Gemini CLI support the same core workflow through the shared `.agents/skills/` surface; this release does not claim the same runtime proof or ergonomics.
 - **Runtime-surface freshness:** Installed generated skills and native adapters are renderer-checked locally; repair stays deterministic through `npx gsdd-cli update`.
 
 Start with the public proof pack:
@@ -119,6 +119,8 @@ Start with the public proof pack:
 - [Verification discipline](docs/VERIFICATION-DISCIPLINE.md)
 
 ### Quickstart (after init)
+
+Runtime floor: Node 20+.
 
 Your tool determines how you invoke workflows:
 
@@ -156,7 +158,7 @@ npx gsdd-cli init --tools all        # All of the above
 | **Claude Code** | Directly validated | `.claude/skills/`, `.claude/commands/`, `.claude/agents/` — native workflow surfaces, freshness-checked when generated locally |
 | **OpenCode** | Directly validated | `.opencode/commands/`, `.opencode/agents/` — native workflow surfaces, freshness-checked when generated locally |
 | **Codex CLI** | Directly validated | Portable skill entry plus `.codex/agents/gsdd-plan-checker.toml`; planning stays locked until explicit `$gsdd-execute`, and installed surfaces are freshness-checked locally |
-| **Cursor / Copilot / Gemini** | Qualified support | Skills-native discovery from `.agents/skills/`; optional root `AGENTS.md` block adds behavioral governance, and the generated skill surface is freshness-checked locally |
+| **Cursor / Copilot / Gemini** | Same core workflow | Skills-native discovery from `.agents/skills/`; optional root `AGENTS.md` block adds behavioral governance, and the generated skill surface is freshness-checked locally |
 | **Other AI tools** | Fallback only | Open `.agents/skills/gsdd-*/SKILL.md` directly |
 
 ### Updating
@@ -372,7 +374,7 @@ Workspine generates vendor-specific files from vendor-agnostic markdown — it d
 | **Claude Code** | Directly validated | Skill-primary plan surface, thin command alias, native `gsdd-plan-checker` agent |
 | **OpenCode** | Directly validated | Specialized `/gsdd-plan` command (`subtask: false`), hidden `gsdd-plan-checker` subagent (`mode: subagent`) |
 | **Codex CLI** | Directly validated | Portable skill as entry surface, `.codex/agents/gsdd-plan-checker.toml` (read-only, high reasoning effort), explicit `$gsdd-execute` unlock |
-| **Cursor / Copilot / Gemini** | Qualified support | Runtime discovers `.agents/skills/` natively; optional root `AGENTS.md` block adds behavioral governance only |
+| **Cursor / Copilot / Gemini** | Same core workflow | Runtime discovers `.agents/skills/` natively; optional root `AGENTS.md` block adds behavioral governance only |
 | **agents** (`--tools agents`) | Governance-only helper | Root `AGENTS.md` block for tools that benefit from governance or need open-standard fallback guidance |
 
 All adapters render the plan-checker from a single source (`distilled/templates/delegates/plan-checker.md`). Each adapter shapes the output to its platform's native mechanics, and the portable skill remains the shared workflow source.

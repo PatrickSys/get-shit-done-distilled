@@ -16,7 +16,7 @@ The workflow contract has direct repo proof for these runtimes:
 
 These are the strongest public runtime claims.
 
-### Qualified support
+### Same core workflow
 
 These runtimes use the same portable workflow surfaces, but this release does not claim equal runtime proof or equal ergonomics:
 
@@ -35,9 +35,9 @@ Any tool that can read the generated markdown workflows can still use the framew
 | Claude Code | Directly validated | `.claude/skills/`, `.claude/commands/`, `.claude/agents/` | Native surface was a mandatory Phase 32 validation target; installed generated files are freshness-checked locally |
 | OpenCode | Directly validated | `.opencode/commands/`, `.opencode/agents/` | Native command and checker path; installed generated files are freshness-checked locally |
 | Codex CLI | Directly validated | `.agents/skills/gsdd-*` plus `.codex/agents/gsdd-plan-checker.toml` | Portable skill entry, native checker adapter, mandatory Phase 32 validation target |
-| Cursor | Qualified support | `.agents/skills/gsdd-*` | Skills-native path; generated skill files are freshness-checked locally, but the runtime is not claimed as parity-validated |
-| GitHub Copilot | Qualified support | `.agents/skills/gsdd-*` | Skills-native path; generated skill files are freshness-checked locally, but the runtime is not claimed as parity-validated |
-| Gemini CLI | Qualified support | `.agents/skills/gsdd-*` | Skills-native path; governance is optional, generated skill files are freshness-checked locally, and parity is not claimed |
+| Cursor | Same core workflow | `.agents/skills/gsdd-*` | Skills-native path; generated skill files are freshness-checked locally, but the runtime is not claimed as parity-validated |
+| GitHub Copilot | Same core workflow | `.agents/skills/gsdd-*` | Skills-native path; generated skill files are freshness-checked locally, but the runtime is not claimed as parity-validated |
+| Gemini CLI | Same core workflow | `.agents/skills/gsdd-*` | Skills-native path; governance is optional, generated skill files are freshness-checked locally, and parity is not claimed |
 
 ## Generated-surface freshness
 

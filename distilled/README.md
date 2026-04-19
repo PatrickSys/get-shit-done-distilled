@@ -19,7 +19,7 @@ Workspine began as a fork of Get Shit Done, whose long-horizon delivery spine pr
 
 Launch proof posture:
 - Directly validated in repo truth: Claude Code, Codex CLI, OpenCode
-- Qualified support only: Cursor, Copilot, Gemini CLI via the shared `.agents/skills/` surface plus optional governance
+- Qualified support only: Cursor, Copilot, Gemini CLI support the same core workflow via the shared `.agents/skills/` surface plus optional governance; proof and ergonomics differ from the directly validated runtimes
 - Installed generated runtime surfaces are renderer-checked locally through `gsdd health`, with deterministic repair through `gsdd update`
 - Public proof entrypoints: `docs/BROWNFIELD-PROOF.md`, `docs/proof/consumer-node-cli/README.md`, `docs/RUNTIME-SUPPORT.md`, `docs/VERIFICATION-DISCIPLINE.md`
 
@@ -77,24 +77,24 @@ Use the same three-way routing everywhere:
 - `gsdd-quick` is the bounded brownfield lane when the change is already concrete. It uses existing codebase maps when present and otherwise builds a just-enough inline baseline.
 - `gsdd-map-codebase` is the deeper orientation pass for unfamiliar or higher-risk repos before choosing between `quick` and `new-project`.
 
-## Current Status (updated 2026-04-19)
+## Workflow Surface (updated 2026-04-19)
 
-| Workflow | Status | Notes |
-|----------|--------|-------|
-| `new-project.md` | [OK] Defined, source-audited | Covers greenfield + brownfield + milestone context |
-| `plan.md` | [OK] Defined, source-audited | Portable workflow defines the planner contract and supports independent plan checking through generated native adapters |
-| `execute.md` | [OK] Source-audited | Mandatory read enforcement, auth-gate routing, deviation-rule examples, and substantive summary quality gate |
-| `verify.md` | [OK] Source-audited | 5 gap closures against hardened verifier role contract: grouped-gap guidance, orphan detection, frontmatter enforcement, verification basis emphasis, requirements coverage chain |
-| `audit-milestone.md` | [OK] Defined, source-audited | Aggregates phase verification, cross-phase integration audit, auth protection checks, requirement reconciliation, and orphan detection into `MILESTONE-AUDIT.md` |
-| `complete-milestone.md` | [OK] Defined | Archives milestone, evolves SPEC.md, collapses ROADMAP.md — no gsd-tools.cjs dependency |
-| `new-milestone.md` | [OK] Defined | Brownfield milestone continuation: goals, SPEC.md requirements, ROADMAP.md phases |
-| `plan-milestone-gaps.md` | [OK] Defined (unvalidated) | Gap closure phases from MILESTONE-AUDIT.md results |
-| `quick.md` | [OK] | Quick-work lane for sub-hour tasks outside the phase cycle, including bounded brownfield inline baseline and escalation (D11, D47) |
-| `pause.md` | [OK] Source-audited | Session checkpoint writer with conversational handoff (D12) |
-| `resume.md` | [OK] Source-audited | Session context restorer with priority-ordered routing (D12) |
-| `progress.md` | [OK] Source-audited | Read-only status reporter with 6 named route branches, recent work, archived-milestone detection, and non-phase brownfield-state routing (D12, D46, D47) |
-| `map-codebase.md` | [OK] Defined, source-audited | Standalone codebase mapping/refresh and deeper brownfield orientation |
-| `verify-work.md` | [OK] Defined | Conversational UAT validation with structured gap tracking |
+| Workflow | What ships |
+|----------|------------|
+| `new-project.md` | Greenfield + brownfield + milestone initialization |
+| `plan.md` | Portable planner contract with independent plan checking through generated native adapters |
+| `execute.md` | Mandatory reads, auth-gate routing, deviation rules, and substantive summary quality gate |
+| `verify.md` | Phase verification with orphan detection, frontmatter enforcement, and requirements coverage chain |
+| `audit-milestone.md` | Cross-phase integration audit, auth protection checks, requirement reconciliation, and orphan detection into `MILESTONE-AUDIT.md` |
+| `complete-milestone.md` | Milestone archive, spec evolution, and roadmap collapse |
+| `new-milestone.md` | Brownfield milestone continuation: goals, requirements, and roadmap phases |
+| `plan-milestone-gaps.md` | Gap-closure phases from `MILESTONE-AUDIT.md` results |
+| `quick.md` | Quick-work lane for sub-hour tasks outside the phase cycle |
+| `pause.md` | Session checkpoint writer with conversational handoff |
+| `resume.md` | Session context restorer with priority-ordered routing |
+| `progress.md` | Read-only status reporter with recent work, archived-milestone detection, and non-phase brownfield routing |
+| `map-codebase.md` | Standalone codebase mapping/refresh and deeper brownfield orientation |
+| `verify-work.md` | Conversational UAT validation with structured gap tracking |
 
 Architecture notes:
 - `bin/gsdd.mjs` remains the thin generator entrypoint, while vendor-specific rendering lives in adapter modules.
@@ -103,7 +103,7 @@ Architecture notes:
 - Portable lifecycle contracts now align to the roadmap template status grammar: `[ ]`, `[-]`, `[x]`.
 - Phase verification and milestone integration audit are treated as separate concerns.
 - Canonical role contracts use bounded sections, typed output examples, and checklist-driven completion where those structures materially improve downstream reliability.
-- Public launch wording is conservative by design: direct proof is claimed only for runtimes with recorded lifecycle evidence in `.planning/research/09-RESEARCH.md`.
+- Public launch wording is conservative by design: direct proof is claimed only for runtimes with recorded lifecycle evidence in the repo.
 
 ## Init Workflow Agent Count (by config)
 

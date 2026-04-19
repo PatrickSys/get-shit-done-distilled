@@ -1,6 +1,6 @@
 # Workspine User Guide
 
-A detailed reference for Workspine workflows, troubleshooting, and configuration. Workspine is the public product name; the package, CLI, workflow names, and workspace remain `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/` as retained technical contracts. For quick-start setup and the public proof pack, start with the [README](../README.md).
+A detailed reference for Workspine workflows, troubleshooting, and configuration. Workspine is the public product name; the package, CLI, workflow names, and workspace remain `gsdd-cli`, `gsdd`, `gsdd-*`, and `.planning/` as retained technical contracts. Runtime floor: Node 20+. For quick-start setup and the public proof pack, start with the [README](../README.md).
 
 ---
 
@@ -45,10 +45,17 @@ A detailed reference for Workspine workflows, troubleshooting, and configuration
              │             │ No
              └─────────────┼──────────────┘
                            │
-            ┌──────────────▼──────────────┐
-            │  gsdd-audit-milestone       │
-            └─────────────────────────────┘
+             ┌──────────────▼──────────────┐
+             │  gsdd-audit-milestone       │
+             └─────────────────────────────┘
 ```
+
+Optional closure and milestone-continuation workflows in the shipped surface:
+
+- `gsdd-verify-work` adds conversational UAT when user-facing behavior needs explicit validation.
+- `gsdd-plan-milestone-gaps` turns audit findings into gap-closure phases when a milestone is not ready to ship.
+- `gsdd-complete-milestone` archives a shipped milestone, evolves `SPEC.md`, and collapses `ROADMAP.md`.
+- `gsdd-new-milestone` starts the next milestone after closure.
 
 ### Planning Agent Coordination
 
@@ -161,7 +168,11 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
 | `gsdd-plan` | Research + plan + adversarial check for current phase; writes planning artifacts only | Before executing a phase |
 | `gsdd-execute` | Execute phase plans in parallel waves | After planning is complete |
 | `gsdd-verify` | 3-level verification gate + anti-pattern scan | After execution completes |
+| `gsdd-verify-work` | Conversational UAT validation with structured gap tracking | When user-facing behavior needs explicit validation beyond repo artifacts |
 | `gsdd-audit-milestone` | Cross-phase integration, requirements coverage, E2E flows | When all phases are done |
+| `gsdd-complete-milestone` | Archive a shipped milestone, evolve `SPEC.md`, collapse `ROADMAP.md` | When the audited milestone is ready to ship |
+| `gsdd-new-milestone` | Start the next milestone with goals, requirements, and roadmap phases | After closing a milestone and starting the next one |
+| `gsdd-plan-milestone-gaps` | Turn milestone audit findings into gap-closure phases | When audit findings need planned follow-up before shipment |
 | `gsdd-quick` | Plan and execute sub-hour work outside the phase cycle | Bug fixes, small features, config changes when the bounded change is already concrete |
 | `gsdd-pause` | Save session context to checkpoint | Stopping mid-phase |
 | `gsdd-resume` | Restore context from checkpoint and route to next action | Starting a new session |
@@ -279,9 +290,17 @@ Workspine does not impose commit formats, branch naming, or one-commit-per-task 
 
 `npx gsdd-cli init`
 
+Cursor, Copilot, and Gemini use the same core workflow through installed `.agents/skills/` surfaces. The difference is runtime proof and ergonomics, not workflow shape.
+
 - `Claude/OpenCode`: `/gsdd-new-project -> /gsdd-plan -> /gsdd-execute -> /gsdd-verify -> /gsdd-audit-milestone`
 - `Codex`: `$gsdd-new-project -> $gsdd-plan -> $gsdd-execute -> $gsdd-verify -> $gsdd-audit-milestone` (`$gsdd-plan` ends at plan creation; `$gsdd-execute` is a separate explicit unlock)
 - `Cursor / Copilot / Gemini`: `/gsdd-new-project -> /gsdd-plan -> /gsdd-execute -> /gsdd-verify -> /gsdd-audit-milestone` from the slash command menu once the skill is installed
+
+### Milestone Continuation
+
+- `Claude/OpenCode`: `/gsdd-plan-milestone-gaps` when audit findings need closure work, or `/gsdd-complete-milestone -> /gsdd-new-milestone` when the milestone is ready to ship
+- `Codex`: `$gsdd-plan-milestone-gaps` when audit findings need closure work, or `$gsdd-complete-milestone -> $gsdd-new-milestone` when the milestone is ready to ship
+- `Cursor / Copilot / Gemini`: use the matching slash commands once the skills are installed, with the same routing as above
 
 ### Existing Codebase
 

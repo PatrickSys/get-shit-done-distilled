@@ -22,6 +22,9 @@ Milestone: **v1.4.0 — Launch Surface Coherence**
 * FUNDING.yml and SECURITY.md references updated
 * FRAMEWORK_VERSION bumped to v1.4
 * framework state: 52 design decisions, 14 workflows, 1,381 tests across 13 suites
+* npm tarball now ships public docs/proof surfaces plus `distilled/EVIDENCE-INDEX.md` and `distilled/SKILL.md`
+* `gsdd help` now reflects the full workflow surface and helper commands more cleanly
+* launch docs now align on Node 20+, qualified-support caveats, and milestone-continuation surfaces
 
 # [0.17.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.16.1...v0.17.0) (2026-04-16)
 
@@ -207,20 +210,6 @@ Milestone: **v1.4.0 — Launch Surface Coherence**
 * Phase 5 — evidence index, I27 accept-by-design (D38), G31/G32/G33 guards ([e8416b6](https://github.com/PatrickSys/get-shit-done-distilled/commit/e8416b656be23a429d4bdad5a74771911a8154f9))
 * v0.6.0 — UX clarity, workflow depth, UAT ([#56](https://github.com/PatrickSys/get-shit-done-distilled/issues/56)) ([261011c](https://github.com/PatrickSys/get-shit-done-distilled/commit/261011c77e707ddce8095d0685be63c925cb3078))
 
-# [0.6.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.5.0...v0.6.0) (2026-03-29)
-
-
-### Bug Fixes
-
-* skip .internal-research/gaps.md guards in CI (gitignored file) ([4ce0d51](https://github.com/PatrickSys/get-shit-done-distilled/commit/4ce0d517bc4224d9f3009787851205eb897e3480))
-
-
-### Features
-
-* milestone lifecycle — distill complete-milestone, new-milestone, plan-milestone-gaps ([#54](https://github.com/PatrickSys/get-shit-done-distilled/issues/54)) ([6412401](https://github.com/PatrickSys/get-shit-done-distilled/commit/6412401786596b36934328fef893fe16283b67a7))
-* Phase 5 — evidence index, I27 accept-by-design (D38), G31/G32/G33 guards ([e8416b6](https://github.com/PatrickSys/get-shit-done-distilled/commit/e8416b656be23a429d4bdad5a74771911a8154f9))
-* v0.6.0 — UX clarity, workflow depth, UAT ([#56](https://github.com/PatrickSys/get-shit-done-distilled/issues/56)) ([261011c](https://github.com/PatrickSys/get-shit-done-distilled/commit/261011c77e707ddce8095d0685be63c925cb3078))
-
 # [0.5.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.4.1...v0.5.0) (2026-03-28)
 
 
@@ -284,19 +273,6 @@ Current framework state: 39 design decisions documented in `distilled/DESIGN.md`
 * approach exploration with hybrid architecture (D29) ([1fd8fd8](https://github.com/PatrickSys/get-shit-done-distilled/commit/1fd8fd81c610e1d096cee99270842b97967361e8))
 * hardening propagation + outcome dimension (D30, D31) ([#44](https://github.com/PatrickSys/get-shit-done-distilled/issues/44)) ([25dde9d](https://github.com/PatrickSys/get-shit-done-distilled/commit/25dde9d3cb982514921db783473a6014c407ca1c))
 * quick workflow alignment hardening + context engineering (D32, D33, D34) ([#45](https://github.com/PatrickSys/get-shit-done-distilled/issues/45)) ([ecccd5c](https://github.com/PatrickSys/get-shit-done-distilled/commit/ecccd5c6080244d4997c37993a53bf9f8208b829))
-
-# [0.2.0](https://github.com/PatrickSys/get-shit-done-distilled/compare/v0.1.0...v0.2.0) (2026-03-24)
-
-
-### Bug Fixes
-
-* update models hint test for both-override suppression logic ([3d962e0](https://github.com/PatrickSys/get-shit-done-distilled/commit/3d962e07d2576dc629460c9362d5e658e0d263af))
-
-
-### Features
-
-* approach exploration with hybrid architecture (D29) ([1fd8fd8](https://github.com/PatrickSys/get-shit-done-distilled/commit/1fd8fd81c610e1d096cee99270842b97967361e8))
-* hardening propagation + outcome dimension (D30, D31) ([#44](https://github.com/PatrickSys/get-shit-done-distilled/issues/44)) ([25dde9d](https://github.com/PatrickSys/get-shit-done-distilled/commit/25dde9d3cb982514921db783473a6014c407ca1c))
 
 # Changelog
 

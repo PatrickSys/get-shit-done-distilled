@@ -24,6 +24,8 @@ Every commit that lands on `main` must follow this format:
 
 ## Running tests
 
+Use Node 20+.
+
 ```bash
 npm run test:gsdd
 ```
