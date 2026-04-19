@@ -58,7 +58,7 @@ const WORKFLOWS = [
   defineWorkflow({ name: 'gsdd-progress', workflow: 'progress.md', description: 'Check progress - show project status and route to next action', mutatesArtifacts: false }),
 ];
 
-const FRAMEWORK_VERSION = 'v1.3';
+const FRAMEWORK_VERSION = 'v1.4';
 
 function createCliContext(cwd = process.cwd()) {
   return {

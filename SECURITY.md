@@ -6,7 +6,7 @@
 
 Preferred path:
 
-- use GitHub private vulnerability reporting for `PatrickSys/get-shit-done-distilled` when it is available for this repository
+- use GitHub private vulnerability reporting for `PatrickSys/workspine` when it is available for this repository
 
 Fallback path if private reporting is unavailable:
 
