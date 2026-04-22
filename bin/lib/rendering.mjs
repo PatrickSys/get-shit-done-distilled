@@ -63,8 +63,23 @@ function forwardResult(result, fallbackMessage) {
 }
 
 function runPackagedCli() {
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  return spawnSync(npmCommand, ['exec', '--yes', \`--package=\${packageSpec}\`, '--', 'gsdd', ...args], {
+  if (process.platform === 'win32') {
+    const powershellScript = [
+      '$argList = @($env:GSDD_LAUNCH_ARGS | ConvertFrom-Json)',
+      \`& npm exec --yes "--package=\${packageSpec}" -- gsdd @argList\`,
+      'exit $LASTEXITCODE',
+    ].join('; ');
+
+    return spawnSync('powershell.exe', ['-NoProfile', '-Command', powershellScript], {
+      stdio: 'inherit',
+      env: {
+        ...env,
+        GSDD_LAUNCH_ARGS: JSON.stringify(args),
+      },
+    });
+  }
+
+  return spawnSync('npm', ['exec', '--yes', \`--package=\${packageSpec}\`, '--', 'gsdd', ...args], {
     stdio: 'inherit',
     env,
   });

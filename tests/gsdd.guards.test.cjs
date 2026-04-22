@@ -2561,6 +2561,8 @@ describe('Phase 18 deterministic CLI guards', () => {
       'rendering.mjs must invoke the packaged CLI via npm exec --package=... -- gsdd. FIX: Replace the fragile bare npx package invocation.');
     assert.doesNotMatch(renderingSource, /\['--yes', packageSpec, \.\.\.args]/,
       'rendering.mjs must not keep the old npx <packageSpec> invocation shape. FIX: Remove the bare package execution path.');
+    assert.ok(renderingSource.includes("spawnSync('powershell.exe'") && renderingSource.includes('ConvertFrom-Json'),
+      'rendering.mjs must use a Windows-safe launcher path instead of spawning npm.cmd directly. FIX: Bridge Windows packaged execution through PowerShell with structured args.');
     assert.match(renderingSource, /relativePath:\s*'bin\/gsdd'/,
       'rendering.mjs must emit a POSIX repo-local gsdd shim. FIX: Add the .planning/bin/gsdd wrapper.');
     assert.match(renderingSource, /relativePath:\s*'bin\/gsdd\.cmd'/,
