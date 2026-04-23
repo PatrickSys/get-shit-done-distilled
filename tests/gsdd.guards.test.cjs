@@ -2553,20 +2553,24 @@ describe('Phase 18 deterministic CLI guards', () => {
       'Help text must document lifecycle-preflight. FIX: Add lifecycle-preflight command to cmdHelp output.');
   });
 
-  test('local helper renderer uses explicit packaged gsdd execution and emits shell shims', async () => {
+  test('local helper renderer emits a self-contained helper runtime and platform shims', async () => {
     const renderingPath = path.join(ROOT, 'bin', 'lib', 'rendering.mjs');
     const renderingSource = fs.readFileSync(renderingPath, 'utf-8');
 
-    assert.match(renderingSource, /npm(?:\.cmd)?'.*exec.*--package=/s,
-      'rendering.mjs must invoke the packaged CLI via npm exec --package=... -- gsdd. FIX: Replace the fragile bare npx package invocation.');
-    assert.doesNotMatch(renderingSource, /\['--yes', packageSpec, \.\.\.args]/,
-      'rendering.mjs must not keep the old npx <packageSpec> invocation shape. FIX: Remove the bare package execution path.');
-    assert.ok(renderingSource.includes("spawnSync('powershell.exe'") && renderingSource.includes('ConvertFrom-Json'),
-      'rendering.mjs must use a Windows-safe launcher path instead of spawning npm.cmd directly. FIX: Bridge Windows packaged execution through PowerShell with structured args.');
+    assert.match(renderingSource, /import \{ cmdFileOp \} from '\.\/lib\/file-ops\.mjs';/,
+      'rendering.mjs must generate a self-contained helper runtime entrypoint. FIX: Import the copied helper modules instead of proxying through npm exec.');
+    assert.match(renderingSource, /bootstrapHelperWorkspace\(import\.meta\.url\)/,
+      'rendering.mjs must bootstrap workspace root from the generated helper location. FIX: Initialize the local helper runtime with bootstrapHelperWorkspace().');
+    assert.doesNotMatch(renderingSource, /npm(?:\.cmd)?'.*exec.*--package=/s,
+      'rendering.mjs must not keep the npm exec trampoline. FIX: Remove packaged CLI proxy execution from the local helper runtime.');
     assert.match(renderingSource, /relativePath:\s*'bin\/gsdd'/,
       'rendering.mjs must emit a POSIX repo-local gsdd shim. FIX: Add the .planning/bin/gsdd wrapper.');
     assert.match(renderingSource, /relativePath:\s*'bin\/gsdd\.cmd'/,
       'rendering.mjs must emit a Windows repo-local gsdd shim. FIX: Add the .planning/bin/gsdd.cmd wrapper.');
+    assert.match(renderingSource, /relativePath:\s*'bin\/gsdd\.ps1'/,
+      'rendering.mjs must emit a PowerShell repo-local gsdd shim. FIX: Add the .planning/bin/gsdd.ps1 wrapper.');
+    assert.match(renderingSource, /relativePath:\s*`bin\/lib\/\$\{fileName\}`/,
+      'rendering.mjs must copy helper support modules into .planning/bin/lib/. FIX: Render helper lib entries together with the runtime entrypoint.');
   });
 
   test('affected workflows route checkpoint file ops through the local workflow helper launcher', () => {

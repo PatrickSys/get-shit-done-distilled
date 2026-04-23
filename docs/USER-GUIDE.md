@@ -182,12 +182,10 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
 
 | Command | Purpose |
 |---------|---------|
-| `gsdd init [--tools <platform>]` | Set up `.planning/`, generate adapters |
-| `gsdd update [--tools <platform>]` | Regenerate adapters from latest sources |
-| `gsdd update --templates` | Refresh role contracts and delegates (warns about user modifications) |
-| `gsdd find-phase [N]` | Show phase info as JSON (for agent consumption) |
-| `gsdd verify <N>` | Run artifact checks for phase N |
-| `gsdd scaffold phase <N> [name]` | Create a new phase plan file |
+| `npx gsdd-cli init [--tools <platform>]` | First-run setup: create `.planning/`, `.agents/skills/`, and selected runtime adapters |
+| `gsdd health [--json]` | Check installed generated surfaces and workspace state |
+| `npx gsdd-cli update [--tools <platform>]` | Regenerate installed runtime surfaces from latest sources |
+| `npx gsdd-cli update --templates` | Refresh role contracts and delegates (warns about user modifications) |
 | `gsdd models show` | Display effective model state across all runtimes |
 | `gsdd models profile <tier>` | Set global model profile (`quality`/`balanced`/`budget`) |
 | `gsdd models agent-profile --agent <id> --profile <tier>` | Per-agent semantic override |
@@ -195,7 +193,33 @@ The 7 check dimensions: requirement coverage, task completeness, dependency corr
 | `gsdd models clear --runtime <rt> --agent <id>` | Remove runtime override |
 | `gsdd help` | Show all commands |
 
-`init` generates a local `.planning/bin/gsdd*` helper surface. Workflow-embedded helper commands still use `node .planning/bin/gsdd.mjs ...` as the portable contract, so lifecycle preflight, file-op, and phase-status mechanics do not depend on a global `gsdd` binary after init.
+Normal user flow:
+
+1. Run `npx gsdd-cli init`.
+2. Enter workflows through your runtime surface: `/gsdd-*` or `$gsdd-*`.
+3. Use `gsdd health` to check installed generated surfaces.
+4. Use `npx gsdd-cli update` when generated surfaces drift or you want the latest shipped output.
+
+Surface split:
+
+- `.agents/skills/gsdd-*` is the workflow entry surface.
+- `.planning/bin/gsdd*` is an internal local helper surface used by workflow-embedded lifecycle mechanics. It is kept available, but it is not the normal first-run user entrypoint.
+
+Advanced/internal helper commands remain available:
+
+| Command | Purpose |
+|---------|---------|
+| `gsdd file-op <copy\|delete\|regex-sub>` | Deterministic workspace-confined file copy, delete, and text mutation |
+| `gsdd phase-status <N> <status>` | Update a single ROADMAP phase status through the local helper surface |
+| `gsdd lifecycle-preflight <surface> [phase]` | Inspect deterministic lifecycle gate results for a workflow surface |
+
+Other CLI commands that remain available outside the first-run path:
+
+| Command | Purpose |
+|---------|---------|
+| `gsdd find-phase [N]` | Show phase info as JSON (for agent consumption) |
+| `gsdd verify <N>` | Run artifact checks for phase N |
+| `gsdd scaffold phase <N> [name]` | Create a new phase plan file |
 
 ### Platform flags for `--tools`
 
@@ -308,6 +332,7 @@ Cursor, Copilot, and Gemini use the same core workflow through installed `.agent
 
 `npx gsdd-cli init`
 
+- Choose one starting lane after init:
 - `Claude/OpenCode`: `/gsdd-quick` for a concrete bounded change, `/gsdd-new-project` for fuzzy or milestone-shaped work, or `/gsdd-map-codebase` first when the repo needs a deeper brownfield baseline
 - `Codex`: `$gsdd-quick` for a concrete bounded change, `$gsdd-new-project` for fuzzy or milestone-shaped work, or `$gsdd-map-codebase` first when the repo needs a deeper brownfield baseline
 - `Cursor / Copilot / Gemini`: `/gsdd-quick`, `/gsdd-new-project`, or `/gsdd-map-codebase` from the slash command menu once the skills are installed, using the same routing rules above
@@ -377,6 +402,12 @@ npx gsdd-cli update --templates       # Refreshes role contracts and delegates
 
 If you've modified any templates, the generation manifest detects this and warns you before overwriting. The SHA-256 hash of each generated file is tracked in `.planning/generation-manifest.json`.
 
+### Generated Surfaces Drift Or A Runtime Command Goes Missing
+
+Start with `gsdd health`. If it reports drift or missing installed generated surfaces, run `npx gsdd-cli update` for the whole workspace or `npx gsdd-cli update --tools <runtime>` for a specific runtime.
+
+That repair path is deterministic for generated files. It does not imply that every runtime has equal native ergonomics or equal validation depth.
+
 ### Model Costs Too High
 
 Switch to budget profile: `gsdd models profile budget`. Disable research and plan-check via config if the domain is familiar.
@@ -407,7 +438,9 @@ Switch to budget profile: `gsdd models profile budget`. Disable research and pla
   bin/
     gsdd                    # POSIX shim for the local helper surface
     gsdd.cmd                # Windows shim for the local helper surface
-    gsdd.mjs                # Canonical local workflow-helper launcher
+    gsdd.mjs                # Canonical self-contained local helper runtime
+    gsdd.ps1                # PowerShell shim for the local helper surface
+    lib/                    # Copied helper-runtime support modules
   generation-manifest.json  # SHA-256 hashes for template versioning
   .continue-here.md         # Session checkpoint (created by pause, consumed by resume)
   research/                 # Domain research outputs

@@ -205,7 +205,9 @@ export function collectExpectedRuntimeSurfaceGroups({ cwd = process.cwd(), workf
 
 export function evaluateRuntimeFreshness({ cwd = process.cwd(), workflows = [] }) {
   const groups = collectExpectedRuntimeSurfaceGroups({ cwd, workflows }).map((group) => {
-    const installed = existsSync(join(cwd, group.root));
+    const installed = group.runtime === 'workspace-helper'
+      ? existsSync(join(cwd, '.planning'))
+      : existsSync(join(cwd, group.root));
     const comparisons = installed
       ? group.entries.map((entry) => compareGeneratedFile({
         cwd,

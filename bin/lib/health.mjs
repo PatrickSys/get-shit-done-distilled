@@ -10,6 +10,7 @@ import { output } from './cli-utils.mjs';
 import { runTruthChecks, TRUTH_CHECK_IDS } from './health-truth.mjs';
 import { evaluateLifecycleState } from './lifecycle-state.mjs';
 import { evaluateRuntimeFreshness } from './runtime-freshness.mjs';
+import { resolveWorkspaceContext } from './workspace-root.mjs';
 
 /**
  * Factory function returning the health command.
@@ -18,8 +19,17 @@ import { evaluateRuntimeFreshness } from './runtime-freshness.mjs';
 export function createCmdHealth(ctx) {
   return async function cmdHealth(...healthArgs) {
     const jsonMode = healthArgs.includes('--json');
-    const cwd = process.cwd();
-    const planningDir = join(cwd, '.planning');
+    const { planningDir, workspaceRoot, invalid, error } = resolveWorkspaceContext(healthArgs);
+    if (invalid) {
+      if (jsonMode) {
+        output({ status: 'broken', errors: [{ id: 'E1', severity: 'ERROR', message: error, fix: 'Pass --workspace-root with a real path or remove the flag.' }], warnings: [], info: [] });
+      } else {
+        console.log(error);
+      }
+      process.exitCode = 1;
+      return;
+    }
+    const cwd = workspaceRoot;
     const frameworkSourceMode = isFrameworkSourceRepo(cwd);
     const healthCheckIds = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'W1', 'W2', 'W3', 'W4', 'W5', 'W6', ...TRUTH_CHECK_IDS, 'I1', 'I2', 'I3'];
 

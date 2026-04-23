@@ -1,6 +1,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
 import { dirname, isAbsolute, relative, resolve } from 'path';
 import { output, parseFlagValue } from './cli-utils.mjs';
+import { resolveWorkspaceContext } from './workspace-root.mjs';
 
 class FileOpError extends Error {}
 
@@ -134,19 +135,24 @@ function cmdRegexSub(cwd, args) {
 }
 
 export function cmdFileOp(...args) {
-  const cwd = process.cwd();
-  const [operation, ...rest] = args;
+  const { args: normalizedArgs, workspaceRoot, invalid, error } = resolveWorkspaceContext(args);
+  if (invalid) {
+    console.error(error);
+    process.exitCode = 1;
+    return;
+  }
+  const [operation, ...rest] = normalizedArgs;
 
   try {
     switch (operation) {
       case 'copy':
-        cmdCopy(cwd, rest);
+        cmdCopy(workspaceRoot, rest);
         return;
       case 'delete':
-        cmdDelete(cwd, rest);
+        cmdDelete(workspaceRoot, rest);
         return;
       case 'regex-sub':
-        cmdRegexSub(cwd, rest);
+        cmdRegexSub(workspaceRoot, rest);
         return;
       default:
         fail('Usage: gsdd file-op <copy|delete|regex-sub> ...');

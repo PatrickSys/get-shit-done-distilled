@@ -5,6 +5,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const DISTILLED_DIR = join(__dirname, '..', '..', 'distilled');
+const HELPER_LIB_FILES = Object.freeze([
+  'cli-utils.mjs',
+  'evidence-contract.mjs',
+  'file-ops.mjs',
+  'lifecycle-preflight.mjs',
+  'lifecycle-state.mjs',
+  'phase.mjs',
+  'session-fingerprint.mjs',
+  'workspace-root.mjs',
+]);
 
 function getWorkflowContent(workflowFile) {
   const filePath = join(DISTILLED_DIR, 'workflows', workflowFile);
@@ -30,71 +40,57 @@ agent: ${workflow.agent}
 ${workflowContent}`;
 }
 
-function renderPlanningCliLauncher({ packageName = 'gsdd-cli', packageVersion }) {
-  if (!packageVersion) {
-    throw new Error('renderPlanningCliLauncher requires packageVersion');
-  }
-
-  const packageSpec = `${packageName}@${packageVersion}`;
-
+function renderPlanningCliLauncher() {
   return `#!/usr/bin/env node
 
-import { spawnSync } from 'node:child_process';
+import { cmdFileOp } from './lib/file-ops.mjs';
+import { cmdLifecyclePreflight } from './lib/lifecycle-preflight.mjs';
+import { cmdPhaseStatus } from './lib/phase.mjs';
+import { bootstrapHelperWorkspace } from './lib/workspace-root.mjs';
 
-const packageSpec = ${JSON.stringify(packageSpec)};
-const args = process.argv.slice(2);
-const env = { ...process.env };
+bootstrapHelperWorkspace(import.meta.url);
 
-function forwardResult(result, fallbackMessage) {
-  if (result.error) {
-    console.error(fallbackMessage ?? result.error.message);
+const COMMANDS = {
+  'file-op': cmdFileOp,
+  'lifecycle-preflight': cmdLifecyclePreflight,
+  'phase-status': cmdPhaseStatus,
+};
+
+function printHelp() {
+  console.log([
+    'Usage: node .planning/bin/gsdd.mjs <command> [args]',
+    '',
+    'Local workflow helper commands:',
+    '  file-op <copy|delete|regex-sub>',
+    '                               Run deterministic workspace-confined file operations',
+    '  phase-status <N> <status>   Update ROADMAP.md phase status ([ ] / [-] / [x])',
+    '  lifecycle-preflight <surface> [phase]',
+    '                               Inspect lifecycle gate results for a workflow surface',
+    '',
+    'Advanced option:',
+    '  --workspace-root <path>     Override workspace root discovery when needed',
+  ].join('\\n'));
+}
+
+async function main() {
+  const [command, ...args] = process.argv.slice(2);
+
+  if (!command || command === 'help' || command === '--help') {
+    printHelp();
+    return;
+  }
+
+  const handler = COMMANDS[command];
+  if (!handler) {
+    printHelp();
     process.exitCode = 1;
     return;
   }
 
-  if (typeof result.status === 'number') {
-    process.exitCode = result.status;
-    return;
-  }
-
-  if (result.signal) {
-    process.exitCode = 1;
-  }
+  await handler(...args);
 }
 
-function runPackagedCli() {
-  if (process.platform === 'win32') {
-    const powershellScript = [
-      '$argList = @($env:GSDD_LAUNCH_ARGS | ConvertFrom-Json)',
-      \`& npm exec --yes "--package=\${packageSpec}" -- gsdd @argList\`,
-      'exit $LASTEXITCODE',
-    ].join('; ');
-
-    return spawnSync('powershell.exe', ['-NoProfile', '-Command', powershellScript], {
-      stdio: 'inherit',
-      env: {
-        ...env,
-        GSDD_LAUNCH_ARGS: JSON.stringify(args),
-      },
-    });
-  }
-
-  return spawnSync('npm', ['exec', '--yes', \`--package=\${packageSpec}\`, '--', 'gsdd', ...args], {
-    stdio: 'inherit',
-    env,
-  });
-}
-
-if (env.GSDD_CLI_PATH) {
-  const localResult = spawnSync(process.execPath, [env.GSDD_CLI_PATH, ...args], {
-    stdio: 'inherit',
-    env,
-  });
-  forwardResult(localResult, 'Failed to run the local GSDD CLI path from GSDD_CLI_PATH.');
-} else {
-  const packagedResult = runPackagedCli();
-  forwardResult(packagedResult, \`Failed to run \${packageSpec} via npm exec.\`);
-}
+await main();
 `;
 }
 
@@ -113,11 +109,23 @@ node "%~dp0gsdd.mjs" %*
 `;
 }
 
-function buildPlanningCliHelperEntries({ packageName = 'gsdd-cli', packageVersion }) {
+function renderPlanningCliPowerShellShim() {
+  return `#!/usr/bin/env pwsh
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+node (Join-Path $scriptDir 'gsdd.mjs') @args
+exit $LASTEXITCODE
+`;
+}
+
+function readHelperLibContent(fileName) {
+  return readFileSync(join(__dirname, fileName), 'utf-8');
+}
+
+function buildPlanningCliHelperEntries() {
   return [
     {
       relativePath: 'bin/gsdd.mjs',
-      content: renderPlanningCliLauncher({ packageName, packageVersion }),
+      content: renderPlanningCliLauncher(),
     },
     {
       relativePath: 'bin/gsdd',
@@ -127,6 +135,14 @@ function buildPlanningCliHelperEntries({ packageName = 'gsdd-cli', packageVersio
       relativePath: 'bin/gsdd.cmd',
       content: renderPlanningCliCmdShim(),
     },
+    {
+      relativePath: 'bin/gsdd.ps1',
+      content: renderPlanningCliPowerShellShim(),
+    },
+    ...HELPER_LIB_FILES.map((fileName) => ({
+      relativePath: `bin/lib/${fileName}`,
+      content: readHelperLibContent(fileName),
+    })),
   ];
 }
 

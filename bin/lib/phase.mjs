@@ -7,6 +7,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from 
 import { join, basename } from 'path';
 import { output } from './cli-utils.mjs';
 import { writeFingerprint } from './session-fingerprint.mjs';
+import { resolveWorkspaceContext } from './workspace-root.mjs';
 
 const PHASE_STATUS_MARKERS = {
   not_started: '[ ]',
@@ -152,10 +153,14 @@ export function updateRoadmapPhaseStatus(roadmap, phaseNumber, status) {
 }
 
 export function cmdPhaseStatus(...args) {
-  const cwd = process.cwd();
-  const planningDir = join(cwd, '.planning');
+  const { args: normalizedArgs, planningDir, invalid, error } = resolveWorkspaceContext(args);
+  if (invalid) {
+    console.error(error);
+    process.exitCode = 1;
+    return;
+  }
   const roadmapPath = join(planningDir, 'ROADMAP.md');
-  const [phaseNumber, status] = args;
+  const [phaseNumber, status] = normalizedArgs;
 
   if (!phaseNumber || !status) {
     console.error('Usage: gsdd phase-status <phase-number> <not_started|todo|in_progress|done>');
@@ -185,9 +190,13 @@ export function cmdPhaseStatus(...args) {
 }
 
 export function cmdFindPhase(...args) {
-  const cwd = process.cwd();
-  const planningDir = join(cwd, '.planning');
-  const phaseNum = args[0];
+  const { args: normalizedArgs, planningDir, invalid, error } = resolveWorkspaceContext(args);
+  if (invalid) {
+    output({ error });
+    process.exitCode = 1;
+    return;
+  }
+  const phaseNum = normalizedArgs[0];
 
   if (!existsSync(planningDir)) {
     output({ error: 'No .planning/ directory found. Run `gsdd init` then the new-project workflow first.' });
@@ -235,9 +244,13 @@ export function cmdFindPhase(...args) {
 }
 
 export function cmdVerify(...args) {
-  const cwd = process.cwd();
-  const planningDir = join(cwd, '.planning');
-  const phaseNum = args[0];
+  const { args: normalizedArgs, workspaceRoot, planningDir, invalid, error } = resolveWorkspaceContext(args);
+  if (invalid) {
+    console.error(error);
+    process.exitCode = 1;
+    return;
+  }
+  const phaseNum = normalizedArgs[0];
   if (!phaseNum) {
     console.error('Usage: gsdd verify <phase-number>');
     process.exitCode = 1; return;
@@ -271,7 +284,7 @@ export function cmdVerify(...args) {
   }
 
   const results = expectedFiles.map((f) => {
-    const fullPath = join(cwd, f);
+      const fullPath = join(workspaceRoot, f);
     const exists = existsSync(fullPath);
     let substantive = false;
     if (exists) {
@@ -292,7 +305,7 @@ export function cmdVerify(...args) {
   for (const r of results) {
     if (!r.exists) continue;
     try {
-      const content = readFileSync(join(cwd, r.file), 'utf-8');
+        const content = readFileSync(join(workspaceRoot, r.file), 'utf-8');
       const lines = content.split('\n');
       lines.forEach((line, i) => {
         if (/TODO|FIXME|HACK|XXX/.test(line)) {
@@ -318,9 +331,13 @@ export function cmdVerify(...args) {
 }
 
 export function cmdScaffold(...args) {
-  const cwd = process.cwd();
-  const planningDir = join(cwd, '.planning');
-  const [type, ...rest] = args;
+  const { args: normalizedArgs, planningDir, invalid, error } = resolveWorkspaceContext(args);
+  if (invalid) {
+    console.error(error);
+    process.exitCode = 1;
+    return;
+  }
+  const [type, ...rest] = normalizedArgs;
 
   if (type !== 'phase') {
     console.error('Usage: gsdd scaffold phase <number> [name]');

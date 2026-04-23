@@ -146,9 +146,9 @@ describe('gsdd init and update', () => {
     });
 
     const launcher = fs.readFileSync(path.join(tmpDir, '.planning', 'bin', 'gsdd.mjs'), 'utf-8');
-    assert.match(launcher, /gsdd-cli@\d+\.\d+\.\d+/);
-    assert.match(launcher, /npm(?:\.cmd)?'.*exec.*--package=/s);
-    assert.doesNotMatch(launcher, /\['--yes', packageSpec, \.\.\.args]/);
+    assert.match(launcher, /bootstrapHelperWorkspace\(import\.meta\.url\)/);
+    assert.match(launcher, /import \{ cmdFileOp \} from '\.\/lib\/file-ops\.mjs';/);
+    assert.doesNotMatch(launcher, /npm(?:\.cmd)?'.*exec.*--package=/s);
     assert.doesNotMatch(launcher, new RegExp(tmpDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.doesNotMatch(launcher, /Repos[\\/].+get-shit-done-distilled/i);
 
@@ -157,6 +157,12 @@ describe('gsdd init and update', () => {
 
     const cmdShim = fs.readFileSync(path.join(tmpDir, '.planning', 'bin', 'gsdd.cmd'), 'utf-8');
     assert.match(cmdShim, /node "%~dp0gsdd\.mjs" %\*/);
+
+    const ps1Shim = fs.readFileSync(path.join(tmpDir, '.planning', 'bin', 'gsdd.ps1'), 'utf-8');
+    assert.match(ps1Shim, /Join-Path \$scriptDir 'gsdd\.mjs'/);
+
+    const helperLib = fs.readFileSync(path.join(tmpDir, '.planning', 'bin', 'lib', 'workspace-root.mjs'), 'utf-8');
+    assert.match(helperLib, /resolveWorkspaceContext/);
 
     const newProjectSkill = fs.readFileSync(
       path.join(tmpDir, '.agents', 'skills', 'gsdd-new-project', 'SKILL.md'),
@@ -530,7 +536,7 @@ describe('gsdd init and update', () => {
       'progress must remain agent: Plan because it is the read-only workflow');
   });
 
-  test('generated local helper launcher can proxy through GSDD_CLI_PATH', async () => {
+  test('generated local helper runtime executes without npm or global gsdd', async () => {
     const restoreStdin = setNonInteractiveStdin();
     try {
       const gsdd = await loadGsdd(tmpDir);
@@ -547,13 +553,39 @@ describe('gsdd init and update', () => {
         encoding: 'utf-8',
         env: {
           ...process.env,
-          GSDD_CLI_PATH: path.join(__dirname, '..', 'bin', 'gsdd.mjs'),
+          PATH: '',
         },
       }
     );
 
-    assert.match(output, /Usage: gsdd <command> \[args\]/);
-    assert.match(output, /Commands:/);
+    assert.match(output, /Usage: node \.planning\/bin\/gsdd\.mjs <command> \[args\]/);
+    assert.match(output, /Local workflow helper commands:/);
+    assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'bin', 'gsdd.ps1')));
+    assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'bin', 'lib', 'workspace-root.mjs')));
+  });
+
+  test('generated PowerShell shim executes the local helper runtime on Windows', async () => {
+    if (process.platform !== 'win32') return;
+
+    const restoreStdin = setNonInteractiveStdin();
+    try {
+      const gsdd = await loadGsdd(tmpDir);
+      await gsdd.cmdInit();
+    } finally {
+      restoreStdin();
+    }
+
+    const output = execFileSync(
+      'pwsh',
+      ['-NoProfile', '-File', path.join(tmpDir, '.planning', 'bin', 'gsdd.ps1'), 'help'],
+      {
+        cwd: tmpDir,
+        encoding: 'utf-8',
+      }
+    );
+
+    assert.match(output, /Local workflow helper commands:/);
+    assert.match(output, /phase-status <N> <status>/);
   });
 
   test('delegates reference canonical role contracts', async () => {
@@ -993,7 +1025,10 @@ describe('gsdd init and update', () => {
 
     const updatedLauncher = fs.readFileSync(launcherPath, 'utf-8');
     assert.doesNotMatch(updatedLauncher, /^stale launcher$/m);
-    assert.match(updatedLauncher, /gsdd-cli@\d+\.\d+\.\d+/);
+    assert.match(updatedLauncher, /bootstrapHelperWorkspace\(import\.meta\.url\)/);
+
+    const updatedPs1Shim = fs.readFileSync(path.join(tmpDir, '.planning', 'bin', 'gsdd.ps1'), 'utf-8');
+    assert.match(updatedPs1Shim, /Join-Path \$scriptDir 'gsdd\.mjs'/);
 
     const updatedShellShim = fs.readFileSync(shellShimPath, 'utf-8');
     assert.doesNotMatch(updatedShellShim, /^stale shell shim$/m);

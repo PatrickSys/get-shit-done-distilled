@@ -4,6 +4,7 @@
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
+const { execFileSync } = require('node:child_process');
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -159,6 +160,52 @@ describe('Phase 18 deterministic CLI mechanics', () => {
     assert.strictEqual(fs.readFileSync(roadmapPath, 'utf-8'), original);
   });
 
+  test('phase-status finds the workspace root when the main CLI runs from a nested directory', async () => {
+    const nestedDir = path.join(tmpDir, 'src', 'nested');
+    const roadmapPath = path.join(tmpDir, '.planning', 'ROADMAP.md');
+    fs.mkdirSync(nestedDir, { recursive: true });
+    fs.writeFileSync(
+      roadmapPath,
+      '# Roadmap\n\n- [ ] **Phase 18: Deterministic CLI Mechanics** - goal\n'
+    );
+
+    const result = await runCliAsMain(nestedDir, ['phase-status', '18', 'done']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+    assert.match(fs.readFileSync(roadmapPath, 'utf-8'), /- \[x\] \*\*Phase 18: Deterministic CLI Mechanics\*\*/);
+  });
+
+  test('generated helper runtime resolves the workspace root from a nested directory', async () => {
+    const nestedDir = path.join(tmpDir, 'packages', 'feature');
+    const roadmapPath = path.join(tmpDir, '.planning', 'ROADMAP.md');
+    const helperPath = path.join(tmpDir, '.planning', 'bin', 'gsdd.mjs');
+
+    const gsdd = await loadGsdd(tmpDir);
+    await gsdd.cmdInit('--auto', '--tools', 'claude');
+    fs.mkdirSync(nestedDir, { recursive: true });
+    fs.writeFileSync(
+      roadmapPath,
+      '# Roadmap\n\n- [ ] **Phase 18: Deterministic CLI Mechanics** - goal\n'
+    );
+
+    const output = execFileSync(
+      process.execPath,
+      [helperPath, 'phase-status', '18', 'done'],
+      {
+        cwd: nestedDir,
+        encoding: 'utf-8',
+        env: {
+          ...process.env,
+          PATH: '',
+        },
+      }
+    );
+
+    const result = JSON.parse(output);
+    assert.strictEqual(result.phase, '18');
+    assert.strictEqual(result.changed, true);
+    assert.match(fs.readFileSync(roadmapPath, 'utf-8'), /- \[x\] \*\*Phase 18: Deterministic CLI Mechanics\*\*/);
+  });
+
   test('phase-status fails loudly for invalid status values', async () => {
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'ROADMAP.md'),
@@ -168,6 +215,18 @@ describe('Phase 18 deterministic CLI mechanics', () => {
     const result = await runCliAsMain(tmpDir, ['phase-status', '18', 'complete']);
     assert.notStrictEqual(result.exitCode, 0, 'invalid phase status should fail');
     assert.match(result.output, /unsupported phase status/i);
+  });
+
+  test('helper commands fail loudly when --workspace-root is malformed', async () => {
+    const result = await runCliAsMain(tmpDir, ['phase-status', '18', 'done', '--workspace-root']);
+    assert.notStrictEqual(result.exitCode, 0, 'malformed workspace-root flag should fail');
+    assert.match(result.output, /Usage: --workspace-root <path>/);
+  });
+
+  test('helper commands fail loudly when --workspace-root targets the wrong path', async () => {
+    const result = await runCliAsMain(tmpDir, ['phase-status', '18', 'done', '--workspace-root', path.join(tmpDir, 'missing-root')]);
+    assert.notStrictEqual(result.exitCode, 0, 'invalid workspace-root target should fail');
+    assert.match(result.output, /Workspace root does not contain \.planning\//);
   });
 
   test('help text documents file-op, phase-status, and lifecycle-preflight commands', async () => {
@@ -645,6 +704,32 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.strictEqual(output.classification, 'owned_write');
     assert.strictEqual(output.explicitLifecycleMutation, 'phase-status');
     assert.deepStrictEqual(output.ownedWrites, ['summary']);
+    assert.strictEqual(output.phase, '30');
+  });
+
+  test('finds lifecycle state from a nested directory', async () => {
+    const nestedDir = path.join(tmpDir, 'apps', 'web');
+    fs.mkdirSync(nestedDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.3.0 Engine Contract Hardening',
+        '',
+        '- [ ] **Phase 30: Deterministic Lifecycle Gates** — [ENGINE-02]',
+      ].join('\n')
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '30-deterministic-lifecycle-gates', '30-PLAN.md'),
+      '# plan\n'
+    );
+
+    const result = await runCliAsMain(nestedDir, ['lifecycle-preflight', 'execute', '30', '--expects-mutation', 'phase-status']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
     assert.strictEqual(output.phase, '30');
   });
 

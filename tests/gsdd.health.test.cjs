@@ -154,6 +154,16 @@ describe('Health — healthy workspace', () => {
     assert.strictEqual(json.warnings.length, 0);
     assert.ok(!json.info.some((i) => i.id === 'I1'), 'clean init should not report manifest version drift');
   });
+
+  test('nested cwd with explicit --workspace-root → healthy JSON', async () => {
+    await initWorkspace();
+    const nestedDir = path.join(tmpDir, 'apps', 'nested');
+    fs.mkdirSync(nestedDir, { recursive: true });
+    const result = await runCliAsMain(nestedDir, ['health', '--json', '--workspace-root', tmpDir]);
+    assert.strictEqual(result.exitCode, 0);
+    const json = JSON.parse(result.output);
+    assert.strictEqual(json.status, 'healthy');
+  });
 });
 
 describe('Health — ERROR: malformed config.json', () => {
@@ -436,6 +446,17 @@ describe('Health — WARN: adapter and truth drift detection', () => {
     const json = JSON.parse(result.output);
     const warning = json.warnings.find((w) => w.id === 'W11');
     assert.ok(warning, 'should warn when local workflow helper drifts');
+    assert.match(warning.message, /\.planning\/bin\/gsdd\.mjs/);
+    assert.match(warning.fix, /gsdd update/);
+  });
+
+  test('missing local workflow helper runtime → W11 with gsdd update guidance', async () => {
+    await initWorkspace();
+    fs.rmSync(path.join(tmpDir, '.planning', 'bin'), { recursive: true, force: true });
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+    const warning = json.warnings.find((w) => w.id === 'W11');
+    assert.ok(warning, 'should warn when the generated local helper runtime is missing');
     assert.match(warning.message, /\.planning\/bin\/gsdd\.mjs/);
     assert.match(warning.fix, /gsdd update/);
   });

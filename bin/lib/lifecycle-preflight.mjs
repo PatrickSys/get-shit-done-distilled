@@ -4,6 +4,7 @@ import { output } from './cli-utils.mjs';
 import { describeEvidenceSurface } from './evidence-contract.mjs';
 import { evaluateLifecycleState, normalizePhaseToken } from './lifecycle-state.mjs';
 import { checkDrift } from './session-fingerprint.mjs';
+import { resolveWorkspaceContext } from './workspace-root.mjs';
 
 const SURFACE_POLICIES = {
   progress: {
@@ -298,9 +299,13 @@ function blocker(code, message, artifacts) {
 }
 
 export function cmdLifecyclePreflight(...args) {
-  const cwd = process.cwd();
-  const planningDir = join(cwd, '.planning');
-  const [surface, maybePhase, ...rest] = args;
+  const { args: normalizedArgs, planningDir, invalid, error } = resolveWorkspaceContext(args);
+  if (invalid) {
+    console.error(error);
+    process.exitCode = 1;
+    return;
+  }
+  const [surface, maybePhase, ...rest] = normalizedArgs;
 
   if (!surface) {
     console.error('Usage: gsdd lifecycle-preflight <surface> [phase] [--expects-mutation <none|phase-status>]');

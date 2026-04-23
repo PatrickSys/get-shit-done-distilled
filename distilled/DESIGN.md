@@ -2584,18 +2584,20 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 
 ## D58 - Local Workflow Helper Launcher
 
-**Decision (2026-04-22):** Workflow-embedded CLI helper commands must run through a generated local helper surface under `.planning/bin/`, with `.planning/bin/gsdd.mjs` as the canonical launcher, instead of assuming a bare `gsdd` binary is available on the consumer repo's PATH.
+**Decision (2026-04-22, revised 2026-04-23):** Workflow-embedded CLI helper commands must run through a generated local helper runtime under `.planning/bin/`, with `.planning/bin/gsdd.mjs` as the canonical launcher and copied support modules under `.planning/bin/lib/`, instead of assuming a bare `gsdd` binary is available on the consumer repo's PATH or proxying helper execution back through `npm exec` at workflow runtime.
 
 **Context:**
 - Public onboarding already leads with `npx gsdd-cli init`, which works even when the package is not globally installed.
 - The authored workflow surfaces had drifted into a different assumption: embedded helper commands such as `lifecycle-preflight`, `file-op`, and `phase-status` were written as bare `gsdd ...` invocations.
 - That split contract caused consumer friction in the exact place the deterministic helper seam was supposed to help: a workflow could initialize successfully, then fail later because the repo did not have a global `gsdd` on PATH.
 - The helper surface must stay out of `.agents/` ownership so it does not pollute unrelated `.agents` folders or leak into generated governance.
+- The first `.planning/bin/gsdd.mjs` repair still left the wrong runtime dependency in place: the generated file was a trampoline back through `npm exec --package=gsdd-cli@... -- gsdd ...`, so helper execution still depended on npm/package resolution and shell quirks at the exact moment deterministic local mechanics were supposed to be the reliable fallback.
 
 **Decision:**
-- Generate `.planning/bin/gsdd.mjs` plus thin repo-local shell shims (`.planning/bin/gsdd`, `.planning/bin/gsdd.cmd`) on `gsdd init` for every initialized workspace.
+- Generate `.planning/bin/gsdd.mjs` as a self-contained local helper runtime plus repo-local shell shims (`.planning/bin/gsdd`, `.planning/bin/gsdd.cmd`, `.planning/bin/gsdd.ps1`) on `gsdd init` for every initialized workspace.
 - Regenerate that helper surface on `gsdd update` whenever `.planning/` exists.
-- Keep the launcher machine-independent by resolving back to the published `gsdd-cli` package version used for generation rather than embedding framework checkout paths, and invoke the packaged `gsdd` bin explicitly through `npm exec --package=... -- gsdd ...` instead of the fragile bare `npx <package>` form.
+- Copy the minimal helper support modules into `.planning/bin/lib/` so workflow-time helper execution needs only Node, not npm/package-manager resolution.
+- Bootstrap the workspace root from the generated helper location and shared root-resolution logic so helper commands operate on repo truth instead of raw `process.cwd()`.
 - Route workflow-embedded helper commands through `node .planning/bin/gsdd.mjs ...` for the deterministic helper seam:
   - `lifecycle-preflight`
   - `file-op`
@@ -2606,10 +2608,16 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 - It preserves the existing skills-first architecture instead of inventing a second discovery or governance path.
 - It fixes the actual consumer DX failure at the point where workflows invoke deterministic helper commands.
 - It keeps ownership aligned with `.planning/`, which already holds the other local runtime mechanics and generation-manifest state.
+- It removes npm/package fetches from the helper hot path, which is the stronger cross-platform ownership model for Linux, WSL, and Windows consumers.
+- It lets both the generated helper runtime and the main CLI share one root-resolution seam instead of relying on repo-root `cwd` as an unstated precondition.
 
 **Evidence:**
 - `bin/lib/init-flow.mjs`
 - `bin/lib/rendering.mjs`
+- `bin/lib/workspace-root.mjs`
+- `bin/lib/file-ops.mjs`
+- `bin/lib/phase.mjs`
+- `bin/lib/lifecycle-preflight.mjs`
 - `bin/lib/runtime-freshness.mjs`
 - `bin/lib/manifest.mjs`
 - `bin/lib/health.mjs`
@@ -2619,12 +2627,14 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 - `tests/gsdd.init.test.cjs`
 - `tests/gsdd.health.test.cjs`
 - `tests/gsdd.manifest.test.cjs`
+- `tests/phase.test.cjs`
 - `tests/gsdd.scenarios.test.cjs`
 
 **Consequences:**
-- Consumer repos no longer need a global `gsdd` binary for workflow-embedded helper mechanics after init.
+- Consumer repos no longer need a global `gsdd` binary or workflow-time `npm exec` trampoline for embedded helper mechanics after init.
 - Helper-command freshness is now owned under `.planning/` without widening `.agents` install detection.
 - Generated governance remains compact and routing-focused because helper-surface instructions stay out of `AGENTS.md`.
+- Cross-platform proof is stronger for the local-helper seam itself, but direct live validation still needs to stay conservative by environment: the repo now has focused tests plus Windows fixture proof; Linux/WSL live consumer validation remains a separate evidence question.
 
 ## Maintenance
 

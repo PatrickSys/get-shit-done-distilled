@@ -124,7 +124,7 @@ export function createCmdInit(ctx) {
 
     console.log('\nGSDD initialized.');
     printInitSummary(interactiveSession.config ?? buildDefaultConfig({ autoAdvance: isAuto }));
-    console.log('Next: run the new-project workflow to produce SPEC.md and ROADMAP.md:\n');
+    console.log('Next: choose the starting lane that fits your repo and current scope:\n');
     printPostInitRouting(interactiveSession.selectedRuntimes);
   };
 }

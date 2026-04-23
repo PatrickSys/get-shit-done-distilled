@@ -90,11 +90,15 @@ npx gsdd-cli init
 
 This creates:
 
-1. `.planning/` — durable workspace with templates, role contracts, and config
-2. `.agents/skills/gsdd-*` — portable workflow entrypoints
+1. `.planning/` — durable workspace with templates, role contracts, config, and internal local helpers
+2. `.agents/skills/gsdd-*` — portable workflow entrypoints your runtime invokes as `/gsdd-*` or `$gsdd-*`
 3. Tool-specific adapters you choose in the install wizard (Claude skills/commands/agents, OpenCode commands/agents, Codex agents, optional governance)
 
-Then run the new-project workflow to produce `.planning/SPEC.md` and `.planning/ROADMAP.md`.
+Then pick the first workflow lane that matches your situation:
+
+- `gsdd-new-project` for greenfield work, fuzzy brownfield work, or milestone-shaped work
+- `gsdd-quick` for a concrete bounded brownfield change
+- `gsdd-map-codebase` first when the repo is unfamiliar, risky, or needs a deeper baseline before choosing a lane
 
 In a terminal, `gsdd init` now opens a guided install wizard:
 
@@ -102,9 +106,9 @@ In a terminal, `gsdd init` now opens a guided install wizard:
 - Step 2: decide separately whether repo-wide `AGENTS.md` governance is worth installing
 - Step 3: configure planning defaults in the same guided flow
 
-Portable `.agents/skills/gsdd-*` skills are always generated. The wizard controls extra native adapters and optional governance, not the portable baseline.
-When those generated surfaces exist locally, `gsdd health` checks them against current render output instead of asking you to trust manual review.
-`init` generates a local `.planning/bin/gsdd*` helper surface. Workflow-embedded helper commands still use `node .planning/bin/gsdd.mjs ...` as the portable contract, so execution-time lifecycle helpers do not depend on a global `gsdd` binary after init.
+Portable `.agents/skills/gsdd-*` skills are always generated. They are the shared workflow entry surface. The wizard controls extra native adapters and optional governance, not the portable baseline.
+When generated surfaces exist locally, `gsdd health` checks them against current render output instead of asking you to trust manual review.
+`init` also generates `.planning/bin/gsdd*`, but that is an internal local helper surface for workflow-embedded lifecycle mechanics. It is not the normal first-run user entrypoint.
 
 ### Launch Proof Status
 
@@ -123,11 +127,16 @@ Start with the public proof pack:
 
 Runtime floor: Node 20+.
 
-Your tool determines how you invoke workflows:
+Your tool determines how you invoke workflows after `npx gsdd-cli init`:
 
 - **Claude Code / OpenCode / Cursor / Copilot / Gemini:** Use slash commands directly — `/gsdd-new-project`, `/gsdd-plan`, etc.
 - **Codex CLI:** Use skill references — `$gsdd-new-project`, `$gsdd-plan`, etc. `$gsdd-plan` writes the plan and stops; start a separate `$gsdd-execute` run when you want implementation to begin.
-- **Other AI tools:** Open `.agents/skills/gsdd-<workflow>/SKILL.md` and follow the instructions.
+- **Other AI tools:** Open `.agents/skills/gsdd-<workflow>/SKILL.md` and follow the instructions manually.
+
+For repair and refresh:
+
+- `gsdd health` checks whether installed generated surfaces still match the current renderer output.
+- `npx gsdd-cli update` regenerates installed generated surfaces when they drift or when you want the latest shipped wording/templates. If `gsdd` is already on your PATH, `gsdd update` is the same repair path.
 
 If you generate the root `AGENTS.md` block, it adds the framework's behavioral governance. For Cursor, Copilot, and Gemini, that governance is optional discipline on top of native skill discovery — not the mechanism that makes workflows discoverable.
 
@@ -162,13 +171,15 @@ npx gsdd-cli init --tools all        # All of the above
 | **Cursor / Copilot / Gemini** | Same core workflow | Skills-native discovery from `.agents/skills/`; optional root `AGENTS.md` block adds behavioral governance, and the generated skill surface is freshness-checked locally |
 | **Other AI tools** | Fallback only | Open `.agents/skills/gsdd-*/SKILL.md` directly |
 
-### Updating
+### Updating And Repair
 
 ```bash
 npx gsdd-cli update                    # Regenerate adapters from latest sources
 npx gsdd-cli update --tools claude     # Update specific platform only
 npx gsdd-cli update --templates        # Refresh .planning/templates/ and role contracts from framework source
 ```
+
+Use `gsdd health` first when you want a status check. Use `npx gsdd-cli update` when the generated runtime-facing surfaces are missing, drifted, or you want the latest generated output. If a runtime is only in the qualified-support tier, `health` and `update` still cover generated-surface drift; they do not imply parity-level runtime proof.
 
 ### Non-Interactive Mode (CI / Automation)
 
@@ -327,16 +338,22 @@ Workflows are agent skills or commands, not plain shell utilities. How you invok
 
 | Command | What it does |
 |---------|--------------|
-| `gsdd init [--tools <platform>]` | Set up `.planning/`, generate adapters |
-| `gsdd update [--tools <platform>] [--templates]` | Regenerate adapters; `--templates` refreshes `.planning/templates/` and role contracts |
-| `gsdd health [--json]` | Check workspace integrity (healthy/degraded/broken) |
-| `gsdd file-op <copy\|delete\|regex-sub>` | Run deterministic workspace-confined file copy, delete, and regex substitution |
+| `npx gsdd-cli init [--tools <platform>]` | First-run setup: create `.planning/`, `.agents/skills/`, and selected runtime adapters |
+| `gsdd health [--json]` | Check installed generated surfaces and workspace state (healthy/degraded/broken) |
+| `npx gsdd-cli update [--tools <platform>] [--templates]` | Regenerate installed runtime surfaces; `--templates` also refreshes `.planning/templates/` and role contracts |
+| `gsdd models [show\|profile\|set\|...]` | Inspect and manage model profile propagation |
+| `gsdd help` | Show all commands, including advanced/internal helpers |
+
+Advanced/internal helpers kept available for automation, workflow internals, or repair:
+
+| Command | What it does |
+|---------|--------------|
+| `gsdd file-op <copy\|delete\|regex-sub>` | Deterministic workspace-confined file copy, delete, and regex substitution |
+| `gsdd lifecycle-preflight <surface> [phase]` | Inspect deterministic lifecycle gate results for a workflow surface |
 | `gsdd find-phase [N]` | Show phase info as JSON (for agent consumption) |
 | `gsdd phase-status <N> <status>` | Update a single ROADMAP phase status through the status-aware helper |
 | `gsdd verify <N>` | Run artifact checks for phase N |
 | `gsdd scaffold phase <N> [name]` | Create a new phase plan file |
-| `gsdd models [show\|profile\|set\|...]` | Inspect and manage model profile propagation |
-| `gsdd help` | Show all commands |
 
 ---
 

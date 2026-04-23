@@ -30,11 +30,16 @@ Any tool that can read the generated markdown workflows can still use the framew
 
 ## Current runtime surfaces
 
+Two surfaces matter for users:
+
+- `.agents/skills/gsdd-*` is the shared workflow entry surface. Depending on the runtime, users invoke those workflows as `/gsdd-*`, `$gsdd-*`, or by opening the skill markdown directly.
+- `.planning/bin/gsdd*` is an internal local helper surface used by workflow-embedded lifecycle mechanics after init. It is not the primary user entry surface.
+
 | Runtime | Current claim | Entry surface | Notes |
 | --- | --- | --- | --- |
 | Claude Code | Directly validated | `.claude/skills/`, `.claude/commands/`, `.claude/agents/` | Native surface was a mandatory Phase 32 validation target; installed generated files are freshness-checked locally |
 | OpenCode | Directly validated | `.opencode/commands/`, `.opencode/agents/` | Native command and checker path; installed generated files are freshness-checked locally |
-| Codex CLI | Directly validated | `.agents/skills/gsdd-*` plus `.codex/agents/gsdd-plan-checker.toml` | Portable skill entry, native checker adapter, mandatory Phase 32 validation target |
+| Codex CLI | Directly validated | `.agents/skills/gsdd-*` plus `.codex/agents/gsdd-plan-checker.toml` | Portable skill entry remains the user workflow surface; the native checker adapter supports plan checking |
 | Cursor | Same core workflow | `.agents/skills/gsdd-*` | Skills-native path; generated skill files are freshness-checked locally, but the runtime is not claimed as parity-validated |
 | GitHub Copilot | Same core workflow | `.agents/skills/gsdd-*` | Skills-native path; generated skill files are freshness-checked locally, but the runtime is not claimed as parity-validated |
 | Gemini CLI | Same core workflow | `.agents/skills/gsdd-*` | Skills-native path; governance is optional, generated skill files are freshness-checked locally, and parity is not claimed |
@@ -43,9 +48,11 @@ Any tool that can read the generated markdown workflows can still use the framew
 
 The authored source contract stays in `distilled/workflows/*`. Generated runtime-facing files are trusted only through deterministic rendering:
 
-- `gsdd health` compares any installed generated surfaces under `.agents/skills/`, `.claude/`, `.opencode/`, and `.codex/` against current render output.
-- `gsdd update` regenerates drifted generated surfaces from the authored workflow and delegate sources.
+- `gsdd health` compares any installed generated surfaces under `.planning/bin/`, `.agents/skills/`, `.claude/`, `.opencode/`, and `.codex/` against current render output.
+- `npx gsdd-cli update` regenerates drifted generated surfaces from the authored workflow and delegate sources.
 - Missing generated surfaces are not treated as drift unless the corresponding runtime surface is actually installed locally.
+
+This is a generated-surface repair story, not a blanket runtime-parity claim. `health` and `update` can tell you whether installed files are current and can deterministically regenerate them. They cannot make an unsupported runtime become directly validated.
 
 ## What stays portable
 
@@ -74,4 +81,4 @@ Portable contract does not mean equal UX everywhere.
 - `docs/BROWNFIELD-PROOF.md`
 - `docs/proof/consumer-node-cli/README.md`
 - `docs/VERIFICATION-DISCIPLINE.md`
-- `gsdd health` / `gsdd update`
+- `gsdd health` / `npx gsdd-cli update`
