@@ -2189,6 +2189,10 @@ describe('G46 - Brownfield Artifact Contract', () => {
   });
 
   test('planning and design truth agree on the bounded brownfield-change lane', () => {
+    if (!fs.existsSync(PLANNING_SPEC_MD) || !fs.existsSync(PLANNING_ROADMAP_MD) || !fs.existsSync(INTERNAL_TODO_MD) || !fs.existsSync(gapsPath)) {
+      return assert.ok(true, 'local-only planning truth is absent in CI');
+    }
+
     const planningSpec = fs.readFileSync(PLANNING_SPEC_MD, 'utf-8');
     const roadmap = fs.readFileSync(PLANNING_ROADMAP_MD, 'utf-8');
     const todo = fs.readFileSync(INTERNAL_TODO_MD, 'utf-8');
