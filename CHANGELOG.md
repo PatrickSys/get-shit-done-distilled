@@ -1,3 +1,17 @@
+# [0.19.0](https://github.com/PatrickSys/workspine/compare/v0.18.5...v0.19.0) (2026-04-24)
+
+
+### Bug Fixes
+
+* accept successful npm token exchange responses ([e58847f](https://github.com/PatrickSys/workspine/commit/e58847f5d6c2cea4eaf029c19839d4944cce40c6))
+* fail fast without npm trusted publishing ([e3b3578](https://github.com/PatrickSys/workspine/commit/e3b35782d59acae22f07a3d7ab95321233556c63))
+* resolve installer stall and add clear completion signal ([#91](https://github.com/PatrickSys/workspine/issues/91)) ([017620f](https://github.com/PatrickSys/workspine/commit/017620fc4bf5db25dec3aadd65afaa14b879d242))
+
+
+### Features
+
+* add brownfield change continuity flow ([2915854](https://github.com/PatrickSys/workspine/commit/2915854f9e5a061182a49e4280efa34949957936))
+
 ## [0.18.5](https://github.com/PatrickSys/workspine/compare/v0.18.4...v0.18.5) (2026-04-24)
 
 
