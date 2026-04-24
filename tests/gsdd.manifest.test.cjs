@@ -175,6 +175,20 @@ describe('generation manifest', () => {
     assert.strictEqual(afterContent, beforeContent);
   });
 
+  test('update does not generate GSDD skills for unrelated .agents/skills directories', async () => {
+    const unrelatedSkillDir = path.join(tmpDir, '.agents', 'skills', 'custom-agent');
+    fs.mkdirSync(unrelatedSkillDir, { recursive: true });
+    fs.writeFileSync(path.join(unrelatedSkillDir, 'SKILL.md'), '# Custom Agent\n');
+
+    const result = await runCliAsMain(tmpDir, ['update']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+    assert.match(result.output, /no adapters found to update/);
+    assert.ok(!fs.existsSync(path.join(tmpDir, '.agents', 'skills', 'gsdd-plan')),
+      'unrelated .agents/skills must not trigger GSDD skill generation');
+    assert.ok(!fs.existsSync(path.join(tmpDir, '.planning')),
+      'update must not bootstrap planning state for an unrelated .agents/skills directory');
+  });
+
   test('update repairs open-standard skills when only the .planning/bin helper remains', async () => {
     await initProject();
 

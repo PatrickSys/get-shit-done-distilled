@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from 'fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, cpSync } from 'fs';
 import { dirname, join, isAbsolute } from 'path';
 import { buildPlanningCliHelperEntries, renderSkillContent } from './rendering.mjs';
 import { buildManifest, readManifest, writeManifest } from './manifest.mjs';
@@ -147,7 +147,7 @@ export function createCmdUpdate(ctx) {
       updated = true;
     }
 
-    if (platforms.length > 0 || existsSync(ctx.planningDir) || existsSync(join(ctx.cwd, '.agents', 'skills'))) {
+    if (platforms.length > 0 || existsSync(ctx.planningDir) || hasGeneratedOpenStandardSkills(ctx.cwd)) {
       if (isDry) {
         console.log('  - would update open-standard skills (.agents/skills/gsdd-*)');
       } else {
@@ -197,6 +197,21 @@ export function createCmdUpdate(ctx) {
       console.log('\nAdapters updated.\n');
     }
   };
+}
+
+function hasGeneratedOpenStandardSkills(cwd) {
+  const skillsDir = join(cwd, '.agents', 'skills');
+  if (!existsSync(skillsDir)) return false;
+
+  try {
+    return readdirSync(skillsDir, { withFileTypes: true }).some((entry) =>
+      entry.isDirectory() &&
+      entry.name.startsWith('gsdd-') &&
+      existsSync(join(skillsDir, entry.name, 'SKILL.md'))
+    );
+  } catch {
+    return false;
+  }
 }
 
 function generateOpenStandardSkills(cwd, workflows) {
