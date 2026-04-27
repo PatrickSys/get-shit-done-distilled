@@ -42,6 +42,7 @@ export function evaluateLifecycleState({ planningDir, provenance = null } = {}) 
     return {
       ...phase,
       hasArtifacts: matchingArtifacts.length > 0,
+      hasLifecycleArtifacts: hasPlan || hasSummary,
       hasPlan,
       hasSummary,
       artifacts: matchingArtifacts,
@@ -339,10 +340,10 @@ function classifyPhaseArtifact(dir, name) {
   if (!baseIdMatch || !phaseTokenMatch) return null;
 
   let kind = 'other';
-  if (name.includes('PLAN')) kind = 'plan';
-  else if (name.includes('SUMMARY')) kind = 'summary';
-  else if (name.includes('VERIFICATION')) kind = 'verification';
-  else if (name.includes('APPROACH')) kind = 'approach';
+  if (isNamedPhaseArtifact(name, baseIdMatch[1], 'PLAN')) kind = 'plan';
+  else if (isNamedPhaseArtifact(name, baseIdMatch[1], 'SUMMARY')) kind = 'summary';
+  else if (isNamedPhaseArtifact(name, baseIdMatch[1], 'VERIFICATION')) kind = 'verification';
+  else if (isNamedPhaseArtifact(name, baseIdMatch[1], 'APPROACH')) kind = 'approach';
 
   return {
     dir,
@@ -352,6 +353,10 @@ function classifyPhaseArtifact(dir, name) {
     phaseToken: normalizePhaseToken(phaseTokenMatch[1]),
     kind,
   };
+}
+
+function isNamedPhaseArtifact(name, baseId, kind) {
+  return name.toLowerCase() === `${baseId.toLowerCase()}-${kind.toLowerCase()}.md`;
 }
 
 function parseMilestoneLedger(content) {

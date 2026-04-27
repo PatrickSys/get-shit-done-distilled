@@ -56,8 +56,8 @@ export function runTruthChecks(planningDir, frameworkDir, actualCheckIds, option
       warnings.push({
         id: 'W8',
         severity: 'WARN',
-        message: `distilled/README.md workflow inventory is out of sync (${issues.join('; ')})`,
-        fix: 'Update distilled/README.md workflow status table and framework file tree to match distilled/workflows/',
+        message: `distilled/README.md workflow surface/status inventory is out of sync (${issues.join('; ')})`,
+        fix: 'Update distilled/README.md workflow inventory table and framework file tree to match distilled/workflows/',
       });
     }
   }
@@ -119,19 +119,34 @@ function extractHealthTableIds(content) {
 }
 
 function extractReadmeStatusEntries(content) {
-  const section = extractSection(content, '## Current Status', 'Architecture notes:');
+  const workflowSurface = extractSection(content, '## Workflow Surface', 'Architecture notes:');
+  const currentStatus = extractSection(content, '## Current Status', 'Architecture notes:');
+  const section = workflowSurface || currentStatus;
   if (!section) return [];
   return [...normalizeContent(section).matchAll(/\|\s*`([^`]+\.md)`\s*\|/g)].map((result) => result[1]);
 }
 
 function extractReadmeWorkflowTreeEntries(content) {
   const section = extractSection(content, '## Files In This Framework', '## ');
-  const match = normalizeContent(section || '').match(/```[\s\S]*?workflows\/\n([\s\S]*?)\n\s*templates\//);
+  const match = normalizeContent(section || '').match(/```[^\n]*\n([\s\S]*?)\n```/);
   if (!match) return [];
-  return match[1]
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.endsWith('.md'));
+  const entries = [];
+  let inWorkflows = false;
+  for (const rawLine of match[1].split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (!inWorkflows) {
+      if (/\bworkflows\/$/.test(line)) inWorkflows = true;
+      continue;
+    }
+    if (/\.md\b/.test(line)) {
+      const file = line.match(/([^\s/`|├└─]+\.md)\b/);
+      if (file) entries.push(file[1]);
+      continue;
+    }
+    if (/\b[^\s/]+\/$/.test(line)) break;
+  }
+  return entries;
 }
 
 function extractRepoLocalPaths(content) {

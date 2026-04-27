@@ -93,6 +93,34 @@ function writeAlignedTruthFixtures() {
   writeFile('.planning/ROADMAP.md', '- [ ] **Phase 16: Framework Health & Truth Reconciliation** — [LAUNCH-07]\n');
 }
 
+function writeWorkflowInventoryReadme({ heading = '## Workflow Surface', rows = ['alpha.md', 'beta.md'], treeLines }) {
+  const tableIntro = heading.startsWith('## Current Status')
+    ? ['| Workflow | Status | Notes |', '|----------|--------|-------|']
+    : ['| Workflow | What ships |', '|----------|------------|'];
+  const tableRows = rows.map((file) => `| \`${file}\` | x |`);
+  writeFile('distilled/README.md', [
+    heading,
+    '',
+    ...tableIntro,
+    ...tableRows,
+    '',
+    'Architecture notes:',
+    '',
+    '## Files In This Framework',
+    '',
+    '```',
+    ...(treeLines || [
+      'distilled/',
+      '  workflows/',
+      '    alpha.md',
+      '    beta.md',
+      '  templates/',
+    ]),
+    '```',
+    '',
+  ].join('\n'));
+}
+
 function writeForkHonestAlignmentFixtures() {
   writeFile('.internal-research/gaps.md', [
     'Historical checkpoint evidence is recorded against the active checkpoint file rather than a stale missing repo path.',
@@ -323,6 +351,28 @@ describe('Health — WARN: ROADMAP references nonexistent phase', () => {
     const json = JSON.parse(result.output);
     assert.ok(!json.warnings.some((w) => w.id === 'W4'), 'should ignore future planned phases');
   });
+
+  test('active phase with only non-lifecycle artifacts → W4 without W5', async () => {
+    await initWorkspace();
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      '# Roadmap\n\n- [x] **Phase 47: Synthesis And v1.7 Plan**\n'
+    );
+    const phaseDir = path.join(tmpDir, '.planning', 'phases', '47-synthesis-and-v1-7-plan');
+    fs.mkdirSync(phaseDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(phaseDir, '47-v1.7-IMPLEMENTATION-PLAN.md'),
+      '# Next Milestone Implementation Plan\n'
+    );
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.ok(json.warnings.some((w) => w.id === 'W4' && /Phase 47/.test(w.message)),
+      'non-lifecycle artifacts must not make active phase health clean');
+    assert.ok(!json.warnings.some((w) => w.id === 'W5'),
+      'non-lifecycle artifacts must not create stale PLAN/SUMMARY warnings');
+  });
 });
 
 describe('Health — WARN: phase with PLAN but no SUMMARY', () => {
@@ -402,6 +452,126 @@ describe('Health — WARN: adapter and truth drift detection', () => {
     const result = await runCliAsMain(tmpDir, ['health', '--json']);
     const json = JSON.parse(result.output);
     assert.ok(json.warnings.some((w) => w.id === 'W8'));
+  });
+
+  test('current Workflow Surface inventory shape → no W8', async () => {
+    await initWorkspace();
+    writeAlignedTruthFixtures();
+    writeWorkflowInventoryReadme({ heading: '## Workflow Surface' });
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.ok(!json.warnings.some((w) => w.id === 'W8'),
+      'current Workflow Surface table and plain tree shape should align with workflows dir');
+  });
+
+  test('legacy Current Status inventory shape → no W8', async () => {
+    await initWorkspace();
+    writeAlignedTruthFixtures();
+    writeWorkflowInventoryReadme({ heading: '## Current Status (updated 2026-04-10)' });
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.ok(!json.warnings.some((w) => w.id === 'W8'),
+      'legacy Current Status table should remain compatible with workflows dir');
+  });
+
+  test('framework tree glyph inventory shape → no W8', async () => {
+    await initWorkspace();
+    writeAlignedTruthFixtures();
+    writeWorkflowInventoryReadme({
+      heading: '## Workflow Surface',
+      treeLines: [
+        'distilled/',
+        '├── workflows/',
+        '│   ├── alpha.md',
+        '│   └── beta.md',
+        '└── templates/',
+      ],
+    });
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.ok(!json.warnings.some((w) => w.id === 'W8'),
+      'tree glyph framework inventory should align with workflows dir');
+  });
+
+  test('missing workflow table entry → W8', async () => {
+    await initWorkspace();
+    writeAlignedTruthFixtures();
+    writeWorkflowInventoryReadme({ rows: ['alpha.md'] });
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    const warning = json.warnings.find((w) => w.id === 'W8');
+    assert.ok(warning, 'missing workflow table entry should warn');
+    assert.match(warning.message, /missing from status table: beta\.md/);
+  });
+
+  test('canonical Workflow Surface table is not masked by legacy Current Status rows', async () => {
+    await initWorkspace();
+    writeAlignedTruthFixtures();
+    writeFile('distilled/README.md', [
+      '## Workflow Surface',
+      '',
+      '| Workflow | What ships |',
+      '|----------|------------|',
+      '| `alpha.md` | x |',
+      '',
+      'Architecture notes:',
+      '',
+      '## Current Status (updated 2026-04-10)',
+      '',
+      '| Workflow | Status | Notes |',
+      '|----------|--------|-------|',
+      '| `alpha.md` | x |',
+      '| `beta.md` | x |',
+      '',
+      'Architecture notes:',
+      '',
+      '## Files In This Framework',
+      '',
+      '```',
+      'distilled/',
+      '  workflows/',
+      '    alpha.md',
+      '    beta.md',
+      '  templates/',
+      '```',
+      '',
+    ].join('\n'));
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    const warning = json.warnings.find((w) => w.id === 'W8');
+    assert.ok(warning, 'canonical Workflow Surface drift should warn even when legacy Current Status is complete');
+    assert.match(warning.message, /missing from status table: beta\.md/);
+  });
+
+  test('missing workflow tree entry → W8', async () => {
+    await initWorkspace();
+    writeAlignedTruthFixtures();
+    writeWorkflowInventoryReadme({
+      rows: ['alpha.md', 'beta.md'],
+      treeLines: [
+        'distilled/',
+        '  workflows/',
+        '    alpha.md',
+        '  templates/',
+      ],
+    });
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    const warning = json.warnings.find((w) => w.id === 'W8');
+    assert.ok(warning, 'missing workflow tree entry should warn');
+    assert.match(warning.message, /missing from framework tree: beta\.md/);
   });
 
   test('gaps.md stale repo-local path reference → W9', async () => {
