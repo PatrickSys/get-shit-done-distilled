@@ -1633,6 +1633,22 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.ok(output.blockers.some((blocker) => blocker.code === 'invalid_release_claim_posture'));
   });
 
+  test('blocks complete-milestone preflight on invalid evidence kind values', async () => {
+    writeCompletedMilestoneFixture(tmpDir);
+    writeMilestoneAudit(tmpDir, {
+      requiredKinds: ['code', 'test', 'banana'],
+      observedKinds: ['code', 'test'],
+    });
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'complete-milestone']);
+    assert.strictEqual(result.exitCode, 1, result.output);
+
+    const output = JSON.parse(result.output);
+    const evidenceKindBlocker = output.blockers.find((blocker) => blocker.code === 'invalid_release_evidence_kinds');
+    assert.ok(evidenceKindBlocker);
+    assert.match(evidenceKindBlocker.message, /required_kinds: banana/);
+  });
+
   test('allows complete-milestone preflight when passed audit release contract is satisfied', async () => {
     writeCompletedMilestoneFixture(tmpDir);
     writeMilestoneAudit(tmpDir, {});
@@ -1661,6 +1677,48 @@ describe('Phase 30 lifecycle-preflight helper', () => {
         generated_surface: 'failed',
       },
     });
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'complete-milestone']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+  });
+
+  test('parses structured YAML deferrals for unsupported release claims', async () => {
+    writeCompletedMilestoneFixture(tmpDir);
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'v1.6-MILESTONE-AUDIT.md'),
+      [
+        '---',
+        'milestone: v1.6',
+        'status: passed',
+        'delivery_posture: repo_only',
+        'release_claim_posture: repo_closeout',
+        'evidence_contract:',
+        '  required_kinds: [code, test]',
+        '  observed_kinds: [code, test]',
+        '  missing_kinds: []',
+        'release_claim_contract:',
+        '  unsupported_claims:',
+        '    - public support',
+        '  waivers: []',
+        '  deferrals:',
+        '    - claim: public support',
+        '      missing_kinds: [delivery]',
+        '      later: next delivery milestone',
+        '  contradiction_checks:',
+        '    evidence: passed',
+        '    public_surface: not_applicable',
+        '    runtime: not_applicable',
+        '    delivery: not_applicable',
+        '    planning_drift: passed',
+        '    generated_surface: failed',
+        '---',
+        '',
+        '# audit',
+      ].join('\n')
+    );
 
     const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'complete-milestone']);
     assert.strictEqual(result.exitCode, 0, result.output);
@@ -1950,7 +2008,11 @@ describe('Phase 31 evidence-gated closure helpers', () => {
     assert.strictEqual(deliveryClaim.deliveryPosture, 'delivery_sensitive');
     assert.deepStrictEqual(deliveryClaim.requiredKinds, ['code', 'test', 'runtime', 'delivery']);
 
-    assert.strictEqual(mod.normalizeReleaseClaimPosture('unknown'), 'repo_closeout');
+    assert.strictEqual(mod.normalizeReleaseClaimPosture('unknown'), null);
+    assert.throws(
+      () => mod.getReleaseClaimContract('complete-milestone', 'unknown'),
+      /Unsupported release claim posture/
+    );
   });
 
   test('unsupported stronger release claims must downgrade or defer instead of using waiver prose', async () => {

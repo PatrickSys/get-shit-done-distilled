@@ -120,7 +120,8 @@ export function isClosureSurface(surface) {
 }
 
 export function normalizeReleaseClaimPosture(posture) {
-  return RELEASE_CLAIM_POSTURES.includes(posture) ? posture : 'repo_closeout';
+  if (!posture) return 'repo_closeout';
+  return RELEASE_CLAIM_POSTURES.includes(posture) ? posture : null;
 }
 
 export function getEvidenceContract(surface, deliveryPosture) {
@@ -170,6 +171,9 @@ function getDowngradePosture(observedKinds) {
 
 export function getReleaseClaimContract(surface, releaseClaimPosture = 'repo_closeout') {
   const posture = normalizeReleaseClaimPosture(releaseClaimPosture);
+  if (!posture) {
+    throw new Error(`Unsupported release claim posture: ${releaseClaimPosture}`);
+  }
   const claim = RELEASE_CLAIM_MATRIX[posture];
   const evidence = getEvidenceContract(surface, claim.deliveryPosture);
   const requiredKinds = uniqueKinds([...evidence.requiredKinds, ...claim.requiredClaimKinds]);

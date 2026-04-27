@@ -3,6 +3,7 @@ import { join } from 'path';
 import { output } from './cli-utils.mjs';
 import {
   DELIVERY_POSTURES,
+  EVIDENCE_KINDS,
   RELEASE_CLAIM_POSTURES,
   describeEvidenceSurface,
   evaluateReleaseClaimCloseoutContract,
@@ -401,6 +402,12 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
   const deferrals = readBlockList(releaseBlock, 'deferrals');
   const contradictionChecks = readNestedStatusBlock(releaseBlock, 'contradiction_checks');
   const blockers = [];
+  const invalidEvidenceKinds = [
+    ...findInvalidEvidenceKinds('required_kinds', requiredKinds),
+    ...findInvalidEvidenceKinds('observed_kinds', observedKinds),
+    ...findInvalidEvidenceKinds('missing_kinds', missingKinds),
+    ...findInvalidEvidenceKinds('waivers', waivedKinds),
+  ];
 
   if (requiredKinds.length === 0 && observedKinds.length === 0) {
     blockers.push(blocker(
@@ -426,6 +433,14 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
     ));
   }
 
+  if (invalidEvidenceKinds.length > 0) {
+    blockers.push(blocker(
+      'invalid_release_evidence_kinds',
+      `Milestone audit has invalid release evidence kind values (${invalidEvidenceKinds.join(', ')}). Supported values are ${EVIDENCE_KINDS.join(', ')}.`,
+      [auditPath]
+    ));
+  }
+
   const missingContradictionChecks = RELEASE_CONTRADICTION_CHECKS.filter((name) => !(name in contradictionChecks));
   const invalidContradictionChecks = Object.entries(contradictionChecks)
     .filter(([, status]) => !RELEASE_CONTRADICTION_STATUSES.includes(status))
@@ -445,6 +460,10 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
       `Milestone audit release_claim_contract.contradiction_checks has invalid statuses (${invalidContradictionChecks.join(', ')}).`,
       [auditPath]
     ));
+  }
+
+  if (!DELIVERY_POSTURES.includes(deliveryPosture) || !RELEASE_CLAIM_POSTURES.includes(releaseClaimPosture)) {
+    return blockers;
   }
 
   const releaseEvaluation = evaluateReleaseClaimCloseoutContract({
@@ -560,10 +579,40 @@ function readBlockList(block, key) {
     collected.push(line);
   }
 
-  return collected
-    .map((line) => line.match(/^\s*-\s*(.+?)\s*$/)?.[1])
-    .filter(Boolean)
+  return parseYamlListItems(collected, baseIndent)
+    .map((item) => item.join(' '))
     .map(cleanYamlValue);
+}
+
+function parseYamlListItems(lines, baseIndent) {
+  const items = [];
+  let current = null;
+  let itemIndent = null;
+
+  for (const line of lines) {
+    const match = line.match(/^(\s*)-\s*(.+?)\s*$/);
+    const indent = line.match(/^\s*/)[0].length;
+
+    if (match && indent > baseIndent && (itemIndent === null || indent === itemIndent)) {
+      if (current) items.push(current);
+      current = [match[2]];
+      itemIndent = indent;
+      continue;
+    }
+
+    if (current && line.trim()) {
+      current.push(line.trim());
+    }
+  }
+
+  if (current) items.push(current);
+  return items;
+}
+
+function findInvalidEvidenceKinds(field, kinds) {
+  return kinds
+    .filter((kind) => !EVIDENCE_KINDS.includes(kind))
+    .map((kind) => `${field}: ${kind}`);
 }
 
 function readNestedStatusBlock(block, key) {
