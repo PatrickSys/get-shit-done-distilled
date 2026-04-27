@@ -2091,6 +2091,51 @@ describe('Phase 31 evidence-gated closure helpers', () => {
     assert.ok(result.blockers.some((blocker) => blocker.code === 'unknown_release_contradiction_checks'));
   });
 
+  test('release closeout contract fails closed on missing contradiction checks', async () => {
+    const mod = await importEvidenceContractModule();
+
+    const result = mod.evaluateReleaseClaimCloseoutContract({
+      surface: 'complete-milestone',
+      releaseClaimPosture: 'repo_closeout',
+      observedKinds: ['code', 'test'],
+      contradictionChecks: {
+        evidence: 'passed',
+        planning_drift: 'passed',
+      },
+    });
+
+    assert.strictEqual(result.status, 'unsupported');
+    assert.deepStrictEqual(result.missingContradictionChecks, [
+      'public_surface',
+      'runtime',
+      'delivery',
+      'generated_surface',
+    ]);
+    assert.ok(result.blockers.some((blocker) => blocker.code === 'missing_release_contradiction_checks'));
+  });
+
+  test('release closeout contract fails closed on invalid contradiction check statuses', async () => {
+    const mod = await importEvidenceContractModule();
+
+    const result = mod.evaluateReleaseClaimCloseoutContract({
+      surface: 'complete-milestone',
+      releaseClaimPosture: 'repo_closeout',
+      observedKinds: ['code', 'test'],
+      contradictionChecks: {
+        evidence: 'passed',
+        public_surface: 'not_applicable',
+        runtime: 'not_applicable',
+        delivery: 'skipped',
+        planning_drift: 'passed',
+        generated_surface: 'not_applicable',
+      },
+    });
+
+    assert.strictEqual(result.status, 'unsupported');
+    assert.deepStrictEqual(result.invalidContradictionChecks, ['delivery']);
+    assert.ok(result.blockers.some((blocker) => blocker.code === 'invalid_release_contradiction_checks'));
+  });
+
   test('lifecycle preflight exposes closure evidence metadata only for closure surfaces', async () => {
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'ROADMAP.md'),

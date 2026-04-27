@@ -67,6 +67,8 @@ const CONTRADICTION_CATEGORIES = Object.freeze([
   'generated_surface',
 ]);
 
+const CONTRADICTION_STATUSES = Object.freeze(['passed', 'failed', 'not_applicable']);
+
 const RELEASE_CLAIM_MATRIX = Object.freeze({
   repo_closeout: Object.freeze({
     deliveryPosture: 'repo_only',
@@ -239,11 +241,15 @@ export function evaluateReleaseClaimCloseoutContract({
     observedKinds,
     waivedKinds,
   });
+  const missingContradictionChecks = CONTRADICTION_CATEGORIES.filter((name) => !(name in contradictionChecks));
   const failedContradictionChecks = Object.entries(contradictionChecks)
     .filter(([, status]) => status === 'failed')
     .map(([name]) => name);
   const unknownContradictionChecks = Object.keys(contradictionChecks)
     .filter((name) => !CONTRADICTION_CATEGORIES.includes(name));
+  const invalidContradictionChecks = Object.entries(contradictionChecks)
+    .filter(([, status]) => !CONTRADICTION_STATUSES.includes(status))
+    .map(([name]) => name);
   const blockingContradictionChecks = failedContradictionChecks.filter((name) =>
     CONTRADICTION_BLOCKERS_BY_POSTURE[posture.releaseClaimPosture].includes(name)
   );
@@ -268,8 +274,14 @@ export function evaluateReleaseClaimCloseoutContract({
   if (unresolvedUnsupportedClaims.length > 0) {
     blockers.push({ code: 'unsupported_release_claims', details: unresolvedUnsupportedClaims });
   }
+  if (missingContradictionChecks.length > 0) {
+    blockers.push({ code: 'missing_release_contradiction_checks', details: missingContradictionChecks });
+  }
   if (unknownContradictionChecks.length > 0) {
     blockers.push({ code: 'unknown_release_contradiction_checks', details: unknownContradictionChecks });
+  }
+  if (invalidContradictionChecks.length > 0) {
+    blockers.push({ code: 'invalid_release_contradiction_checks', details: invalidContradictionChecks });
   }
   if (blockingContradictionChecks.length > 0) {
     blockers.push({ code: 'failed_release_contradiction_checks', details: blockingContradictionChecks });
@@ -281,7 +293,9 @@ export function evaluateReleaseClaimCloseoutContract({
     deferrals: [...deferrals],
     failedContradictionChecks: blockingContradictionChecks,
     allFailedContradictionChecks: failedContradictionChecks,
+    missingContradictionChecks,
     unknownContradictionChecks,
+    invalidContradictionChecks,
     unresolvedUnsupportedClaims,
     blockers,
     status: blockers.length === 0 ? 'supported' : 'unsupported',
