@@ -42,6 +42,7 @@ export function evaluateLifecycleState({ planningDir, provenance = null } = {}) 
     return {
       ...phase,
       hasArtifacts: matchingArtifacts.length > 0,
+      hasLifecycleArtifacts: hasPlan || hasSummary,
       hasPlan,
       hasSummary,
       artifacts: matchingArtifacts,

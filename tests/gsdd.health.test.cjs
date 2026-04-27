@@ -351,6 +351,28 @@ describe('Health — WARN: ROADMAP references nonexistent phase', () => {
     const json = JSON.parse(result.output);
     assert.ok(!json.warnings.some((w) => w.id === 'W4'), 'should ignore future planned phases');
   });
+
+  test('active phase with only non-lifecycle artifacts → W4 without W5', async () => {
+    await initWorkspace();
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      '# Roadmap\n\n- [x] **Phase 47: Synthesis And v1.7 Plan**\n'
+    );
+    const phaseDir = path.join(tmpDir, '.planning', 'phases', '47-synthesis-and-v1-7-plan');
+    fs.mkdirSync(phaseDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(phaseDir, '47-v1.7-IMPLEMENTATION-PLAN.md'),
+      '# Next Milestone Implementation Plan\n'
+    );
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.ok(json.warnings.some((w) => w.id === 'W4' && /Phase 47/.test(w.message)),
+      'non-lifecycle artifacts must not make active phase health clean');
+    assert.ok(!json.warnings.some((w) => w.id === 'W5'),
+      'non-lifecycle artifacts must not create stale PLAN/SUMMARY warnings');
+  });
 });
 
 describe('Health — WARN: phase with PLAN but no SUMMARY', () => {

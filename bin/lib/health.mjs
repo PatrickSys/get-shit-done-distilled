@@ -179,7 +179,7 @@ export function createCmdHealth(ctx) {
     const lifecycle = evaluateLifecycleState({ planningDir });
 
     if (roadmap && existsSync(phasesDir)) {
-      for (const phase of lifecycle.phases.filter((entry) => entry.status !== 'not_started' && !entry.hasArtifacts)) {
+      for (const phase of lifecycle.phases.filter((entry) => entry.status !== 'not_started' && !entry.hasLifecycleArtifacts)) {
         warnings.push({
           id: 'W4',
           severity: 'WARN',
