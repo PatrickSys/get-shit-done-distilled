@@ -22,6 +22,14 @@ Identify the target phase: the first phase with status `[ ]` or `[-]` in `ROADMA
 All `node .planning/bin/gsdd.mjs ...` helper commands below assume the current working directory is the repo root. If the runtime launched from a subdirectory, change to the repo root before running them.
 </repo_root_helper_contract>
 
+<lifecycle_preflight>
+Before writing or rewriting phase planning artifacts, run:
+
+- `node .planning/bin/gsdd.mjs lifecycle-preflight plan {phase_num}`
+
+If the preflight result is `blocked`, STOP and report the blocker instead of inferring planning eligibility from workflow-local prose. Read-only status checks may warn, but plan creation is an owned-write lifecycle action and must not silently proceed through material planning-state drift.
+</lifecycle_preflight>
+
 <integration_surface_check>
 Before planning roadmap work, inspect the live integration surface separately from checkpoint or planning artifacts:
 - current branch name
@@ -411,15 +419,12 @@ notes: [What the checker actually validated or why it was skipped]
 
 <approach_exploration>
 ### When This Runs
-
 Check `.planning/config.json` for `workflow.discuss`:
 - If `workflow.discuss: false` (or key missing): skip this section, go to `<goal_backward_planning>`. Note `reduced_alignment` in the orchestration summary.
 - If `workflow.discuss: true`: mandatory before planning.
 
 ### Check for Existing APPROACH.md
-
 Check if `{phase_dir}/{padded_phase}-APPROACH.md` exists.
-
 **If exists:**
 Offer the user a choice:
 - "Use existing" — load decisions from APPROACH.md, skip to `<goal_backward_planning>`
@@ -430,9 +435,7 @@ Offer the user a choice:
 Run the approach explorer.
 
 ### Running the Approach Explorer
-
 **Primary path — inline conversation with research subagents:**
-
 The conversation with the user runs inline in the main context. For each technical gray area, a read-only research subagent is spawned to isolate heavy codebase and documentation reads, returning only compressed summaries.
 
 1. Load context: read ONLY locked decisions from `.planning/SPEC.md` and the target phase goal/requirements from `.planning/ROADMAP.md`.

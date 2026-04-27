@@ -18,6 +18,7 @@ import { cmdFindPhase, cmdVerify, cmdScaffold, cmdPhaseStatus } from './lib/phas
 import { cmdFileOp } from './lib/file-ops.mjs';
 import { createCmdHealth } from './lib/health.mjs';
 import { cmdLifecyclePreflight } from './lib/lifecycle-preflight.mjs';
+import { cmdSessionFingerprint } from './lib/session-fingerprint.mjs';
 import { resolveWorkspaceContext } from './lib/workspace-root.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,9 +26,7 @@ const __dirname = dirname(__filename);
 const DISTILLED_DIR = join(__dirname, '..', 'distilled');
 const AGENTS_DIR = join(__dirname, '..', 'agents');
 const PACKAGE_JSON = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
-const IS_MAIN = process.argv[1]
-  ? realpathSync(process.argv[1]) === realpathSync(__filename)
-  : false;
+const IS_MAIN = process.argv[1] ? realpathSync(process.argv[1]) === realpathSync(__filename) : false;
 
 const [,, command, ...args] = process.argv;
 
@@ -107,6 +106,7 @@ const COMMANDS = {
   health: cmdHealth,
   'file-op': cmdFileOp,
   'lifecycle-preflight': cmdLifecyclePreflight,
+  'session-fingerprint': cmdSessionFingerprint,
   'find-phase': cmdFindPhase,
   'phase-status': cmdPhaseStatus,
   verify: cmdVerify,
@@ -136,4 +136,4 @@ if (IS_MAIN) {
   await runCli();
 }
 
-export { cmdHelp, cmdInit, cmdUpdate, cmdModels, cmdHealth, cmdFileOp, cmdLifecyclePreflight, cmdFindPhase, cmdPhaseStatus, cmdVerify, cmdScaffold, runCli, FRAMEWORK_VERSION, createCliContext };
+export { cmdHelp, cmdInit, cmdUpdate, cmdModels, cmdHealth, cmdFileOp, cmdLifecyclePreflight, cmdSessionFingerprint, cmdFindPhase, cmdPhaseStatus, cmdVerify, cmdScaffold, runCli, FRAMEWORK_VERSION, createCliContext };

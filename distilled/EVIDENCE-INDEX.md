@@ -357,12 +357,12 @@
 ## D49 — Deterministic Lifecycle Preflight Gates
 - `.planning/SPEC.md` (`ENGINE-01`, `ENGINE-02`, `ENGINE-03`)
 - `.planning/ROADMAP.md` (Phase 30)
-- `bin/lib/lifecycle-preflight.mjs`, `bin/lib/lifecycle-state.mjs`
+- `bin/lib/lifecycle-preflight.mjs`, `bin/lib/lifecycle-state.mjs`, `bin/lib/session-fingerprint.mjs`
 - `bin/gsdd.mjs`, `bin/lib/init.mjs`
-- `distilled/workflows/execute.md`, `distilled/workflows/verify.md`
+- `distilled/workflows/plan.md`, `distilled/workflows/execute.md`, `distilled/workflows/verify.md`
 - `distilled/workflows/audit-milestone.md`, `distilled/workflows/complete-milestone.md`
 - `distilled/workflows/new-milestone.md`, `distilled/workflows/resume.md`, `distilled/workflows/progress.md`
-- `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.scenarios.test.cjs`
+- `tests/phase.test.cjs`, `tests/session-fingerprint.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.scenarios.test.cjs`
 - `get-shit-done/workflows/progress.md`
 
 ## D50 — Evidence-Gated Closure Matrix

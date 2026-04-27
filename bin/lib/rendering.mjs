@@ -46,12 +46,14 @@ function renderPlanningCliLauncher() {
 import { cmdFileOp } from './lib/file-ops.mjs';
 import { cmdLifecyclePreflight } from './lib/lifecycle-preflight.mjs';
 import { cmdPhaseStatus } from './lib/phase.mjs';
+import { cmdSessionFingerprint } from './lib/session-fingerprint.mjs';
 import { bootstrapHelperWorkspace, consumeWorkspaceRootArg, resolveWorkspaceContext } from './lib/workspace-root.mjs';
 
 const COMMANDS = {
   'file-op': cmdFileOp,
   'lifecycle-preflight': cmdLifecyclePreflight,
   'phase-status': cmdPhaseStatus,
+  'session-fingerprint': cmdSessionFingerprint,
 };
 
 function printHelp() {
@@ -67,6 +69,8 @@ function printHelp() {
     '  lifecycle-preflight <surface> [phase]',
     '                               Inspect lifecycle gate results for a workflow surface',
     '                               Example: node .planning/bin/gsdd.mjs lifecycle-preflight verify 1 --expects-mutation phase-status',
+    '  session-fingerprint write',
+    '                               Rebaseline planning-state drift after reviewing changed planning files',
     '',
     'Advanced option:',
     '  --workspace-root <path>     Override workspace root discovery before or after the subcommand',

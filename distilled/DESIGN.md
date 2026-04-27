@@ -2157,7 +2157,8 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
   - it reports blockers, owned writes, mutation expectations, and lifecycle posture
   - it does not mutate ROADMAP or milestone state itself
 - Keep `gsdd phase-status` as the only explicit ROADMAP mutator for phase-state transitions.
-- Require transition-sensitive workflow contracts to call the shared preflight seam instead of narrating their own lifecycle inference.
+- Require transition-sensitive workflow contracts, including plan creation, to call the shared preflight seam instead of narrating their own lifecycle inference.
+- Treat planning-state drift as warning-only for read-only surfaces and blocking for owned-write surfaces, with file-level drift details from the session fingerprint helper.
 - Preserve `progress` as read-only and make it explicitly defer any recommended transition back to the downstream workflow's own preflight gate.
 
 **Why this fits the codebase:**
@@ -2170,7 +2171,9 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 - `.planning/ROADMAP.md` (Phase 30 success criteria)
 - `bin/lib/lifecycle-preflight.mjs`
 - `bin/lib/lifecycle-state.mjs`
+- `bin/lib/session-fingerprint.mjs`
 - `bin/gsdd.mjs`
+- `distilled/workflows/plan.md`
 - `distilled/workflows/execute.md`
 - `distilled/workflows/verify.md`
 - `distilled/workflows/audit-milestone.md`
@@ -2188,7 +2191,7 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
 - `progress` can continue reporting lifecycle posture without inheriting write authority or becoming a hidden transition surface.
 - Phase 31 can build evidence-gated closure on top of a stable deterministic preflight contract instead of competing lifecycle entry logic.
 
-**GSDD implementation:** `bin/lib/lifecycle-preflight.mjs`, `bin/lib/lifecycle-state.mjs`, `bin/gsdd.mjs`, `bin/lib/init.mjs`, `distilled/workflows/execute.md`, `distilled/workflows/verify.md`, `distilled/workflows/audit-milestone.md`, `distilled/workflows/complete-milestone.md`, `distilled/workflows/new-milestone.md`, `distilled/workflows/resume.md`, `distilled/workflows/progress.md`, `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.scenarios.test.cjs`
+**GSDD implementation:** `bin/lib/lifecycle-preflight.mjs`, `bin/lib/lifecycle-state.mjs`, `bin/lib/session-fingerprint.mjs`, `bin/gsdd.mjs`, `bin/lib/init.mjs`, `distilled/workflows/plan.md`, `distilled/workflows/execute.md`, `distilled/workflows/verify.md`, `distilled/workflows/audit-milestone.md`, `distilled/workflows/complete-milestone.md`, `distilled/workflows/new-milestone.md`, `distilled/workflows/resume.md`, `distilled/workflows/progress.md`, `tests/phase.test.cjs`, `tests/session-fingerprint.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.scenarios.test.cjs`
 
 ---
 
