@@ -72,13 +72,14 @@ function listPhaseArtifacts(dir) {
 }
 
 function classifyPhaseArtifact(dir, name) {
+  const baseIdMatch = name.match(/^(\d+(?:\.\d+)*[a-z]?(?:-\d+)?)/i);
   const dirMatch = dir ? dir.match(/^(\d+(?:\.\d+)*[a-z]?)-/i) : null;
   const nameMatch = name.match(/^(\d+(?:\.\d+)*[a-z]?)/i);
   const phaseToken = normalizePhaseToken((dirMatch || nameMatch)?.[1] || '');
 
   let kind = 'OTHER';
-  if (name.includes('PLAN')) kind = 'PLAN';
-  else if (name.includes('SUMMARY')) kind = 'SUMMARY';
+  if (baseIdMatch && isNamedPhaseArtifact(name, baseIdMatch[1], 'PLAN')) kind = 'PLAN';
+  else if (baseIdMatch && isNamedPhaseArtifact(name, baseIdMatch[1], 'SUMMARY')) kind = 'SUMMARY';
 
   return {
     dir,
@@ -87,6 +88,10 @@ function classifyPhaseArtifact(dir, name) {
     phaseToken,
     kind,
   };
+}
+
+function isNamedPhaseArtifact(name, baseId, kind) {
+  return name.toLowerCase() === `${baseId.toLowerCase()}-${kind.toLowerCase()}.md`;
 }
 
 function padPhase(n) {

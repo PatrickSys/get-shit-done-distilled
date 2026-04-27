@@ -728,6 +728,70 @@ describe('Phase 29 lifecycle-state helper', () => {
     );
   });
 
+  test('does not classify implementation-plan handoff artifacts as executable phase plans', async () => {
+    fs.mkdirSync(path.join(tmpDir, '.planning', 'phases', '47-synthesis-minimal-hardening-and-v1-7-plan'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.6 Release Spine Hardening',
+        '',
+        '- [x] **Phase 47: Synthesis, Minimal Hardening, And v1.7 Plan** — [REL-04]',
+      ].join('\n')
+    );
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '- [x] **[REL-04]**: v1.7 plan\n');
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '47-synthesis-minimal-hardening-and-v1-7-plan', '47-PLAN.md'),
+      '# executable phase plan\n'
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '47-synthesis-minimal-hardening-and-v1-7-plan', '47-SUMMARY.md'),
+      '# phase summary\n'
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '47-synthesis-minimal-hardening-and-v1-7-plan', '47-v1.7-IMPLEMENTATION-PLAN.md'),
+      '# next-milestone implementation plan candidate\n'
+    );
+
+    const mod = await importLifecycleStateModule();
+    const state = mod.evaluateLifecycleState({ planningDir: path.join(tmpDir, '.planning') });
+
+    assert.ok(
+      state.phaseArtifacts.some((artifact) => artifact.displayPath.endsWith('47-v1.7-IMPLEMENTATION-PLAN.md') && artifact.kind === 'other'),
+      'implementation-plan handoff files must stay kind=other. FIX: classify only exact <baseId>-PLAN.md files as executable phase plans.'
+    );
+    assert.deepStrictEqual(state.incompletePlans, [],
+      'implementation-plan handoff files must not create stale in-progress W5 warnings. FIX: keep incompletePlans limited to exact executable PLAN artifacts.');
+  });
+
+  test('phase CLI ignores implementation-plan handoff artifacts when finding executable plans', async () => {
+    fs.mkdirSync(path.join(tmpDir, '.planning', 'phases', '47-synthesis-minimal-hardening-and-v1-7-plan'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.6 Release Spine Hardening',
+        '',
+        '- [x] **Phase 47: Synthesis, Minimal Hardening, And v1.7 Plan** — [REL-04]',
+      ].join('\n')
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '47-synthesis-minimal-hardening-and-v1-7-plan', '47-v1.7-IMPLEMENTATION-PLAN.md'),
+      '# next-milestone implementation plan candidate\n'
+    );
+
+    const result = await runCliAsMain(tmpDir, ['verify', '47']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.exists, false);
+    assert.deepStrictEqual(output.plans, [],
+      'phase CLI must not treat IMPLEMENTATION-PLAN handoff files as executable plans. FIX: keep phase.mjs classifier exact-name based.');
+    assert.strictEqual(output.verified, false);
+  });
+
   test('derives active brownfield change continuity from CHANGE.md and HANDOFF.md without a roadmap', async () => {
     fs.mkdirSync(path.join(tmpDir, '.planning', 'brownfield-change'), { recursive: true });
     fs.writeFileSync(
@@ -1164,6 +1228,7 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.strictEqual(output.reason, 'roadmap_phase_status_mismatch');
     assert.ok(output.blockers.some((blocker) => blocker.code === 'roadmap_phase_status_mismatch'));
   });
+
 });
 
 describe('verify command nested phase plans', () => {
