@@ -52,8 +52,17 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(claudePlanSkill, /Do NOT fork this skill into a subagent/);
     assert.match(claudePlanSkill, /not as a stop signal for this Claude-native adapter path/);
     assert.match(claudePlanSkill, /Maximum 3 checker cycles total/);
-    assert.match(claudePlanSkill, /"status": "passed"/);
-    assert.match(claudePlanSkill, /Status must be either "passed" or "issues_found"\./);
+    assert.match(claudePlanSkill, /blockers or warnings remain after cycle 3/);
+    assert.match(claudePlanSkill, /"status": "issues_found"/);
+    assert.match(claudePlanSkill, /Use "passed" only when "issues": \[\]/);
+    assert.match(claudePlanSkill, /alignment_status: user_confirmed/);
+    assert.match(claudePlanSkill, /alignment_status: approved_skip/);
+    assert.match(claudePlanSkill, /all canonical proof fields[\s\S]{0,260}alignment_status[\s\S]{0,80}alignment_method[\s\S]{0,80}user_confirmed_at[\s\S]{0,80}explicit_skip_approved[\s\S]{0,80}skip_scope[\s\S]{0,80}skip_rationale[\s\S]{0,80}confirmed_decisions/);
+    assert.match(claudePlanSkill, /No questions needed.*not valid proof|not valid proof.*No questions needed/);
+    assert.match(claudePlanSkill, /Use existing[\s\S]{0,220}validate the alignment proof/i);
+    assert.match(claudePlanSkill, /gsdd-approach-explorer[\s\S]{0,240}\.planning\/config\.json[\s\S]{0,100}workflow\.discuss/i);
+    assert.match(claudePlanSkill, /workflow\.planCheck: false[\s\S]{0,260}does not skip[\s\S]{0,160}alignment-proof gate/i);
+    assert.match(claudePlanSkill, /\.planning\/config\.json[\s\S]{0,120}workflow\.discuss[\s\S]{0,80}workflow\.planCheck/i);
     assert.doesNotMatch(claudePlanSkill, /^context: fork$/m);
     assert.doesNotMatch(claudePlanSkill, /^agent:/m);
 
@@ -92,14 +101,29 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(opencodePlanCommand, /hidden `gsdd-plan-checker` subagent/);
     assert.match(opencodePlanCommand, /not as a stop signal for this OpenCode-native adapter path/);
     assert.match(opencodePlanCommand, /Maximum 3 checker cycles total/);
-    assert.match(opencodePlanCommand, /"status": "passed"/);
-    assert.match(opencodePlanCommand, /Status must be either "passed" or "issues_found"\./);
+    assert.match(opencodePlanCommand, /blockers or warnings remain after cycle 3/);
+    assert.match(opencodePlanCommand, /"status": "issues_found"/);
+    assert.match(opencodePlanCommand, /Use "passed" only when "issues": \[\]/);
+    assert.match(opencodePlanCommand, /alignment_status: user_confirmed/);
+    assert.match(opencodePlanCommand, /alignment_status: approved_skip/);
+    assert.match(opencodePlanCommand, /all canonical proof fields[\s\S]{0,260}alignment_status[\s\S]{0,80}alignment_method[\s\S]{0,80}user_confirmed_at[\s\S]{0,80}explicit_skip_approved[\s\S]{0,80}skip_scope[\s\S]{0,80}skip_rationale[\s\S]{0,80}confirmed_decisions/);
+    assert.match(opencodePlanCommand, /confirmed_decisions/);
+    assert.match(opencodePlanCommand, /explicit_skip_approved: true/);
+    assert.match(opencodePlanCommand, /skip_scope/);
+    assert.match(opencodePlanCommand, /skip_rationale/);
+    assert.match(opencodePlanCommand, /No questions needed.*not valid proof|not valid proof.*No questions needed/);
+    assert.match(opencodePlanCommand, /Use existing[\s\S]{0,220}validate the alignment proof/i);
+    assert.match(opencodePlanCommand, /gsdd-approach-explorer[\s\S]{0,220}\.planning\/config\.json[\s\S]{0,80}workflow\.discuss/i);
+    assert.match(opencodePlanCommand, /workflow\.planCheck: false[\s\S]{0,260}does not skip[\s\S]{0,160}alignment-proof gate/i);
+    assert.match(opencodePlanCommand, /\.planning\/config\.json[\s\S]{0,120}workflow\.discuss[\s\S]{0,80}workflow\.planCheck/i);
 
     assert.doesNotMatch(opencodeExecuteCommand, /^subtask: false$/m);
 
     assert.match(opencodePlanChecker, /^mode: subagent$/m);
     assert.match(opencodePlanChecker, /^hidden: true$/m);
     assert.match(opencodePlanChecker, /Return JSON only/);
+    assert.match(opencodePlanChecker, /alignment_status/);
+    assert.match(opencodePlanChecker, /\.planning\/config\.json/);
   });
 
   test('portable skill is the Codex entry surface with checker invocation instructions', async () => {
@@ -126,8 +150,9 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(portableSkill, /Invoking the Checker/);
     assert.match(portableSkill, /gsdd-plan-checker/);
     assert.match(portableSkill, /Maximum 3 checker cycles total/);
-    assert.match(portableSkill, /"status": "passed"/);
-    assert.match(portableSkill, /Status must be either "passed" or "issues_found"\./);
+    assert.match(portableSkill, /blockers or warnings remain after cycle 3/);
+    assert.match(portableSkill, /"status": "issues_found"/);
+    assert.match(portableSkill, /Use "passed" only when "issues": \[\]/);
     assert.match(portableSkill, /reduced_assurance/);
     assert.match(portableSkill, /Orchestration Summary/);
     assert.match(portableSkill, /Planning stops here|plan-only/i);
@@ -306,7 +331,7 @@ describe('specialized plan adapter surfaces', () => {
     assert.doesNotMatch(content, /^sandbox_mode = "read-only"/m, 'approach-explorer must NOT be read-only (needs write access unlike checker)');
   });
 
-  test('all native plan surfaces contain the same 9 dimension names', async () => {
+  test('all native plan surfaces contain the same 14 dimension names', async () => {
     const allDimensions = [
       'requirement_coverage',
       'task_completeness',
@@ -316,6 +341,11 @@ describe('specialized plan adapter surfaces', () => {
       'must_have_quality',
       'context_compliance',
       'goal_achievement',
+      'scope_boundaries',
+      'anti_regression_capture',
+      'escalation_integrity',
+      'closure_honesty',
+      'high_leverage_review',
       'approach_alignment',
     ];
 
@@ -383,6 +413,7 @@ describe('specialized plan adapter surfaces', () => {
     const delegateContent = fs.readFileSync(delegatePath, 'utf-8');
     // Pick a key phrase that must survive into all native checker surfaces
     const keyPhrase = 'Return JSON only';
+    const canonicalProofFieldsPattern = /all canonical proof fields[\s\S]{0,260}alignment_status[\s\S]{0,80}alignment_method[\s\S]{0,80}user_confirmed_at[\s\S]{0,80}explicit_skip_approved[\s\S]{0,80}skip_scope[\s\S]{0,80}skip_rationale[\s\S]{0,80}confirmed_decisions/;
 
     // Init claude
     const claudeTmpDir = createTempProject();
@@ -431,8 +462,12 @@ describe('specialized plan adapter surfaces', () => {
 
     // Verify delegate content appears in all native checker surfaces
     assert.ok(delegateContent.includes(keyPhrase), `delegate source must contain key phrase: ${keyPhrase}`);
+    assert.match(delegateContent, canonicalProofFieldsPattern);
+    assert.match(delegateContent, /"severity": "blocker \| warning"/);
     for (const [label, content] of [['claude', claudeChecker], ['opencode', opencodeChecker], ['codex', codexChecker]]) {
       assert.ok(content.includes(keyPhrase), `${label} checker must contain delegate key phrase: ${keyPhrase}`);
+      assert.match(content, canonicalProofFieldsPattern, `${label} checker must require all canonical proof fields`);
+      assert.match(content, /"severity": "blocker \| warning"/, `${label} checker must preserve severity schema parity`);
     }
   });
 

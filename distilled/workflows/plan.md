@@ -427,7 +427,7 @@ Check `.planning/config.json` for `workflow.discuss`:
 Check if `{phase_dir}/{padded_phase}-APPROACH.md` exists.
 **If exists:**
 Offer the user a choice:
-- "Use existing" — load decisions from APPROACH.md, skip to `<goal_backward_planning>`
+- "Use existing" — load decisions from APPROACH.md, validate the alignment proof below, then continue to `<goal_backward_planning>` only if the proof is valid
 - "Update it" — run the approach explorer to revise decisions
 - "View it" — display APPROACH.md contents, then offer "Use existing" / "Update"
 
@@ -461,7 +461,7 @@ The conversation with the user runs inline in the main context. For each technic
 **Native agent optimization:**
 
 If your runtime provides an interactive `gsdd-approach-explorer` agent:
-- Invoke it with: target phase goal, requirement IDs, locked decisions, phase research (if exists), relevant codebase files
+- Invoke it with: target phase goal, requirement IDs, project config from `.planning/config.json` (especially `workflow.discuss`), locked decisions, phase research (if exists), relevant codebase files
 - The native agent runs the full exploration in its own context window
 - This is an optimization — the output (APPROACH.md) is identical to the primary path
 
@@ -474,8 +474,8 @@ If neither the primary path nor native agent is available (e.g., the runtime can
 - Explicitly report `reduced_alignment` — the user did not get full research-backed exploration
 
 ### Using APPROACH.md Decisions
-
 After approach exploration completes (or existing APPROACH.md is loaded):
+- If `workflow.discuss: true`, validate that APPROACH.md records `alignment_status: user_confirmed` or `alignment_status: approved_skip` with the canonical fields `alignment_method`, `user_confirmed_at`, `explicit_skip_approved`, `skip_scope`, `skip_rationale`, and `confirmed_decisions` before goal-backward planning begins. Stop and update the APPROACH artifact if proof is missing, unknown, agent-discretion-only, or based only on agent "No questions needed" judgment.
 - Treat decisions from APPROACH.md as locked constraints, same priority as `.planning/SPEC.md` decisions
 - "Agent's Discretion" items from APPROACH.md give the planner flexibility — do not treat them as locked
 - Thread the APPROACH.md file path to both the planner prompt and the plan-checker prompt
@@ -488,11 +488,9 @@ The approach explorer's full role contract is at `.planning/templates/roles/appr
 
 <plan_check_orchestration>
 ### How Plan Checking Works
-
 After the planner produces a draft plan, an independent checker reviews it in fresh context. The checker does not inherit the planner's hidden reasoning; it treats the plan as an untrusted draft.
 
 ### What The Checker Verifies
-
 1. `requirement_coverage` - every phase requirement is covered by at least one concrete task
 2. `task_completeness` - every task has files, action, verify, and done fields; verify quality sub-checks ensure at least one runnable command per task, flag slow or watch-mode verification, and check test file ordering
 3. `dependency_correctness` - ordering, dependencies, and plan structure are coherent
@@ -506,20 +504,21 @@ After the planner produces a draft plan, an independent checker reviews it in fr
 11. `escalation_integrity` - stop-and-challenge triggers and approval gates are present where side effects or ambiguity warrant them
 12. `closure_honesty` - closure claim limit prevents the plan from overclaiming what verification can prove
 13. `high_leverage_review` - high-leverage surfaces and second-pass obligations are recorded honestly
-14. `approach_alignment` - when APPROACH.md exists, plans implement the chosen approaches, not alternatives. Blocker if plan contradicts an explicit user choice. Warning if plan drifts from recommendation without justification. Skipped when no APPROACH.md is provided.
+14. `approach_alignment` - when APPROACH.md exists, plans implement the chosen approaches, not alternatives. Blocker if plan contradicts an explicit user choice. Warning if plan drifts from recommendation without justification. When `workflow.discuss: true`, missing, proofless, agent-discretion-only, or invalid APPROACH.md is a blocker before a plan can be accepted.
 ### Invoking the Checker
-1. If `.planning/config.json` has `workflow.planCheck: false`, skip the independent checker. Perform the planner self-check below and report `reduced_assurance`.
+1. If `.planning/config.json` has `workflow.planCheck: false`, skip the independent checker. Perform the planner self-check below and report `reduced_assurance`. This does not skip the earlier alignment-proof gate when `workflow.discuss: true`.
 2. If plan checking is enabled, check if your runtime provides a `gsdd-plan-checker` agent.
 3. If a native checker agent is available, invoke it in a fresh context with only these explicit inputs:
    - target phase goal and requirement IDs
    - relevant locked decisions / deferred items from `.planning/SPEC.md`
+   - project config from `.planning/config.json`, especially `workflow.discuss` and `workflow.planCheck`
    - approach decisions from `.planning/phases/*-APPROACH.md` (if exists)
    - relevant phase research file(s)
    - produced `.planning/phases/*-PLAN.md` file(s)
 4. Require the checker to return a single JSON object:
    ```json
    {
-     "status": "passed",
+     "status": "issues_found",
      "summary": "One sentence overall assessment",
      "issues": [
        {
@@ -533,10 +532,10 @@ After the planner produces a draft plan, an independent checker reviews it in fr
      ]
    }
    ```
-   Status must be either "passed" or "issues_found".
+   Status must be either "passed" or "issues_found". Use "passed" only when "issues": []; any blocker or warning must use "issues_found".
 5. If the checker returns `passed`, finish and summarize.
 6. If the checker returns `issues_found`, revise the existing plan files only where needed, then invoke the checker again.
-7. Maximum 3 checker cycles total. If blockers remain after cycle 3, stop and escalate to the user instead of pretending the plan is ready.
+7. Maximum 3 checker cycles total. If any blockers or warnings remain after cycle 3, stop and escalate to the user instead of pretending the plan is ready.
 8. If no native checker agent is available in your runtime, perform the planner self-check below and explicitly report `reduced_assurance` rather than claiming an independent checker ran.
 When the checker outcome is finalized, write the result into the plan artifact:
 - checker ran in same runtime or planner self-check only -> set frontmatter `assurance: self_checked`
@@ -556,7 +555,7 @@ The checker returns structured JSON feedback with specific issues, severities, a
 
 ### When To Escalate
 
-If blockers remain after 3 checker cycles, the orchestrator stops and escalates to the user. It does not pretend the plan is ready.
+If any blockers or warnings remain after 3 checker cycles, the orchestrator stops and escalates to the user. It does not pretend the plan is ready.
 </plan_check_orchestration>
 
 <plan_self_check>

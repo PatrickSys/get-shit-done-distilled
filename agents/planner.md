@@ -50,7 +50,7 @@ When APPROACH.md exists for the target phase, the orchestrator passes it as inpu
 Honor the user's choice from APPROACH.md. Note the tension in the plan's Notes section so the user is aware, but do not override their decision.
 
 **If no APPROACH.md exists:**
-Plan using SPEC.md and research only. The plan-checker will skip the approach_alignment dimension.
+If the orchestrator indicates `workflow.discuss: true`, stop and request approach exploration or an approved skip before planning. Otherwise plan using SPEC.md and research only under `reduced_alignment`; the plan-checker may skip the approach_alignment dimension only in that reduced-alignment mode.
 </approach_decisions>
 
 <goal_backward>
@@ -182,7 +182,7 @@ Wave rule:
 Write one or more `PLAN.md` files to the phase directory.
 
 Keep the current GSDD schema exactly:
-- frontmatter keys: `phase`, `plan`, `type`, `wave`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `must_haves`
+- frontmatter keys: `phase`, `plan`, `type`, `wave`, `runtime`, `assurance`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `non_goals`, `hard_boundaries`, `escalation_triggers`, `approval_gates`, `anti_regression_targets`, `known_unknowns`, `high_leverage_surfaces`, `second_pass_required`, `closure_claim_limit`, `parallelism_budget`, `leverage`, `must_haves`
 - typed tasks with `files`, `action`, `verify`, and `done`
 
 Typed frontmatter example:
@@ -192,6 +192,8 @@ phase: 01-foundation
 plan: 01
 type: execute
 wave: 1
+runtime: claude-code
+assurance: self_checked
 depends_on: []
 files-modified:
   - src/lib/auth.ts
@@ -199,6 +201,28 @@ files-modified:
 autonomous: true
 requirements:
   - REQ-AUTH-01
+non_goals:
+  - Do not redesign auth UX beyond the scoped sign-in flow.
+hard_boundaries:
+  - Do not touch signup, billing, or unrelated session consumers in this plan.
+escalation_triggers:
+  - Stop if the request expands beyond the approved phase success criteria.
+approval_gates:
+  - Ask before destructive migrations or external delivery actions.
+anti_regression_targets:
+  - Existing session middleware behavior remains unchanged for already-supported routes.
+known_unknowns:
+  - Exact copy wording for auth errors may still need product confirmation.
+high_leverage_surfaces: []
+second_pass_required: false
+closure_claim_limit: Do not claim phase completion until verification satisfies the evidence contract for the scoped truths.
+parallelism_budget:
+  max_concurrent_plans: 1
+  safe_parallelism: []
+leverage:
+  lost: Slightly more planning ceremony for this plan.
+  kept: Existing auth/session architecture and repo conventions.
+  gained: Explicit anti-drift boundaries and fail-closed escalation.
 must_haves:
   truths:
     - "User can sign in with email and password"
@@ -239,7 +263,12 @@ Before returning, self-check against the checker dimensions:
 6. must-have quality
 7. context compliance
 8. goal achievement
-9. approach alignment (when APPROACH.md exists)
+9. scope boundaries
+10. anti-regression capture
+11. escalation integrity
+12. closure honesty
+13. high-leverage review
+14. approach alignment (when APPROACH.md exists)
 
 Task completeness rules:
 - every task has files, action, verify, and done
