@@ -447,10 +447,22 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
     ));
   }
 
+  const releaseEvaluation = evaluateReleaseClaimCloseoutContract({
+    surface: 'complete-milestone',
+    deliveryPosture,
+    releaseClaimPosture,
+    observedKinds,
+    waivedKinds,
+    unsupportedClaims,
+    deferrals,
+    contradictionChecks,
+  });
+
   if (DELIVERY_POSTURES.includes(deliveryPosture)) {
     const evidenceContract = getEvidenceContract('complete-milestone', deliveryPosture);
-    const undeclaredRequiredKinds = evidenceContract.requiredKinds.filter((kind) => !requiredKinds.includes(kind));
-    const recomputedMissingKinds = evidenceContract.requiredKinds.filter((kind) => !observedKinds.includes(kind));
+    const enforcedRequiredKinds = [...new Set([...evidenceContract.requiredKinds, ...releaseEvaluation.requiredKinds])];
+    const undeclaredRequiredKinds = enforcedRequiredKinds.filter((kind) => !requiredKinds.includes(kind));
+    const recomputedMissingKinds = enforcedRequiredKinds.filter((kind) => !observedKinds.includes(kind));
 
     if (undeclaredRequiredKinds.length > 0) {
       blockers.push(blocker(
@@ -476,17 +488,6 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
       [auditPath]
     ));
   }
-
-  const releaseEvaluation = evaluateReleaseClaimCloseoutContract({
-    surface: 'complete-milestone',
-    deliveryPosture,
-    releaseClaimPosture,
-    observedKinds,
-    waivedKinds,
-    unsupportedClaims,
-    deferrals,
-    contradictionChecks,
-  });
 
   if (releaseEvaluation.invalidWaivers.length > 0) {
     blockers.push(blocker(

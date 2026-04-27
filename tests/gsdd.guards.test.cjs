@@ -3648,6 +3648,10 @@ describe('G44 - Engine Contract Hardening', () => {
 
     assert.match(audit, /required_kinds.*observed_kinds.*missing_kinds/s,
       'audit-milestone.md must record evidence_contract.required_kinds|observed_kinds|missing_kinds in frontmatter. FIX: Add the shared audit evidence block.');
+    assert.match(verify, /`delivery_sensitive`\s*\|\s*`code`, `runtime`, `delivery`/,
+      'verify.md must require delivery evidence for delivery_sensitive verification. FIX: Keep verify delivery-sensitive evidence aligned with the shared contract.');
+    assert.match(verify, /required_kinds:\s*\[code, runtime, delivery\]/,
+      'verify.md report template must require code, runtime, and delivery for delivery_sensitive verification. FIX: Update the structured frontmatter template.');
     assert.match(audit, /repo_closeout.*runtime_validated_closeout.*delivery_supported_closeout/s,
       'audit-milestone.md must preserve the release claim posture vocabulary. FIX: Add repo/runtime/delivery closeout posture language.');
     assert.match(audit, /unsupported_claims.*waivers.*deferrals.*contradiction_checks/s,

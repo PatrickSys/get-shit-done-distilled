@@ -1533,6 +1533,31 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.ok(output.blockers.some((blocker) => blocker.code === 'failed_release_contradiction_checks'));
   });
 
+  test('blocks runtime-validated closeout when required_kinds omits release-claim runtime evidence', async () => {
+    writeCompletedMilestoneFixture(tmpDir);
+    writeMilestoneAudit(tmpDir, {
+      releaseClaimPosture: 'runtime_validated_closeout',
+      requiredKinds: ['code', 'test'],
+      observedKinds: ['code', 'test', 'runtime'],
+      contradictionChecks: {
+        evidence: 'passed',
+        public_surface: 'not_applicable',
+        runtime: 'passed',
+        delivery: 'not_applicable',
+        planning_drift: 'passed',
+        generated_surface: 'passed',
+      },
+    });
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'complete-milestone']);
+    assert.strictEqual(result.exitCode, 1, result.output);
+
+    const output = JSON.parse(result.output);
+    const evidenceBlocker = output.blockers.find((blocker) => blocker.code === 'invalid_release_evidence_contract');
+    assert.ok(evidenceBlocker);
+    assert.match(evidenceBlocker.message, /runtime/);
+  });
+
   test('blocks complete-milestone preflight when required contradiction checks are missing', async () => {
     writeCompletedMilestoneFixture(tmpDir);
     writeMilestoneAudit(tmpDir, {
