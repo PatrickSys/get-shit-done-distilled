@@ -3225,6 +3225,7 @@ describe('G49 - Native Alignment Proof Gate', () => {
   const checkerContent = fs.readFileSync(checkerPath, 'utf-8');
   const planWorkflowPath = path.join(ROOT, 'distilled', 'workflows', 'plan.md');
   const planWorkflowContent = fs.readFileSync(planWorkflowPath, 'utf-8');
+  const plannerRoleContent = fs.readFileSync(path.join(ROOT, 'agents', 'planner.md'), 'utf-8');
 
   test('plan-checker blocks proofless and agent-discretion-only APPROACH artifacts', () => {
     assert.match(checkerContent, /alignment_status: user_confirmed|user_confirmed/i,
@@ -3271,6 +3272,13 @@ describe('G49 - Native Alignment Proof Gate', () => {
   test('alignment proof gate is independent of optional planCheck', () => {
     assert.match(planWorkflowContent, /workflow\.planCheck: false[\s\S]{0,220}does not skip[\s\S]{0,160}alignment-proof gate/i,
       'plan.md must keep workflow.discuss alignment proof mandatory even when workflow.planCheck=false.');
+  });
+
+  test('planner role does not bypass missing APPROACH when discuss is required', () => {
+    assert.match(plannerRoleContent, /workflow\.discuss: true[\s\S]{0,140}stop[\s\S]{0,140}approach exploration/i,
+      'planner role must not plan through missing APPROACH.md when workflow.discuss=true.');
+    assert.doesNotMatch(plannerRoleContent, /If no APPROACH\.md exists:[\s\S]{0,120}Plan using SPEC\.md and research only[\s\S]{0,120}skip the approach_alignment dimension/i,
+      'planner role must not unconditionally skip approach_alignment when APPROACH.md is missing.');
   });
 
   test('plan-checker input contract includes project config', () => {

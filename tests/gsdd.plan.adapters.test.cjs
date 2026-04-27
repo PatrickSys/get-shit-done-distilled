@@ -103,6 +103,10 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(opencodePlanCommand, /Status must be either "passed" or "issues_found"\./);
     assert.match(opencodePlanCommand, /alignment_status: user_confirmed/);
     assert.match(opencodePlanCommand, /alignment_status: approved_skip/);
+    assert.match(opencodePlanCommand, /confirmed_decisions/);
+    assert.match(opencodePlanCommand, /explicit_skip_approved: true/);
+    assert.match(opencodePlanCommand, /skip_scope/);
+    assert.match(opencodePlanCommand, /skip_rationale/);
     assert.match(opencodePlanCommand, /No questions needed.*not valid proof|not valid proof.*No questions needed/);
     assert.match(opencodePlanCommand, /Use existing[\s\S]{0,220}validate the alignment proof/i);
     assert.match(opencodePlanCommand, /gsdd-approach-explorer[\s\S]{0,220}\.planning\/config\.json[\s\S]{0,80}workflow\.discuss/i);

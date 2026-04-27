@@ -50,7 +50,7 @@ When APPROACH.md exists for the target phase, the orchestrator passes it as inpu
 Honor the user's choice from APPROACH.md. Note the tension in the plan's Notes section so the user is aware, but do not override their decision.
 
 **If no APPROACH.md exists:**
-Plan using SPEC.md and research only. The plan-checker will skip the approach_alignment dimension.
+If the orchestrator indicates `workflow.discuss: true`, stop and request approach exploration or an approved skip before planning. Otherwise plan using SPEC.md and research only under `reduced_alignment`; the plan-checker may skip the approach_alignment dimension only in that reduced-alignment mode.
 </approach_decisions>
 
 <goal_backward>
