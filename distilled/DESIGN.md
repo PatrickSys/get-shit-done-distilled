@@ -2734,9 +2734,9 @@ Sub-gap (b) was closed by D28's `<persistence>` mandate and guarded by G30. Sub-
   - `runtime_validated_closeout`: permits claims about a named runtime behavior or runtime surface only when `runtime` evidence exists for that exact runtime or surface.
   - `delivery_supported_closeout`: permits externally consumed release, install, support, or delivery claims only when the `delivery_sensitive` evidence bar is satisfied.
 - Thread the posture through `audit-milestone` as audit-owned release closeout metadata: unsupported claims, waivers, deferrals, and contradiction checks are recorded with the audit evidence contract.
-- Make `complete-milestone` inherit the audit posture and stop when unsupported claims, invalid waivers, missing evidence, or failed contradiction checks remain.
+- Make `complete-milestone` inherit the audit posture and stop when unsupported claims, invalid waivers, missing evidence, incompatible posture metadata, or failed claim-scoped contradiction checks remain.
 - Keep `verify` out of the main release-claim decision path; phase verification still records evidence, while milestone audit and completion own release closeout.
-- Enforce the inherited contract in `lifecycle-preflight complete-milestone` so milestone completion cannot proceed from a passed audit that lacks release-claim metadata or still contains unsupported stronger claims, invalid waivers, missing required evidence, or failed contradiction checks.
+- Enforce the inherited contract in `lifecycle-preflight complete-milestone` so milestone completion cannot proceed from a passed audit that lacks release-claim metadata or still contains unsupported stronger claims, invalid waivers, missing required evidence, incompatible posture metadata, or failed claim-scoped contradiction checks.
 
 **Why this fits the codebase:**
 - It preserves the compact D50 evidence matrix and avoids a new `release` evidence kind.
@@ -2749,6 +2749,8 @@ Waivers may narrow a claim posture or defer an unsupported claim, but they never
 
 **Contradiction checks:**
 Closeout must check evidence, public-surface, runtime, delivery, planning-drift, and generated-surface contradictions. Generated-surface drift blocks only claims that depend on generated runtime/helper freshness; it does not fail unrelated `repo_closeout` claims.
+
+Posture compatibility is part of that closeout contract: `repo_closeout` and `runtime_validated_closeout` are repo-local wording boundaries over `repo_only`, while `delivery_supported_closeout` requires the `delivery_sensitive` evidence bar.
 
 **Evidence:**
 - `.planning/phases/45-release-closeout-contract/45-APPROACH.md`

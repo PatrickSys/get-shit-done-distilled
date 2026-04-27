@@ -88,6 +88,12 @@ const RELEASE_CLAIM_MATRIX = Object.freeze({
   }),
 });
 
+const CONTRADICTION_BLOCKERS_BY_POSTURE = Object.freeze({
+  repo_closeout: Object.freeze(['evidence', 'planning_drift']),
+  runtime_validated_closeout: Object.freeze(['evidence', 'runtime', 'generated_surface', 'planning_drift']),
+  delivery_supported_closeout: CONTRADICTION_CATEGORIES,
+});
+
 export { CLOSURE_SURFACES, DELIVERY_POSTURES, EVIDENCE_KINDS, RELEASE_CLAIM_POSTURES };
 
 export function normalizeEvidenceKind(kind) {
@@ -215,6 +221,7 @@ export function evaluateReleaseClaimPosture({
 
 export function evaluateReleaseClaimCloseoutContract({
   surface,
+  deliveryPosture = null,
   releaseClaimPosture = 'repo_closeout',
   observedKinds = [],
   waivedKinds = [],
@@ -231,10 +238,20 @@ export function evaluateReleaseClaimCloseoutContract({
   const failedContradictionChecks = Object.entries(contradictionChecks)
     .filter(([, status]) => status === 'failed')
     .map(([name]) => name);
+  const blockingContradictionChecks = failedContradictionChecks.filter((name) =>
+    CONTRADICTION_BLOCKERS_BY_POSTURE[posture.releaseClaimPosture].includes(name)
+  );
   const unresolvedUnsupportedClaims = unsupportedClaims.filter((claim) =>
     !deferrals.some((deferral) => namesUnsupportedClaim(deferral, claim))
   );
   const blockers = [];
+
+  if (deliveryPosture && deliveryPosture !== posture.deliveryPosture) {
+    blockers.push({
+      code: 'incompatible_release_claim_posture',
+      details: [`${deliveryPosture} cannot support ${posture.releaseClaimPosture}; expected ${posture.deliveryPosture}`],
+    });
+  }
 
   if (posture.missingKinds.length > 0) {
     blockers.push({ code: 'missing_required_release_evidence', details: posture.missingKinds });
@@ -245,15 +262,16 @@ export function evaluateReleaseClaimCloseoutContract({
   if (unresolvedUnsupportedClaims.length > 0) {
     blockers.push({ code: 'unsupported_release_claims', details: unresolvedUnsupportedClaims });
   }
-  if (failedContradictionChecks.length > 0) {
-    blockers.push({ code: 'failed_release_contradiction_checks', details: failedContradictionChecks });
+  if (blockingContradictionChecks.length > 0) {
+    blockers.push({ code: 'failed_release_contradiction_checks', details: blockingContradictionChecks });
   }
 
   return {
     ...posture,
     unsupportedClaims: [...unsupportedClaims],
     deferrals: [...deferrals],
-    failedContradictionChecks,
+    failedContradictionChecks: blockingContradictionChecks,
+    allFailedContradictionChecks: failedContradictionChecks,
     unresolvedUnsupportedClaims,
     blockers,
     status: blockers.length === 0 ? 'supported' : 'unsupported',

@@ -71,8 +71,9 @@ Shared closure rules:
   - `repo_closeout` permits repo-local milestone closure only and must not imply public support, delivery, runtime validation, generated-surface freshness, package publication, tags, or GitHub Releases
   - `runtime_validated_closeout` may name only the runtime or surface with explicit `runtime` evidence
   - `delivery_supported_closeout` requires the audit's `delivery_sensitive` bar plus concrete `delivery` evidence for the public/release/support claim
+- inherited `delivery_posture` and `release_claim_posture` must be compatible: `repo_closeout` and `runtime_validated_closeout` use `repo_only`; `delivery_supported_closeout` uses `delivery_sensitive`
 - waivers are valid only when they narrow the release claim or defer an unsupported claim. Deferrals must name the unsupported claim, missing evidence kind(s), and later workflow or milestone candidate when known. STOP if a waiver preserves a stronger claim while required evidence is missing.
-- STOP if `release_claim_contract.unsupported_claims` remain without downgrade or deferral, if contradiction checks failed, or if completion wording would claim more than the audit evidence supports.
+- STOP if `release_claim_contract.unsupported_claims` remain without downgrade or deferral, if unsupported claims, invalid waivers, or failed contradiction checks remain, or if completion wording would claim more than the audit evidence supports. Failed contradiction checks are claim-scoped: generated-surface failures block only runtime/generated freshness claims, not unrelated `repo_closeout` completion.
 - local-only `.planning/` proof can support repo closeout, but cannot become public release proof by itself.
 </evidence_contract>
 
@@ -84,11 +85,11 @@ Check:
 - **Phase completion**: Are all ROADMAP.md phases for this milestone marked `[x]`? List any that are not.
 - **Audit status**: Does a MILESTONE-AUDIT.md exist and have status `passed`? If it has status `gaps_found`, the milestone has open gaps.
 - **Audit evidence posture**: Does the passed audit frontmatter include `delivery_posture` and an `evidence_contract` block with no missing required kinds?
-- **Release claim posture**: Does the passed audit include `release_claim_posture` and `release_claim_contract`, with unsupported claims either downgraded or deferred, no invalid waivers, and no failed contradiction checks?
+- **Release claim posture**: Does the passed audit include compatible `delivery_posture`/`release_claim_posture` values and `release_claim_contract`, with unsupported claims either downgraded or deferred, no invalid waivers, and no failed claim-scoped contradiction checks?
 - **Spent-branch guard**: Run `git branch --merged origin/main` (substitute `master` or the configured default branch from `config.json → gitProtocol.branch` if different) and verify HEAD is not a spent/already-merged branch. If the current branch already backs a merged PR, STOP - do not instruct any commit or tag operations. Prompt the user to check out a fresh active branch before continuing.
 - **Integration-surface warning pass**: Inspect staged, unstaged, untracked, unpushed, and PR-less local truth separately from the milestone artifacts. Warn if the archive is being attempted from a mixed-scope or stale branch even when the milestone documents themselves look complete.
 
-**If phases incomplete, audit not passed, the audit evidence contract is missing/insufficient, or the inherited release claim contract has unsupported claims, invalid waivers, missing/failed contradiction checks, or invalid posture metadata:**
+**If phases incomplete, audit not passed, the audit evidence contract is missing/insufficient, or the inherited release claim contract has unsupported claims, invalid waivers, missing/failed claim-scoped contradiction checks, incompatible posture metadata, or invalid posture metadata:**
 
 STOP without archiving. Route to the narrowest corrective workflow instead:
 1. **Run audit first** — `/gsdd-audit-milestone` if audit is missing, stale, or missing required release-claim schema.

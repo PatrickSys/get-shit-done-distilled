@@ -478,6 +478,7 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
 
   const releaseEvaluation = evaluateReleaseClaimCloseoutContract({
     surface: 'complete-milestone',
+    deliveryPosture,
     releaseClaimPosture,
     observedKinds,
     waivedKinds,
@@ -490,6 +491,13 @@ function buildReleaseClaimCompletionBlockers(auditContent, auditPath) {
     blockers.push(blocker(
       'invalid_release_waivers',
       `Milestone audit has invalid waivers for missing required evidence (${releaseEvaluation.invalidWaivers.join(', ')}).`,
+      [auditPath]
+    ));
+  }
+  if (releaseEvaluation.blockers.some((releaseBlocker) => releaseBlocker.code === 'incompatible_release_claim_posture')) {
+    blockers.push(blocker(
+      'incompatible_release_claim_posture',
+      `Milestone audit release_claim_posture (${releaseClaimPosture}) is incompatible with delivery_posture (${deliveryPosture}).`,
       [auditPath]
     ));
   }
@@ -518,7 +526,7 @@ function extractFrontmatter(content) {
 
 function readTopLevelScalar(frontmatter, key) {
   const match = String(frontmatter || '').match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
-  return match ? match[1].trim() : null;
+  return match ? cleanYamlValue(match[1]) : null;
 }
 
 function extractYamlBlock(frontmatter, key) {
@@ -578,14 +586,48 @@ function extractIndentedBlock(block, key) {
 }
 
 function splitInlineList(value) {
-  return String(value || '')
-    .split(',')
+  return splitCommaAware(value)
     .map(cleanYamlValue)
     .filter(Boolean);
 }
 
+function splitCommaAware(value) {
+  const items = [];
+  let current = '';
+  let quote = null;
+  let escaped = false;
+
+  for (const char of String(value || '')) {
+    if (escaped) {
+      current += char;
+      escaped = false;
+      continue;
+    }
+    if (char === '\\' && quote) {
+      current += char;
+      escaped = true;
+      continue;
+    }
+    if ((char === '"' || char === "'") && (!quote || quote === char)) {
+      quote = quote ? null : char;
+      current += char;
+      continue;
+    }
+    if (char === ',' && !quote) {
+      items.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+
+  items.push(current);
+  return items;
+}
+
 function cleanYamlValue(value) {
   return String(value || '')
+    .trim()
     .replace(/^['"]|['"]$/g, '')
     .trim();
 }
