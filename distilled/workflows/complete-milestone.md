@@ -54,14 +54,26 @@ Stable evidence kinds carried forward from audit:
 
 Read the audit frontmatter and preserve:
 - `delivery_posture`
+- `release_claim_posture`
 - `evidence_contract.required_kinds`
 - `evidence_contract.observed_kinds`
 - `evidence_contract.missing_kinds`
+- `release_claim_contract.unsupported_claims`
+- `release_claim_contract.waivers`
+- `release_claim_contract.deferrals`
+- `release_claim_contract.contradiction_checks`
 
 Shared closure rules:
 - `repo_only` completion may proceed with repo-local closure evidence only; do not invent `runtime` or `delivery` proof
 - `delivery_sensitive` completion must not proceed on code/prose-only evidence; the audit must already show required `code`, `test`, `runtime`, and `delivery` evidence with no missing required kinds
 - if the audit omits the evidence contract or still has missing required kinds, STOP and route back to `/gsdd-audit-milestone` or `/gsdd-plan-milestone-gaps` instead of silently closing the milestone
+- release claim postures are inherited from audit:
+  - `repo_closeout` permits repo-local milestone closure only and must not imply public support, delivery, runtime validation, generated-surface freshness, package publication, tags, or GitHub Releases
+  - `runtime_validated_closeout` may name only the runtime or surface with explicit `runtime` evidence
+  - `delivery_supported_closeout` requires the audit's `delivery_sensitive` bar plus concrete `delivery` evidence for the public/release/support claim
+- waivers are valid only when they narrow the release claim or defer an unsupported claim. Deferrals must name the unsupported claim, missing evidence kind(s), and later workflow or milestone candidate when known. STOP if a waiver preserves a stronger claim while required evidence is missing.
+- STOP if `release_claim_contract.unsupported_claims` remain without downgrade or deferral, if contradiction checks failed, or if completion wording would claim more than the audit evidence supports.
+- local-only `.planning/` proof can support repo closeout, but cannot become public release proof by itself.
 </evidence_contract>
 
 <process>
@@ -72,22 +84,18 @@ Check:
 - **Phase completion**: Are all ROADMAP.md phases for this milestone marked `[x]`? List any that are not.
 - **Audit status**: Does a MILESTONE-AUDIT.md exist and have status `passed`? If it has status `gaps_found`, the milestone has open gaps.
 - **Audit evidence posture**: Does the passed audit frontmatter include `delivery_posture` and an `evidence_contract` block with no missing required kinds?
+- **Release claim posture**: Does the passed audit include `release_claim_posture` and `release_claim_contract`, with unsupported claims either downgraded or deferred, no invalid waivers, and no failed contradiction checks?
 - **Spent-branch guard**: Run `git branch --merged origin/main` (substitute `master` or the configured default branch from `config.json → gitProtocol.branch` if different) and verify HEAD is not a spent/already-merged branch. If the current branch already backs a merged PR, STOP - do not instruct any commit or tag operations. Prompt the user to check out a fresh active branch before continuing.
 - **Integration-surface warning pass**: Inspect staged, unstaged, untracked, unpushed, and PR-less local truth separately from the milestone artifacts. Warn if the archive is being attempted from a mixed-scope or stale branch even when the milestone documents themselves look complete.
 
-**If phases incomplete, audit not passed, or the audit evidence contract is missing/insufficient:**
+**If phases incomplete, audit not passed, the audit evidence contract is missing/insufficient, or the inherited release claim contract has unsupported claims, invalid waivers, missing/failed contradiction checks, or invalid posture metadata:**
 
-Present options:
-1. **Proceed anyway** — archive with known gaps noted in MILESTONES.md
-2. **Run audit first** — `/gsdd-audit-milestone` (if audit is missing or stale)
-3. **Close gaps first** — `/gsdd-plan-milestone-gaps` (if audit found gaps)
-4. **Abort** — stop without archiving
+STOP without archiving. Route to the narrowest corrective workflow instead:
+1. **Run audit first** — `/gsdd-audit-milestone` if audit is missing, stale, or missing required release-claim schema.
+2. **Close gaps first** — `/gsdd-plan-milestone-gaps` if audit found gaps or the release claim outruns available evidence.
+3. **Abort** — stop without archiving if the user does not want corrective work now.
 
-**STOP. Wait for user selection.**
-
-Exception: if `config.json -> mode` is `yolo`, skip the stop gate and proceed with a note about any gaps.
-
-**If all phases complete, audit passed, and the audit evidence contract is satisfied:** Proceed.
+**If all phases complete, audit passed, the audit evidence contract is satisfied, and the inherited release claim contract has no unsupported stronger claims:** Proceed.
 
 ## 2. Determine Version
 
@@ -101,6 +109,7 @@ Extract from phase SUMMARY.md files and git:
 - Test count if discernible from SUMMARY files
 - Start date (first phase completion date) and end date (today)
 - Brief git stats: `git log --oneline --since="[start date]" | wc -l` for commit count
+- Inherited closeout posture: `delivery_posture`, `release_claim_posture`, waivers, deferrals, and contradiction check result from the passed audit
 
 Present a concise stats block for review.
 
@@ -120,7 +129,7 @@ Create `.planning/milestones/v[X.Y]-ROADMAP.md` with full milestone details:
 **Status:** ✅ SHIPPED [date]
 **Phases:** [N]–[M]
 **Total Plans:** [count]
-**Tag:** v[X.Y]
+**Suggested tag:** v[X.Y] (advisory only; do not imply this tag exists unless git confirms it)
 
 ## Overview
 
@@ -220,6 +229,9 @@ Append an entry to `.planning/MILESTONES.md`:
 
 **Delivered:** [One sentence summary of what shipped.]
 
+**Release claim posture:** [repo_closeout | runtime_validated_closeout | delivery_supported_closeout]
+**Unsupported claims deferred:** [none or concise list]
+
 **Key accomplishments:**
 1. [Accomplishment 1]
 2. [Accomplishment 2]
@@ -228,7 +240,7 @@ Append an entry to `.planning/MILESTONES.md`:
 
 **Archive:** `.planning/milestones/v[X.Y]-ROADMAP.md`
 **Requirements:** `.planning/milestones/v[X.Y]-REQUIREMENTS.md`
-**Tag:** `v[X.Y]`
+**Suggested tag:** `v[X.Y]` (advisory; omit or mark not created unless git confirms it exists)
 ```
 
 ## 9. Evolve SPEC.md
@@ -298,7 +310,7 @@ Advisory: Tag this milestone in git:
 </process>
 
 <success_criteria>
-- [ ] Readiness verified (phases complete + audit passed, or user chose to proceed with gaps)
+- [ ] Readiness verified (phases complete, audit passed, evidence contract satisfied, and inherited release claim contract valid)
 - [ ] Version confirmed
 - [ ] Stats gathered from SUMMARY.md files and git
 - [ ] Accomplishments extracted and reviewed
@@ -330,7 +342,7 @@ Archived:
 
 Also available:
 - `/gsdd-progress` — check overall project status
-- `/gsdd-audit-milestone` — re-audit before archiving (if you skipped the audit)
+- `/gsdd-audit-milestone` — re-audit if source truth changed before archive
 
 Consider clearing context before starting the next workflow for best results.
 ---
