@@ -94,12 +94,21 @@ describe('specialized plan adapter surfaces', () => {
     assert.match(opencodePlanCommand, /Maximum 3 checker cycles total/);
     assert.match(opencodePlanCommand, /"status": "passed"/);
     assert.match(opencodePlanCommand, /Status must be either "passed" or "issues_found"\./);
+    assert.match(opencodePlanCommand, /alignment_status: user_confirmed/);
+    assert.match(opencodePlanCommand, /alignment_status: approved_skip/);
+    assert.match(opencodePlanCommand, /No questions needed.*not valid proof|not valid proof.*No questions needed/);
+    assert.match(opencodePlanCommand, /Use existing[\s\S]{0,220}validate the alignment proof/i);
+    assert.match(opencodePlanCommand, /gsdd-approach-explorer[\s\S]{0,220}\.planning\/config\.json[\s\S]{0,80}workflow\.discuss/i);
+    assert.match(opencodePlanCommand, /workflow\.planCheck: false[\s\S]{0,260}does not skip[\s\S]{0,160}alignment-proof gate/i);
+    assert.match(opencodePlanCommand, /\.planning\/config\.json[\s\S]{0,120}workflow\.discuss[\s\S]{0,80}workflow\.planCheck/i);
 
     assert.doesNotMatch(opencodeExecuteCommand, /^subtask: false$/m);
 
     assert.match(opencodePlanChecker, /^mode: subagent$/m);
     assert.match(opencodePlanChecker, /^hidden: true$/m);
     assert.match(opencodePlanChecker, /Return JSON only/);
+    assert.match(opencodePlanChecker, /alignment_status/);
+    assert.match(opencodePlanChecker, /\.planning\/config\.json/);
   });
 
   test('portable skill is the Codex entry surface with checker invocation instructions', async () => {

@@ -1365,6 +1365,7 @@ Both paths produce identical output: `{padded_phase}-APPROACH.md` in the phase d
 | Questioning style | Rigid 4-question batched loop | Adaptive convergence (2-6 questions depending on complexity) | Fixed batch sizes don't match decision complexity. Some areas resolve in 2 questions, others need 6 |
 | Pre-question research | No research before asking | Research subagent per technical area returns structured summary before asking | Users make better decisions when presented with researched options and trade-offs |
 | Quality gate | None | Self-check before writing APPROACH.md (concrete decisions, no vague language, source backing, scope compliance) | Prevents weak outputs that force re-asking during planning |
+| Alignment proof gate | None | `APPROACH.md` records `alignment_status: user_confirmed` or explicit `approved_skip`, and planning validates this before goal-backward planning when `workflow.discuss: true` | Prevents native or existing-artifact paths from turning mandatory discussion into artifact theater |
 | Intermediate persistence | No persistence until final output | Confirmed decisions written to disk incrementally | Protects against context limits in long conversations |
 | Context loading | "Read everything" | JIT extraction guidance (e.g., "From SPEC.md read ONLY locked decisions") | Prevents context pollution with irrelevant content |
 | Plan-checker integration | None | New `approach_alignment` dimension in plan-checker | Verifies plans honor approach decisions, not just requirements |
@@ -1398,11 +1399,11 @@ Isolating research in subagents and returning compressed summaries follows the C
 
 **Trade-offs:**
 
-- Benefit: planner receives locked user decisions instead of guessing approaches; plan-checker can verify approach alignment; context stays lean via research isolation
+- Benefit: planner receives locked user decisions instead of guessing approaches; plan-checker can verify approach alignment; existing APPROACH artifacts are not trusted unless their alignment proof is valid; context stays lean via research isolation
 - Cost: adds one interactive step before planning (~5-15 minutes of user time per phase); hybrid architecture is more complex than a single monolithic workflow
 - Mitigation: `workflow.discuss: true|false` toggle in `.planning/config.json` allows skipping with explicit `reduced_alignment` reporting; taste areas skip research entirely. Default is `false` (opt-in) to stay consistent with GSDD's stripped-down identity; users enable it explicitly
 
-**GSDD implementation:** `agents/approach-explorer.md` (role contract), `distilled/templates/delegates/approach-explorer.md` (thin delegate), `distilled/templates/approach.md` (output template), `distilled/workflows/plan.md` (`<approach_exploration>` section), `agents/planner.md` (`<approach_decisions>` section), `distilled/templates/delegates/plan-checker.md` (`approach_alignment` dimension), `bin/adapters/claude.mjs` + `bin/adapters/opencode.mjs` + `bin/adapters/codex.mjs` (native agent rendering)
+**GSDD implementation:** `agents/approach-explorer.md` (role contract), `distilled/templates/delegates/approach-explorer.md` (thin delegate), `distilled/templates/approach.md` (output template), `distilled/workflows/plan.md` (`<approach_exploration>` section), `agents/planner.md` (`<approach_decisions>` section), `distilled/templates/delegates/plan-checker.md` (`approach_alignment` dimension), `bin/adapters/claude.mjs` + `bin/adapters/opencode.mjs` + `bin/adapters/codex.mjs` (native agent rendering), `tests/gsdd.guards.test.cjs`, `tests/gsdd.plan.adapters.test.cjs`, and `tests/gsdd.scenarios.test.cjs` (alignment-proof propagation coverage)
 
 ---
 

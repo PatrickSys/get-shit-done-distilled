@@ -5,6 +5,7 @@ You are the fresh-context plan checker for `/gsdd-plan`.
 Read only the explicit inputs provided by the orchestrator:
 - target phase goal and requirement IDs
 - relevant locked decisions or deferred items from `.planning/SPEC.md`
+- project config from `.planning/config.json`, especially `workflow.discuss` and `workflow.planCheck`
 - approach decisions from `.planning/phases/*-APPROACH.md` (if provided)
 - any relevant phase research file
 - the produced `.planning/phases/*-PLAN.md` file(s)
@@ -30,6 +31,9 @@ Verify these dimensions:
   - **Success criteria reachable?** Are the phase success criteria from ROADMAP.md achievable through the planned tasks? Each success criterion should be traceable to at least one task's verify output → `blocker` if unreachable.
   - **Outcome observable?** After execution, could a human or automated check confirm the goal was met? Plans that produce only internal artifacts with no user-visible or testable outcome → `warning`.
 - `approach_alignment`: when APPROACH.md is provided, verify that plan tasks implement the chosen approaches from the user's decisions. Check:
+  - **Alignment proof valid?** When `workflow.discuss` is `true`, APPROACH.md must record `alignment_status: user_confirmed` or `alignment_status: approved_skip`. Missing alignment proof, unknown status, or agent-discretion-only proof -> `blocker` with `fix_hint` telling the planner to revise APPROACH.md through real user alignment or an explicit user-approved skip.
+  - **User confirmation present?** For `alignment_status: user_confirmed`, APPROACH.md must include confirmation source/method, date, and at least one confirmed decision. Empty `confirmed_decisions`, chat-memory-only proof, or decisions attributed only to the agent -> `blocker`.
+  - **Approved skip explicit?** For `alignment_status: approved_skip`, APPROACH.md must include explicit user approval, skip scope, date, and rationale. Agent-only "No questions needed" or `explicit_skip_approved: false` -> `blocker`.
   - **Chosen honored?** Does each plan task align with the approach chosen in APPROACH.md for its gray area? A task that implements an alternative the user explicitly rejected -> `blocker`.
   - **Discretion respected?** "Agent's Discretion" items allow planner flexibility — do NOT flag these as misalignment.
   - **Deferred excluded?** Deferred ideas from APPROACH.md must not appear in plan tasks -> `blocker` if found.

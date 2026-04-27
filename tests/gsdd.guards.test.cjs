@@ -1478,6 +1478,31 @@ describe('G23 - Approach Explorer Quality', () => {
       'approach-explorer.md must classify gray areas as taste/technical. FIX: Add gray area classification.');
   });
 
+  test('approach-explorer surfaces require explicit alignment proof under workflow.discuss', () => {
+    for (const [label, content] of [
+      ['role', roleContent],
+      ['delegate', delegateContent],
+      ['template', fs.readFileSync(TEMPLATE_PATH, 'utf-8')],
+    ]) {
+      assert.match(content, /workflow\.discuss/i,
+        `${label} must mention workflow.discuss for alignment proof gating.`);
+      assert.match(content, /alignment_status/i,
+        `${label} must require alignment_status in APPROACH.md.`);
+      assert.match(content, /user_confirmed/i,
+        `${label} must require user_confirmed proof state.`);
+      assert.match(content, /approved_skip/i,
+        `${label} must require approved_skip proof state.`);
+    }
+  });
+
+  test('approach-explorer rejects agent-only no-questions-needed proof', () => {
+    const combined = [roleContent, delegateContent, fs.readFileSync(TEMPLATE_PATH, 'utf-8')].join('\n');
+    assert.match(combined, /No questions needed/i,
+      'approach surfaces must name the no-questions-needed bypass explicitly.');
+    assert.match(combined, /Agent's Discretion[\s\S]{0,160}not (?:valid )?alignment proof|not (?:valid )?proof[\s\S]{0,160}Agent's Discretion/i,
+      'approach surfaces must say Agent\'s Discretion is not alignment proof.');
+  });
+
   // G23.5: No fixed question count prescription (e.g., "ask exactly 4 questions")
   test('approach-explorer role does not prescribe fixed question count', () => {
     assert.doesNotMatch(roleContent, /\bask (exactly )?\d+ questions?\b/i,
@@ -3195,6 +3220,52 @@ describe('G38 - I38 Approach-Exploration Hard Gate', () => {
   });
 });
 
+describe('G49 - Native Alignment Proof Gate', () => {
+  const checkerPath = path.join(ROOT, 'distilled', 'templates', 'delegates', 'plan-checker.md');
+  const checkerContent = fs.readFileSync(checkerPath, 'utf-8');
+  const planWorkflowPath = path.join(ROOT, 'distilled', 'workflows', 'plan.md');
+  const planWorkflowContent = fs.readFileSync(planWorkflowPath, 'utf-8');
+
+  test('plan-checker blocks proofless and agent-discretion-only APPROACH artifacts', () => {
+    assert.match(checkerContent, /alignment_status: user_confirmed|user_confirmed/i,
+      'plan-checker must recognize user_confirmed alignment proof.');
+    assert.match(checkerContent, /alignment_status: approved_skip|approved_skip/i,
+      'plan-checker must recognize approved_skip alignment proof.');
+    assert.match(checkerContent, /agent-discretion-only proof|Agent's Discretion[\s\S]*blocker/i,
+      'plan-checker must block agent-discretion-only approach proof.');
+    assert.match(checkerContent, /No questions needed[\s\S]*blocker|blocker[\s\S]*No questions needed/i,
+      'plan-checker must block agent-only no-questions-needed skip claims.');
+  });
+
+  test('plan-checker requires approved skip metadata', () => {
+    for (const snippet of ['explicit user approval', 'skip scope', 'date', 'rationale', 'fix_hint']) {
+      assert.ok(checkerContent.includes(snippet),
+        `plan-checker approved-skip validation must include ${snippet}.`);
+    }
+  });
+
+  test('plan workflow validates existing APPROACH proof before goal-backward planning', () => {
+    assert.match(planWorkflowContent, /Use existing[\s\S]{0,180}validate the alignment proof/i,
+      'plan.md must not let existing APPROACH.md bypass alignment-proof validation. FIX: Validate existing APPROACH.md before goal-backward planning.');
+    assert.match(planWorkflowContent, /workflow\.discuss: true[\s\S]{0,220}alignment_status: user_confirmed[\s\S]{0,80}alignment_status: approved_skip/i,
+      'plan.md must require valid alignment_status proof before planning when workflow.discuss=true.');
+    assert.doesNotMatch(planWorkflowContent, /Skipped when no APPROACH\.md is provided/i,
+      'plan.md must not say approach_alignment is skipped when workflow.discuss=true and no APPROACH.md exists.');
+  });
+
+  test('alignment proof gate is independent of optional planCheck', () => {
+    assert.match(planWorkflowContent, /workflow\.planCheck: false[\s\S]{0,220}does not skip[\s\S]{0,160}alignment-proof gate/i,
+      'plan.md must keep workflow.discuss alignment proof mandatory even when workflow.planCheck=false.');
+  });
+
+  test('plan-checker input contract includes project config', () => {
+    assert.match(checkerContent, /\.planning\/config\.json/i,
+      'plan-checker must receive project config so workflow.discuss checks are grounded in explicit input.');
+    assert.match(checkerContent, /workflow\.discuss/i,
+      'plan-checker must inspect workflow.discuss from config.');
+  });
+});
+
 describe('G42 - Public Proof Export', () => {
   test('public proof and support entrypoints are git-tracked before repo truth advertises them', () => {
     const requiredTrackedPaths = [
@@ -3398,6 +3469,7 @@ describe('G39 - Health Check ID Consistency', () => {
     assert.deepStrictEqual(extra, [],
       `TRUTH_CHECK_IDS declares IDs with no matching warning push in health-truth.mjs: ${extra.join(', ')}. FIX: Remove the extra IDs or add the missing push call.`);
   });
+
 });
 
 describe('G44 - Engine Contract Hardening', () => {

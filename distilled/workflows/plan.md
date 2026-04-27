@@ -427,7 +427,7 @@ Check `.planning/config.json` for `workflow.discuss`:
 Check if `{phase_dir}/{padded_phase}-APPROACH.md` exists.
 **If exists:**
 Offer the user a choice:
-- "Use existing" — load decisions from APPROACH.md, skip to `<goal_backward_planning>`
+- "Use existing" — load decisions from APPROACH.md, validate the alignment proof below, then continue to `<goal_backward_planning>` only if the proof is valid
 - "Update it" — run the approach explorer to revise decisions
 - "View it" — display APPROACH.md contents, then offer "Use existing" / "Update"
 
@@ -461,7 +461,7 @@ The conversation with the user runs inline in the main context. For each technic
 **Native agent optimization:**
 
 If your runtime provides an interactive `gsdd-approach-explorer` agent:
-- Invoke it with: target phase goal, requirement IDs, locked decisions, phase research (if exists), relevant codebase files
+- Invoke it with: target phase goal, requirement IDs, project config from `.planning/config.json` (especially `workflow.discuss`), locked decisions, phase research (if exists), relevant codebase files
 - The native agent runs the full exploration in its own context window
 - This is an optimization — the output (APPROACH.md) is identical to the primary path
 
@@ -476,6 +476,7 @@ If neither the primary path nor native agent is available (e.g., the runtime can
 ### Using APPROACH.md Decisions
 
 After approach exploration completes (or existing APPROACH.md is loaded):
+- If `workflow.discuss: true`, validate that APPROACH.md records `alignment_status: user_confirmed` or `alignment_status: approved_skip` with confirmation or skip source, date, scope, and rationale metadata before goal-backward planning begins. Stop and update the APPROACH artifact if proof is missing, unknown, agent-discretion-only, or based only on agent "No questions needed" judgment.
 - Treat decisions from APPROACH.md as locked constraints, same priority as `.planning/SPEC.md` decisions
 - "Agent's Discretion" items from APPROACH.md give the planner flexibility — do not treat them as locked
 - Thread the APPROACH.md file path to both the planner prompt and the plan-checker prompt
@@ -506,13 +507,14 @@ After the planner produces a draft plan, an independent checker reviews it in fr
 11. `escalation_integrity` - stop-and-challenge triggers and approval gates are present where side effects or ambiguity warrant them
 12. `closure_honesty` - closure claim limit prevents the plan from overclaiming what verification can prove
 13. `high_leverage_review` - high-leverage surfaces and second-pass obligations are recorded honestly
-14. `approach_alignment` - when APPROACH.md exists, plans implement the chosen approaches, not alternatives. Blocker if plan contradicts an explicit user choice. Warning if plan drifts from recommendation without justification. Skipped when no APPROACH.md is provided.
+14. `approach_alignment` - when APPROACH.md exists, plans implement the chosen approaches, not alternatives. Blocker if plan contradicts an explicit user choice. Warning if plan drifts from recommendation without justification. When `workflow.discuss: true`, missing, proofless, agent-discretion-only, or invalid APPROACH.md is a blocker before a plan can be accepted.
 ### Invoking the Checker
-1. If `.planning/config.json` has `workflow.planCheck: false`, skip the independent checker. Perform the planner self-check below and report `reduced_assurance`.
+1. If `.planning/config.json` has `workflow.planCheck: false`, skip the independent checker. Perform the planner self-check below and report `reduced_assurance`. This does not skip the earlier alignment-proof gate when `workflow.discuss: true`.
 2. If plan checking is enabled, check if your runtime provides a `gsdd-plan-checker` agent.
 3. If a native checker agent is available, invoke it in a fresh context with only these explicit inputs:
    - target phase goal and requirement IDs
    - relevant locked decisions / deferred items from `.planning/SPEC.md`
+   - project config from `.planning/config.json`, especially `workflow.discuss` and `workflow.planCheck`
    - approach decisions from `.planning/phases/*-APPROACH.md` (if exists)
    - relevant phase research file(s)
    - produced `.planning/phases/*-PLAN.md` file(s)

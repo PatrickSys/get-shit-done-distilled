@@ -6,6 +6,8 @@ Template for `.planning/phases/XX-name/{phase_num}-APPROACH.md` — captures imp
 
 **Key principle:** The top-level structure (`<domain>`, `<decisions>`, `<assumptions>`, `<deferred>`) is fixed. Section names WITHIN `<decisions>` emerge from what was actually discussed for THIS phase — a CLI phase has CLI-relevant sections, a UI phase has UI-relevant sections.
 
+**Alignment proof:** When `.planning/config.json` has `workflow.discuss: true`, every APPROACH artifact must include an `## Alignment Proof` section before `<domain>`. It must record `alignment_status: user_confirmed` or `alignment_status: approved_skip`, confirmation/skip source, date, scope, and rationale. `Agent's Discretion` and agent-only "No questions needed" are not valid proof.
+
 **Downstream consumers:**
 - `planner` — Reads decisions to constrain implementation choices. Locked decisions must be implemented. Agent's Discretion items allow planner flexibility.
 - `plan-checker` — Reads decisions to verify plans implement chosen approaches (approach_alignment dimension). Flags plans that contradict explicit user choices.
@@ -19,6 +21,18 @@ Template for `.planning/phases/XX-name/{phase_num}-APPROACH.md` — captures imp
 
 **Explored:** [date]
 **Status:** Ready for planning
+
+## Alignment Proof
+
+- `workflow.discuss`: [true | false]
+- `alignment_status`: [user_confirmed | approved_skip | not_required]
+- `alignment_method`: [conversation source, e.g. runtime command or user message]
+- `user_confirmed_at`: [date or N/A]
+- `explicit_skip_approved`: [true | false]
+- `skip_scope`: [phase-wide / named gray area / N/A]
+- `skip_rationale`: [why the user approved skipping discussion, or N/A]
+- `confirmed_decisions`:
+  - [User-confirmed decision, or "N/A - approved skip"]
 
 <domain>
 ## Phase Boundary
@@ -86,6 +100,19 @@ Template for `.planning/phases/XX-name/{phase_num}-APPROACH.md` — captures imp
 
 **Explored:** 2026-03-22
 **Status:** Ready for planning
+
+## Alignment Proof
+
+- `workflow.discuss`: true
+- `alignment_status`: user_confirmed
+- `alignment_method`: planning conversation
+- `user_confirmed_at`: 2026-03-22
+- `explicit_skip_approved`: false
+- `skip_scope`: N/A
+- `skip_rationale`: N/A
+- `confirmed_decisions`:
+  - Use Recharts for chart rendering
+  - Use react-grid-layout for dashboard widgets
 
 <domain>
 ## Phase Boundary
@@ -157,6 +184,19 @@ Build an interactive dashboard with configurable widgets. Users can view metrics
 
 **Explored:** 2026-03-22
 **Status:** Ready for planning
+
+## Alignment Proof
+
+- `workflow.discuss`: true
+- `alignment_status`: user_confirmed
+- `alignment_method`: planning conversation
+- `user_confirmed_at`: 2026-03-22
+- `explicit_skip_approved`: false
+- `skip_scope`: N/A
+- `skip_rationale`: N/A
+- `confirmed_decisions`:
+  - Use HTTP-only cookies with JWT
+  - Use structured JSON errors
 
 <domain>
 ## Phase Boundary

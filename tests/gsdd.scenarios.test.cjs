@@ -562,6 +562,95 @@ describe('S4 — Native Runtime Chain (Claude + Codex adapter completeness)', ()
       }
     });
 
+    test('OpenCode generated plan agents preserve alignment proof gate wording', async () => {
+      const opencodeTmpDir = createTempProject();
+      const restoreStdin = setNonInteractiveStdin();
+      try {
+        const gsdd = await loadGsdd(opencodeTmpDir);
+        await gsdd.cmdInit('--auto', '--tools', 'opencode');
+      } finally {
+        restoreStdin();
+      }
+
+      const explorer = fs.readFileSync(
+        path.join(opencodeTmpDir, '.opencode', 'agents', 'gsdd-approach-explorer.md'),
+        'utf-8'
+      );
+      const checker = fs.readFileSync(
+        path.join(opencodeTmpDir, '.opencode', 'agents', 'gsdd-plan-checker.md'),
+        'utf-8'
+      );
+      cleanup(opencodeTmpDir);
+
+      for (const [label, content] of [['explorer', explorer], ['checker', checker]]) {
+        assert.match(content, /alignment_status/i, `OpenCode ${label} must include alignment_status.`);
+        assert.match(content, /user_confirmed/i, `OpenCode ${label} must include user_confirmed proof state.`);
+        assert.match(content, /approved_skip/i, `OpenCode ${label} must include approved_skip proof state.`);
+      }
+      assert.match(explorer, /\.planning\/config\.json/i,
+        'OpenCode explorer must receive project config for workflow.discuss validation.');
+      assert.match(explorer, /workflow\.discuss/i,
+        'OpenCode explorer must inspect workflow.discuss before writing alignment proof.');
+      assert.match(checker, /\.planning\/config\.json/i,
+        'OpenCode checker must receive project config for workflow.discuss validation.');
+      assert.match(checker, /No questions needed[\s\S]*blocker|blocker[\s\S]*No questions needed/i,
+        'OpenCode checker must preserve no-questions-needed blocker language.');
+    });
+
+    test('OpenCode local runtime templates preserve alignment proof gate wording', async () => {
+      const opencodeTmpDir = createTempProject();
+      const restoreStdin = setNonInteractiveStdin();
+      let role;
+      let approach;
+      let checker;
+      try {
+        const gsdd = await loadGsdd(opencodeTmpDir);
+        await gsdd.cmdInit('--auto', '--tools', 'opencode');
+        role = fs.readFileSync(
+          path.join(opencodeTmpDir, '.planning', 'templates', 'roles', 'approach-explorer.md'),
+          'utf-8'
+        );
+        approach = fs.readFileSync(
+          path.join(opencodeTmpDir, '.planning', 'templates', 'approach.md'),
+          'utf-8'
+        );
+        checker = fs.readFileSync(
+          path.join(opencodeTmpDir, '.planning', 'templates', 'delegates', 'plan-checker.md'),
+          'utf-8'
+        );
+      } finally {
+        restoreStdin();
+        cleanup(opencodeTmpDir);
+      }
+
+      assert.match(role, /workflow\.discuss/i,
+        'local approach-explorer role must mention workflow.discuss alignment proof.');
+      assert.match(role, /\.planning\/config\.json/i,
+        'local approach-explorer role must receive project config for workflow.discuss validation.');
+      assert.match(role, /alignment_status[\s\S]*user_confirmed|user_confirmed[\s\S]*alignment_status/i,
+        'local approach-explorer role must require user_confirmed alignment proof.');
+      assert.match(role, /approved_skip/i,
+        'local approach-explorer role must allow only explicit approved_skip proof.');
+      assert.match(role, /No questions needed[\s\S]*explicitly approved|explicitly approved[\s\S]*No questions needed/i,
+        'local approach-explorer role must reject agent-only no-questions-needed skips.');
+
+      assert.match(approach, /## Alignment Proof/i,
+        'local approach template must include Alignment Proof section.');
+      assert.match(approach, /alignment_status/i,
+        'local approach template must include alignment_status field.');
+      assert.match(approach, /user_confirmed/i,
+        'local approach template must include user_confirmed proof state.');
+      assert.match(approach, /approved_skip/i,
+        'local approach template must include approved_skip proof state.');
+
+      assert.match(checker, /Alignment proof valid/i,
+        'local plan-checker delegate must validate alignment proof.');
+      assert.match(checker, /No questions needed[\s\S]*blocker|blocker[\s\S]*No questions needed/i,
+        'local plan-checker delegate must block agent-only no-questions-needed claims.');
+      assert.match(checker, /\.planning\/config\.json/i,
+        'local plan-checker delegate must read project config for workflow.discuss validation.');
+    });
+
     test('installed generated Claude surfaces stay render-aligned after init', async () => {
       const freshness = await import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'runtime-freshness.mjs')).href}?t=${Date.now()}-${Math.random()}`);
       const gsdd = await loadGsdd(tmpDir);

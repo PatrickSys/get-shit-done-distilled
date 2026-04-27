@@ -212,7 +212,8 @@
 - `get-shit-done/workflows/discuss-phase.md` (gray area identification, GSD source)
 - `get-shit-done/workflows/list-phase-assumptions.md` (5-dimension assumption surfacing)
 - `get-shit-done/workflows/discovery-phase.md` (3-level research workflow)
-- `agents/approach-explorer.md`, `distilled/templates/delegates/approach-explorer.md`
+- `agents/approach-explorer.md`, `distilled/templates/approach.md`, `distilled/templates/delegates/approach-explorer.md`, `distilled/templates/delegates/plan-checker.md`
+- `distilled/workflows/plan.md`, `bin/adapters/opencode.mjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.plan.adapters.test.cjs`, `tests/gsdd.scenarios.test.cjs`
 
 ## D30 — Hardening Propagation
 - D28 consumer audit (2026-03-21): persistence failures at every workflow boundary
