@@ -54,7 +54,7 @@ Return JSON only as a single object with this shape:
   "issues": [
     {
       "dimension": "requirement_coverage | task_completeness | dependency_correctness | key_link_completeness | scope_sanity | must_have_quality | context_compliance | goal_achievement | scope_boundaries | anti_regression_capture | escalation_integrity | closure_honesty | high_leverage_review | approach_alignment",
-      "severity": "blocker",
+      "severity": "blocker | warning",
       "description": "What is wrong",
       "plan": "01-PLAN",
       "task": "1-02",

@@ -460,9 +460,11 @@ describe('specialized plan adapter surfaces', () => {
     // Verify delegate content appears in all native checker surfaces
     assert.ok(delegateContent.includes(keyPhrase), `delegate source must contain key phrase: ${keyPhrase}`);
     assert.match(delegateContent, canonicalProofFieldsPattern);
+    assert.match(delegateContent, /"severity": "blocker \| warning"/);
     for (const [label, content] of [['claude', claudeChecker], ['opencode', opencodeChecker], ['codex', codexChecker]]) {
       assert.ok(content.includes(keyPhrase), `${label} checker must contain delegate key phrase: ${keyPhrase}`);
       assert.match(content, canonicalProofFieldsPattern, `${label} checker must require all canonical proof fields`);
+      assert.match(content, /"severity": "blocker \| warning"/, `${label} checker must preserve severity schema parity`);
     }
   });
 
