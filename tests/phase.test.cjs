@@ -34,6 +34,10 @@ async function importRuntimeFreshnessModule() {
   return import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'runtime-freshness.mjs')).href}?t=${Date.now()}-${Math.random()}`);
 }
 
+async function importSessionFingerprintModule() {
+  return import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'session-fingerprint.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+}
+
 describe('Phase 18 deterministic CLI mechanics', () => {
   let tmpDir;
 
@@ -1001,6 +1005,49 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.strictEqual(output.phase, '30');
   });
 
+  test('allows plan when the target phase has no summary and no explicit lifecycle mutation', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.3.0 Engine Contract Hardening',
+        '',
+        '- [ ] **Phase 30: Deterministic Lifecycle Gates** - [ENGINE-02]',
+      ].join('\n')
+    );
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'plan', '30']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+    assert.strictEqual(output.classification, 'owned_write');
+    assert.deepStrictEqual(output.ownedWrites, ['plan']);
+    assert.strictEqual(output.explicitLifecycleMutation, 'none');
+    assert.strictEqual(output.phase, '30');
+  });
+
+  test('blocks plan when the target phase is already complete', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.3.0 Engine Contract Hardening',
+        '',
+        '- [x] **Phase 30: Deterministic Lifecycle Gates** - [ENGINE-02]',
+      ].join('\n')
+    );
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'plan', '30']);
+    assert.notStrictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, false);
+    assert.strictEqual(output.reason, 'phase_already_complete');
+  });
+
   test('finds lifecycle state from a nested directory', async () => {
     const nestedDir = path.join(tmpDir, 'apps', 'web');
     fs.mkdirSync(nestedDir, { recursive: true });
@@ -1090,6 +1137,85 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.strictEqual(output.classification, 'read_only');
     assert.strictEqual(output.explicitLifecycleMutation, 'none');
     assert.strictEqual(output.reason, 'illegal_lifecycle_mutation');
+  });
+
+  test('allows read-only progress with planning drift warning', async () => {
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'ROADMAP.md'), '# Roadmap\n');
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '# Spec v1\n');
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'config.json'), '{}\n');
+
+    const fp = await importSessionFingerprintModule();
+    fp.writeFingerprint(path.join(tmpDir, '.planning'));
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '# Spec v2\n');
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'progress']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+    assert.strictEqual(output.classification, 'read_only');
+    assert.strictEqual(output.planningState.classification, 'planning_state_drift');
+    assert.ok(output.warnings.some((warning) => warning.code === 'planning_state_drift'));
+    assert.strictEqual(output.blockers.length, 0);
+  });
+
+  test('blocks owned-write execute preflight when planning drift is present', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.3.0 Engine Contract Hardening',
+        '',
+        '- [ ] **Phase 30: Deterministic Lifecycle Gates** - [ENGINE-02]',
+      ].join('\n')
+    );
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '# Spec v1\n');
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'config.json'), '{}\n');
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '30-deterministic-lifecycle-gates', '30-PLAN.md'),
+      '# plan\n'
+    );
+
+    const fp = await importSessionFingerprintModule();
+    fp.writeFingerprint(path.join(tmpDir, '.planning'));
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '# Spec v2\n');
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'execute', '30', '--expects-mutation', 'phase-status']);
+    assert.strictEqual(result.exitCode, 1, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, false);
+    assert.strictEqual(output.reason, 'planning_state_drift');
+    assert.ok(output.blockers.some((blocker) => blocker.code === 'planning_state_drift'));
+    assert.strictEqual(output.planningState.classification, 'planning_state_drift');
+    assert.strictEqual(output.planningState.files.find((file) => file.file === 'SPEC.md').status, 'changed');
+  });
+
+  test('does not block owned-write execute preflight without a fingerprint baseline', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '### v1.3.0 Engine Contract Hardening',
+        '',
+        '- [ ] **Phase 30: Deterministic Lifecycle Gates** - [ENGINE-02]',
+      ].join('\n')
+    );
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '# Spec\n');
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'config.json'), '{}\n');
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '30-deterministic-lifecycle-gates', '30-PLAN.md'),
+      '# plan\n'
+    );
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'execute', '30', '--expects-mutation', 'phase-status']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+    assert.strictEqual(output.planningState.classification, 'no_baseline');
   });
 
   test('allows resume without checkpoint when active brownfield CHANGE.md exists', async () => {

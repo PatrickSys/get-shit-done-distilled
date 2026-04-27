@@ -186,6 +186,7 @@ Commands:
   phase-status <N> <status>   Update ROADMAP.md phase status ([ ] / [-] / [x])
   lifecycle-preflight <surface> [phase]
                               Inspect deterministic lifecycle gate results for a workflow surface
+  session-fingerprint write    Rebaseline planning-state drift after reviewing changed planning files
   help                        Show this summary
 
 Platforms (for --tools):
@@ -254,6 +255,7 @@ Starting lanes after init:
 
 Advanced/internal helpers (kept available, but not the primary first-run user story):
   lifecycle-preflight       Inspect deterministic lifecycle gate results for a workflow surface
+  session-fingerprint       Rebaseline the local planning-state fingerprint after review
   phase-status              Update ROADMAP.md phase status through the local helper surface
   file-op                   Deterministic workspace-confined file copy/delete/text mutation
 `;

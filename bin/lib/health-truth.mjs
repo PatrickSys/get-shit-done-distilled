@@ -105,8 +105,8 @@ export function runTruthChecks(planningDir, frameworkDir, actualCheckIds, option
       id: 'W12',
       severity: 'WARN',
       message: `Planning state drifted since last recorded session (${drift.details.join('; ')})`,
-      fix: 'Review the changes, then run a lifecycle workflow to update the fingerprint',
-    });
+        fix: 'Review the changed planning files. If the drift is intentional, rebaseline with `node .planning/bin/gsdd.mjs session-fingerprint write`, then rerun the blocked lifecycle preflight.',
+      });
   }
 
   return warnings;

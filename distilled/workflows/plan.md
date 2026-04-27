@@ -22,6 +22,14 @@ Identify the target phase: the first phase with status `[ ]` or `[-]` in `ROADMA
 All `node .planning/bin/gsdd.mjs ...` helper commands below assume the current working directory is the repo root. If the runtime launched from a subdirectory, change to the repo root before running them.
 </repo_root_helper_contract>
 
+<lifecycle_preflight>
+Before writing or rewriting phase planning artifacts, run:
+
+- `node .planning/bin/gsdd.mjs lifecycle-preflight plan {phase_num}`
+
+If the preflight result is `blocked`, STOP and report the blocker instead of inferring planning eligibility from workflow-local prose. Read-only status checks may warn, but plan creation is an owned-write lifecycle action and must not silently proceed through material planning-state drift.
+</lifecycle_preflight>
+
 <integration_surface_check>
 Before planning roadmap work, inspect the live integration surface separately from checkpoint or planning artifacts:
 - current branch name

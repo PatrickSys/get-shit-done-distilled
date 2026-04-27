@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { pathToFileURL } = require('url');
+const { runCliAsMain } = require('./gsdd.helpers.cjs');
 
 function createTmpPlanning() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsdd-fp-test-'));
@@ -75,6 +76,26 @@ describe('session-fingerprint', () => {
     assert.strictEqual(stored.timestamp, written.timestamp, 'stored timestamp should match written');
   });
 
+  test('writeFingerprint gitignores the session-local baseline in committed-docs projects', async () => {
+    const mod = await importModule();
+    fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec');
+
+    mod.writeFingerprint(planningDir);
+
+    const gitignore = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
+    assert.match(gitignore, /^\.planning\/\.state-fingerprint\.json$/m);
+  });
+
+  test('writeFingerprint does not add churn when the planning directory is already gitignored', async () => {
+    const mod = await importModule();
+    fs.writeFileSync(path.join(tmpDir, '.gitignore'), '/.planning/\n');
+
+    mod.writeFingerprint(planningDir);
+
+    const gitignore = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
+    assert.strictEqual(gitignore, '/.planning/\n');
+  });
+
   test('checkDrift returns noBaseline when no fingerprint file exists', async () => {
     const mod = await importModule();
     fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec');
@@ -82,6 +103,7 @@ describe('session-fingerprint', () => {
     const result = mod.checkDrift(planningDir);
     assert.strictEqual(result.drifted, false);
     assert.strictEqual(result.noBaseline, true);
+    assert.strictEqual(result.classification, 'no_baseline');
   });
 
   test('checkDrift detects no drift when state is unchanged', async () => {
@@ -108,8 +130,12 @@ describe('session-fingerprint', () => {
     const result = mod.checkDrift(planningDir);
     assert.strictEqual(result.drifted, true);
     assert.strictEqual(result.noBaseline, false);
+    assert.strictEqual(result.classification, 'planning_state_drift');
     assert.ok(result.details.length > 0, 'should have drift details');
-    assert.ok(result.details.some((d) => d.includes('SPEC.md')), 'details should mention SPEC.md');
+    assert.ok(result.details.some((d) => d === 'SPEC.md changed'), 'details should mention SPEC.md changed');
+    assert.strictEqual(result.files.find((file) => file.file === 'SPEC.md').status, 'changed');
+    assert.strictEqual(result.files.find((file) => file.file === 'ROADMAP.md').status, 'unchanged');
+    assert.strictEqual(result.files.find((file) => file.file === 'config.json').status, 'unchanged');
   });
 
   test('checkDrift detects drift when a file is created', async () => {
@@ -122,5 +148,33 @@ describe('session-fingerprint', () => {
     const result = mod.checkDrift(planningDir);
     assert.strictEqual(result.drifted, true);
     assert.ok(result.details.some((d) => d.includes('ROADMAP.md') && d.includes('created')));
+    assert.strictEqual(result.classification, 'planning_state_drift');
+    assert.strictEqual(result.files.find((file) => file.file === 'ROADMAP.md').status, 'created');
+  });
+
+  test('checkDrift detects drift when an empty planning file is created', async () => {
+    const mod = await importModule();
+    fs.writeFileSync(path.join(planningDir, 'config.json'), '{}');
+    mod.writeFingerprint(planningDir);
+
+    fs.writeFileSync(path.join(planningDir, 'ROADMAP.md'), '');
+
+    const result = mod.checkDrift(planningDir);
+    assert.strictEqual(result.drifted, true);
+    assert.strictEqual(result.files.find((file) => file.file === 'ROADMAP.md').status, 'created');
+  });
+
+  test('session-fingerprint write command creates a fresh baseline', async () => {
+    fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec v1');
+    let result = await runCliAsMain(tmpDir, ['session-fingerprint', 'write']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec v2');
+    const mod = await importModule();
+    assert.strictEqual(mod.checkDrift(planningDir).drifted, true);
+
+    result = await runCliAsMain(tmpDir, ['session-fingerprint', 'write']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+    assert.strictEqual(mod.checkDrift(planningDir).drifted, false);
   });
 });

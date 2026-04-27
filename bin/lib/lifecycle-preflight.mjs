@@ -12,6 +12,12 @@ const SURFACE_POLICIES = {
     ownedWrites: [],
     explicitLifecycleMutation: 'none',
   },
+  plan: {
+    classification: 'owned_write',
+    ownedWrites: ['plan'],
+    explicitLifecycleMutation: 'none',
+    phaseRequired: true,
+  },
   execute: {
     classification: 'owned_write',
     ownedWrites: ['summary'],
@@ -125,15 +131,33 @@ export function evaluateLifecyclePreflight({
   }
 
   const warnings = [];
+  let planningState = null;
 
   if (existsSync(planningDir)) {
     const drift = checkDrift(planningDir);
+    planningState = {
+      classification: drift.classification,
+      drifted: drift.drifted,
+      noBaseline: drift.noBaseline,
+      details: drift.details,
+      files: drift.files,
+    };
     if (drift.drifted) {
-      warnings.push({
+      const driftNotice = {
         code: 'planning_state_drift',
-        message: `Planning state has drifted since the last recorded session: ${drift.details.join('; ')}`,
+        message: `${surface} cannot proceed because planning state drifted since the last recorded session: ${drift.details.join('; ')}`,
         artifacts: ['.planning/ROADMAP.md', '.planning/SPEC.md', '.planning/config.json'],
-      });
+        details: drift.details,
+        files: drift.files,
+      };
+      if (policy.classification === 'owned_write') {
+        blockers.push(driftNotice);
+      } else {
+        warnings.push({
+          ...driftNotice,
+          message: `Planning state has drifted since the last recorded session: ${drift.details.join('; ')}`,
+        });
+      }
     }
   }
 
@@ -158,6 +182,7 @@ export function evaluateLifecyclePreflight({
     reason: blockers[0]?.code ?? null,
     blockers,
     warnings,
+    planningState,
     lifecycle: {
       currentMilestone: lifecycle.currentMilestone,
       currentPhase: lifecycle.currentPhase ? lifecycle.currentPhase.number : null,
@@ -186,6 +211,16 @@ function buildPhaseBlockers({ lifecycle, phaseToken, surface }) {
   const pendingPlans = planArtifacts.filter(
     (artifact) => !summaryArtifacts.some((candidate) => candidate.dir === artifact.dir && candidate.baseId === artifact.baseId)
   );
+
+  if (surface === 'plan' && phaseEntry.status === 'done') {
+    blockers.push(
+      blocker(
+        'phase_already_complete',
+        `Phase ${phaseToken} is already complete. Reopen the phase before writing a new PLAN artifact.`,
+        ['.planning/ROADMAP.md']
+      )
+    );
+  }
 
   if (surface === 'execute') {
     if (planArtifacts.length === 0) {
