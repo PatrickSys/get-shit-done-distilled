@@ -14,7 +14,7 @@ const SURFACE_POLICIES = {
   },
   plan: {
     classification: 'owned_write',
-    ownedWrites: ['plan'],
+    ownedWrites: ['research', 'plan'],
     explicitLifecycleMutation: 'none',
     phaseRequired: true,
   },

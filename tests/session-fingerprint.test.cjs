@@ -4,6 +4,7 @@
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
+const { createHash } = require('node:crypto');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -25,6 +26,16 @@ async function importModule() {
   return import(
     `${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'session-fingerprint.mjs')).href}?t=${Date.now()}-${Math.random()}`
   );
+}
+
+function computeLegacyHash(planningDir) {
+  const hash = createHash('sha256');
+  for (const file of ['ROADMAP.md', 'SPEC.md', 'config.json']) {
+    const filePath = path.join(planningDir, file);
+    const content = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : '';
+    hash.update(`${file}:${content}\n`);
+  }
+  return hash.digest('hex');
 }
 
 describe('session-fingerprint', () => {
@@ -69,24 +80,27 @@ describe('session-fingerprint', () => {
 
     const written = mod.writeFingerprint(planningDir);
     assert.ok(written.hash, 'writeFingerprint should return a hash');
+    assert.strictEqual(written.schemaVersion, 2);
+    assert.strictEqual(written.algorithm, 'sha256:v2:exists-content');
     assert.ok(written.timestamp, 'writeFingerprint should return a timestamp');
 
     const stored = mod.readStoredFingerprint(planningDir);
     assert.strictEqual(stored.hash, written.hash, 'stored hash should match written');
+    assert.strictEqual(stored.schemaVersion, 2);
+    assert.strictEqual(stored.algorithm, 'sha256:v2:exists-content');
     assert.strictEqual(stored.timestamp, written.timestamp, 'stored timestamp should match written');
   });
 
-  test('writeFingerprint gitignores the session-local baseline in committed-docs projects', async () => {
+  test('writeFingerprint does not create root .gitignore', async () => {
     const mod = await importModule();
     fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec');
 
     mod.writeFingerprint(planningDir);
 
-    const gitignore = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
-    assert.match(gitignore, /^\.planning\/\.state-fingerprint\.json$/m);
+    assert.strictEqual(fs.existsSync(path.join(tmpDir, '.gitignore')), false);
   });
 
-  test('writeFingerprint does not add churn when the planning directory is already gitignored', async () => {
+  test('writeFingerprint does not mutate existing root .gitignore', async () => {
     const mod = await importModule();
     fs.writeFileSync(path.join(tmpDir, '.gitignore'), '/.planning/\n');
 
@@ -94,6 +108,44 @@ describe('session-fingerprint', () => {
 
     const gitignore = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
     assert.strictEqual(gitignore, '/.planning/\n');
+  });
+
+  test('checkDrift accepts unchanged legacy fingerprints without false drift', async () => {
+    const mod = await importModule();
+    fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec');
+    fs.writeFileSync(path.join(planningDir, 'ROADMAP.md'), '# Roadmap');
+    fs.writeFileSync(path.join(planningDir, 'config.json'), '{}');
+    fs.writeFileSync(path.join(planningDir, '.state-fingerprint.json'), JSON.stringify({
+      hash: computeLegacyHash(planningDir),
+      sources: { 'ROADMAP.md': true, 'SPEC.md': true, 'config.json': true },
+      timestamp: '2026-04-27T00:00:00.000Z',
+    }, null, 2));
+
+    const result = mod.checkDrift(planningDir);
+    assert.strictEqual(result.drifted, false);
+    assert.strictEqual(result.classification, 'clean');
+    assert.strictEqual(result.compatibility, 'legacy_v1');
+    assert.strictEqual(result.needsBaselineRefresh, true);
+  });
+
+  test('checkDrift keeps legacy fingerprints conservative when content changed', async () => {
+    const mod = await importModule();
+    fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec v1');
+    fs.writeFileSync(path.join(planningDir, 'ROADMAP.md'), '# Roadmap');
+    fs.writeFileSync(path.join(planningDir, 'config.json'), '{}');
+    fs.writeFileSync(path.join(planningDir, '.state-fingerprint.json'), JSON.stringify({
+      hash: computeLegacyHash(planningDir),
+      sources: { 'ROADMAP.md': true, 'SPEC.md': true, 'config.json': true },
+      timestamp: '2026-04-27T00:00:00.000Z',
+    }, null, 2));
+    fs.writeFileSync(path.join(planningDir, 'SPEC.md'), '# Spec v2');
+
+    const result = mod.checkDrift(planningDir);
+    assert.strictEqual(result.drifted, true);
+    assert.strictEqual(result.classification, 'planning_state_drift');
+    assert.strictEqual(result.compatibility, 'legacy_v1');
+    assert.strictEqual(result.files.find((file) => file.file === 'SPEC.md').status, 'unknown');
+    assert.ok(result.details.some((detail) => detail === 'SPEC.md may have changed'));
   });
 
   test('checkDrift returns noBaseline when no fingerprint file exists', async () => {

@@ -123,6 +123,20 @@ describe('Phase 18 deterministic CLI mechanics', () => {
     assert.match(fs.readFileSync(roadmapPath, 'utf-8'), /- \[x\] \*\*Phase 18: Deterministic CLI Mechanics\*\*/);
   });
 
+  test('phase-status refreshes fingerprint without mutating root .gitignore', async () => {
+    const roadmapPath = path.join(tmpDir, '.planning', 'ROADMAP.md');
+    fs.writeFileSync(
+      roadmapPath,
+      '# Roadmap\n\n- [ ] **Phase 18: Deterministic CLI Mechanics** - goal\n'
+    );
+
+    const result = await runCliAsMain(tmpDir, ['phase-status', '18', 'done']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    assert.strictEqual(fs.existsSync(path.join(tmpDir, '.planning', '.state-fingerprint.json')), true);
+    assert.strictEqual(fs.existsSync(path.join(tmpDir, '.gitignore')), false);
+  });
+
   test('phase-status supports letter-suffixed phase identifiers already used in roadmap truth', async () => {
     const roadmapPath = path.join(tmpDir, '.planning', 'ROADMAP.md');
     fs.writeFileSync(
@@ -1023,7 +1037,7 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     const output = JSON.parse(result.output);
     assert.strictEqual(output.allowed, true);
     assert.strictEqual(output.classification, 'owned_write');
-    assert.deepStrictEqual(output.ownedWrites, ['plan']);
+    assert.deepStrictEqual(output.ownedWrites, ['research', 'plan']);
     assert.strictEqual(output.explicitLifecycleMutation, 'none');
     assert.strictEqual(output.phase, '30');
   });
