@@ -1,3 +1,10 @@
+## [0.19.2](https://github.com/PatrickSys/workspine/compare/v0.19.1...v0.19.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* clarify health runtime surface detection ([488afa5](https://github.com/PatrickSys/workspine/commit/488afa52d165be816569deb369010115a7908b89))
+
 ## [0.19.1](https://github.com/PatrickSys/workspine/compare/v0.19.0...v0.19.1) (2026-04-28)
 
 
