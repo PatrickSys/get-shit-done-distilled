@@ -110,7 +110,7 @@ With phase context collected, delegate cross-phase integration checking:
 
 **Task:** Verify cross-phase wiring, API coverage, auth protection, and E2E user flows. Return structured integration report with wiring summary, API coverage, auth protection, E2E flow status, and Requirements Integration Map.
 
-**Return:** Structured integration report (wiring, APIs, auth protection, flows, requirements map).
+**Return:** Structured integration report summary (wiring, APIs, auth protection, flows, requirements map). The checker is read-only; the auditor owns the milestone audit artifact.
 </delegate>
 
 If the runtime supports spawning a subagent: spawn the integration checker as a separate read-only context for independent verification.

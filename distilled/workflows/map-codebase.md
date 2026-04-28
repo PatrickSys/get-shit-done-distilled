@@ -102,7 +102,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Current working directory. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/mapper-tech.md` for full task instructions. Follow them exactly.
 Output: `.planning/codebase/STACK.md`
-Return: 3-5 sentence summary to Orchestrator.
+Return: Routing summary to Orchestrator (100-200 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3. No static dumps. Never read .env contents.
 </delegate>
 
@@ -112,7 +112,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Current working directory. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/mapper-arch.md` for full task instructions. Follow them exactly.
 Output: `.planning/codebase/ARCHITECTURE.md`
-Return: 3-5 sentence summary to Orchestrator.
+Return: Routing summary to Orchestrator (100-200 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3. No static directory dumps. Never read .env contents.
 </delegate>
 
@@ -122,7 +122,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Current working directory. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/mapper-quality.md` for full task instructions. Follow them exactly.
 Output: `.planning/codebase/CONVENTIONS.md`
-Return: 3-5 sentence summary to Orchestrator.
+Return: Routing summary to Orchestrator (100-200 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3. Rules not inventories. Never read .env contents.
 </delegate>
 
@@ -132,7 +132,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Current working directory. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/mapper-concerns.md` for full task instructions. Follow them exactly. Hard stop if secrets found -- report immediately.
 Output: `.planning/codebase/CONCERNS.md`
-Return: 3-5 sentence summary to Orchestrator. If secrets found, STOP and report immediately.
+Return: Routing summary to Orchestrator (100-200 tokens); full findings stay in the output artifact. If secrets found, STOP and report immediately.
 Guardrails: Max Agent Hops = 3. Hard stop on secrets. Never read .env contents.
 </delegate>
 </mapping>

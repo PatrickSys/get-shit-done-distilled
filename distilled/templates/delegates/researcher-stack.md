@@ -26,5 +26,5 @@ Your output feeds the roadmapper. Be prescriptive:
 
 Write to: `.planning/research/STACK.md`
 Use template: `.planning/templates/research/stack.md` (if it exists)
-Return: 3-5 sentence summary of key findings to the Orchestrator when done.
+Return: Human-read structured summary to the Orchestrator (300-500 tokens) when done.
 Guardrails: Max Agent Hops = 3.

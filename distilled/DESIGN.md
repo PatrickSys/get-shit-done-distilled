@@ -71,6 +71,7 @@
 58. [Local Workflow Helper Launcher](#d58---local-workflow-helper-launcher)
 59. [Continuity Authority And Planning-State Drift](#d59---continuity-authority-and-planning-state-drift)
 60. [Release Closeout Contract](#d60---release-closeout-contract)
+61. [Deliberate Subagent Contract](#d61---deliberate-subagent-contract)
 
 ---
 
@@ -285,11 +286,11 @@ This hardening pass also clarified a reusable architectural rule: strict portabl
 
 | researchDepth | Synthesizer behavior                                                                                                                                                                              |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fast`        | Orchestrator writes SUMMARY.md inline from the 4 x 3-5 sentence summaries it holds in context. No delegate spawned.                                                                               |
+| `fast`        | Orchestrator writes SUMMARY.md inline from the 4 human-read structured summaries it holds in context. No delegate spawned.                                                                         |
 | `balanced`    | ResearchSynthesizer delegate spawned. Reads 4 full research files. Cross-references build order constraints, pitfall-to-phase mappings, feature-architecture conflicts that short summaries omit. |
 | `deep`        | Same as balanced but researchers produce longer output (more material for synthesizer to cross-reference).                                                                                        |
 
-**Why conditional:** The synthesizer's value is in cross-referencing specific data across research dimensions. When `researchDepth=fast`, researchers produce 3-5 sentence summaries only -- there's nothing substantive to cross-reference. Spawning a synthesizer to reformat 4 short paragraphs wastes a context window and an agent hop.
+**Why conditional:** The synthesizer's value is in cross-referencing specific data across research dimensions. When `researchDepth=fast`, researchers return compact summaries and the full research files remain available on disk; spawning a synthesizer to reformat shallow inputs wastes a context window and an agent hop.
 
 **Evidence:**
 
@@ -442,7 +443,7 @@ Codex CLI is skills-first because the terminal CLI supports repository skills di
 
 **GSDD:** Makes this explicit as a design rule.
 
-**The rule:** Delegates write full documents to disk. They return 3-5 sentence summaries to the orchestrator. The orchestrator never receives document contents in its conversation context.
+**The rule:** Delegates write full documents to disk. They return bounded summaries to the orchestrator: routing summaries use 100-200 tokens, human-read summaries use 300-500 tokens, and agent-mediated discussion summaries use 500-800 tokens. The orchestrator never receives document contents in its conversation context.
 
 **Why this matters:**
 
@@ -452,7 +453,7 @@ Codex CLI is skills-first because the terminal CLI supports repository skills di
 
 **Implementation:**
 
-- Each delegate's instructions end with: "Return a 3-5 sentence summary of key findings. Do NOT return the full document contents."
+- Each delegate's instructions identify the correct summary tier and keep full document contents on disk instead of echoing them into orchestrator context.
 - Output templates in `.planning/templates/research/` and `.planning/templates/codebase/` define the on-disk format.
 - The synthesizer reads all 4 research files from disk -- it is the only agent that sees full research content.
 
@@ -1356,7 +1357,7 @@ Combined, these three workflows provided genuine leverage: the planner could not
 
 **GSDD decision:** Recover the discuss-phase leverage as a single role (`agents/approach-explorer.md`) embedded in the plan workflow, with a hybrid interaction architecture:
 
-1. **Primary path (inline + research subagents):** Conversation runs in the plan workflow's main context (required for user interactivity). For each technical gray area, a read-only research subagent spawns, reads codebase/docs, and returns a compressed ~1000-token structured summary. Only summaries enter the conversation context, not raw file reads.
+1. **Primary path (inline + research subagents):** Conversation runs in the plan workflow's main context (required for user interactivity). For each technical gray area, a read-only research subagent spawns, reads codebase/docs, and returns a compressed 500-800 token structured summary. Only summaries enter the conversation context, not raw file reads.
 
 2. **Native agent optimization:** Runtimes with interactive subagent support (Claude Code with `AskUserQuestion`, Codex interactive agents, OpenCode `mode: agent`) can run the full exploration as a native agent. Falls back to the inline primary path if unavailable.
 
@@ -1389,7 +1390,7 @@ The approach explorer needs two capabilities with opposite context requirements:
 - **Conversation** needs the main context (for user interaction)
 - **Research** generates thousands of tokens of raw content the conversation doesn't need
 
-Isolating research in subagents and returning compressed summaries follows the Compress and Isolate patterns from context engineering literature. The research subagent prompt template lives in the role contract (`<research_subagent_prompt>` section of `agents/approach-explorer.md`) — co-located with the algorithm it serves, and referenced by the portable workflow rather than inlined. The main context budget stays manageable: ~1000 tokens orchestration + ~4000 tokens research summaries (4 areas × ~1000) + ~4000 tokens conversation + ~500 tokens APPROACH.md = ~9500 tokens. The 1000-token budget (matching Anthropic CE's recommended floor) gives research subagents room for the structured format (Name/Pro/Con/Source) plus recommendation reasoning, source verification, and enough project-specific context that the main agent can handle follow-up questions without re-querying the subagent.
+Isolating research in subagents and returning compressed summaries follows the Compress and Isolate patterns from context engineering literature. The research subagent prompt template lives in the role contract (`<research_subagent_prompt>` section of `agents/approach-explorer.md`) — co-located with the algorithm it serves, and referenced by the portable workflow rather than inlined. The main context budget stays manageable: about 1000 tokens orchestration, up to 3200 tokens research summaries (4 areas x 800), about 4000 tokens conversation, and about 500 tokens APPROACH.md. The 500-800 token agent-mediated discussion tier gives research subagents room for the structured format (Name/Pro/Con/Source) plus recommendation reasoning, source verification, and enough project-specific context that the main agent can handle follow-up questions without re-querying the subagent.
 
 **Evidence:**
 
@@ -2775,6 +2776,42 @@ Posture compatibility is part of that closeout contract: `repo_closeout` and `ru
 - Missing delivery or runtime evidence must produce a downgrade or deferral; it cannot be hidden behind human waiver prose.
 - `complete-milestone` now fails closed before archive writes when the passed audit omits or contradicts the release claim contract.
 - Public claims are scoped to tracked public or repo-visible proof, while GitHub Releases, tags, package publication, and release automation remain deferred until explicitly planned.
+
+## D61 - Deliberate Subagent Contract
+
+**Decision (2026-04-28):** Subagents are deliberate isolation tools, not hidden implementation orchestration. Workspine should use them for research, review, mapping, synthesis, and integration checking when the work is read-only or artifact-backed, while implementation remains sequential unless an approved plan explicitly owns disjoint write sets.
+
+**Context:**
+- Phase 50 found that existing subagent wording was over-strong in some planning and role surfaces while summary-size guidance had drifted across 3-5 sentence, 300-500 token, and 1000-token variants.
+- Phase 46 research supported parallel agents for breadth-first research, but warned that coding writes need stronger coordination before parallel PR or multi-worktree orchestration is safe.
+- Phase 53 approach alignment confirmed the conservative boundary: allow read-heavy and artifact-backed delegation, forbid hidden implementation orchestration, keep roadmapper role-only/direct invocation, and do not claim broad S3/S5 closure or native runtime parity.
+
+**Decision:**
+- Allowed subagent use: research, review, mapping, synthesis, and integration checks when they are read-only or when the subagent writes/updates its own bounded durable artifact.
+- Return discipline: routing summaries use 100-200 tokens, human-read summaries use 300-500 tokens, agent-mediated discussion summaries use 500-800 tokens, and full details live in durable documents on disk.
+- Forbidden by default: hidden implementation orchestration, agent teams, parallel PR flows, multi-worktree coding, and overlapping implementation writes without explicit write-set ownership in the approved plan.
+- Roadmapper remains role-only/direct invocation in Phase 53. Roadmap creation is sequential and coverage-sensitive, writes `.planning/ROADMAP.md`, and does not yet have a proven thin-wrapper delegate use case.
+- S3 and S5 remain deferred. This decision narrows the practical Workspine subagent contract but does not close broad subagent orchestration parity or adapter research gaps.
+
+**Leverage:**
+- Lost: less flexibility for future agents to add delegates by symmetry or treat missing delegates as accidental gaps.
+- Kept: the two-layer role/delegate architecture, summaries-up/documents-to-disk, repo-native workflow state, lifecycle preflight, and write-set constraints.
+- Gained: a durable conservative rule that tells agents when subagents earn their keep and when they create hidden orchestration risk.
+
+**Evidence:**
+- `agents/README.md`
+- `agents/DISTILLATION.md`
+- `distilled/templates/delegates/`
+- `distilled/workflows/map-codebase.md`
+- `distilled/workflows/new-project.md`
+- GSD comparison source: `get-shit-done/workflows/new-project.md` and mapper/research workflows use `Task()` subagents heavily, but GSDD keeps the portable core single-agent-safe and only preserves subagent use where isolation, artifact persistence, or fresh-context review pays for the complexity.
+
+**Consequences:**
+- Future role, delegate, and workflow wording must distinguish read-only/artifact-backed delegation from implementation write ownership.
+- A roadmapper delegate must not appear by symmetry; it needs a future explicit design decision and regression updates.
+- Generated runtime freshness may propagate this wording, but generated freshness is not runtime parity proof.
+
+---
 
 ## Maintenance
 

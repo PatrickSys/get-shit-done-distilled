@@ -3393,6 +3393,76 @@ describe('G49 - Native Alignment Proof Gate', () => {
   });
 });
 
+describe('G53 - Deliberate Subagent Contract', () => {
+  const agentsReadme = fs.readFileSync(path.join(ROOT, 'agents', 'README.md'), 'utf-8');
+  const designContent = fs.readFileSync(DESIGN_MD, 'utf-8');
+  const newProjectContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'new-project.md'), 'utf-8');
+  const mapCodebaseContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'map-codebase.md'), 'utf-8');
+  const planContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'plan.md'), 'utf-8');
+  const auditContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'audit-milestone.md'), 'utf-8');
+  const executorContent = fs.readFileSync(path.join(ROOT, 'agents', 'executor.md'), 'utf-8');
+  const activeDelegateContracts = [
+    'mapper-tech.md',
+    'mapper-arch.md',
+    'mapper-quality.md',
+    'mapper-concerns.md',
+    'researcher-stack.md',
+    'researcher-features.md',
+    'researcher-architecture.md',
+    'researcher-pitfalls.md',
+    'researcher-synthesizer.md',
+  ].map((file) => fs.readFileSync(path.join(ROOT, 'distilled', 'templates', 'delegates', file), 'utf-8'));
+
+  test('policy surfaces preserve artifact-backed summaries and write-set ownership', () => {
+    const combined = [agentsReadme, designContent].join('\n');
+    assert.match(combined, /artifact-backed/i,
+      'Deliberate subagent policy must preserve artifact-backed delegation wording. FIX: Restore artifact-backed subagent boundary.');
+    assert.match(combined, /summaries returned|return discipline|summaries-up/i,
+      'Deliberate subagent policy must preserve summaries-up return discipline. FIX: Restore summary-return wording.');
+    assert.match(combined, /write-set ownership|write-set constraints/i,
+      'Deliberate subagent policy must preserve write-set ownership constraints. FIX: Restore explicit write-set ownership language.');
+  });
+
+  test('summary return tiers do not retain stale single-budget guidance', () => {
+    const distillationContent = fs.readFileSync(path.join(ROOT, 'agents', 'DISTILLATION.md'), 'utf-8');
+    const combined = [designContent, distillationContent].join('\n');
+    const activeRuntimeContracts = [newProjectContent, mapCodebaseContent, ...activeDelegateContracts].join('\n');
+    assert.match(combined, /100-200[\s\S]*300-500[\s\S]*500-800/,
+      'D61 and distillation guidance must preserve the three-tier summary return model. FIX: Restore routing, human-read, and agent-mediated tiers.');
+    assert.doesNotMatch(combined, /~1000-token summaries|1000-token budget|Use 300-500 tokens/,
+      'Phase 53 guidance must not retain stale single-budget summary instructions. FIX: Replace stale 1000-token or 300-500-only wording with the three-tier model.');
+    assert.doesNotMatch(activeRuntimeContracts, /Return:\s*(?:3-5 sentence|5-7 bullet)|4 x 3-5 sentence|3-5 sentence summaries/i,
+      'Active workflow and delegate return contracts must not retain stale sentence-count or bullet-count summary instructions. FIX: Use the three-tier summary return model.');
+  });
+
+  test('new-project keeps roadmapping direct instead of delegated', () => {
+    assert.match(newProjectContent, /DO NOT need to spawn a subagent/i,
+      'new-project.md must keep roadmap creation direct. FIX: Restore direct roadmapping wording.');
+    assert.match(newProjectContent, /roadmap creation remains direct and sequential/i,
+      'new-project.md must distinguish research delegation from direct roadmap creation. FIX: Add direct sequential roadmap wording.');
+    assert.doesNotMatch(newProjectContent, /templates\/delegates\/roadmapper\.md|roadmapper delegate/i,
+      'new-project.md must not route roadmap creation through a roadmapper delegate. FIX: Remove delegate routing.');
+  });
+
+  test('workflow delegation returns summaries or read-only reports', () => {
+    assert.match(mapCodebaseContent, /full findings stay in the output artifact/i,
+      'map-codebase.md must keep mapper detail in artifacts and return summaries. FIX: Restore artifact-backed mapper return wording.');
+    assert.match(planContent, /read-only research subagent/i,
+      'plan.md must keep approach research subagents read-only. FIX: Restore read-only research wording.');
+    assert.match(planContent, /structured summary of findings rather than editing the plan directly/i,
+      'plan.md must keep plan-checking read-only and summary-returning. FIX: Restore checker summary wording.');
+    assert.match(auditContent, /checker is read-only; the auditor owns the milestone audit artifact/i,
+      'audit-milestone.md must keep integration checking read-only. FIX: Restore auditor-owned artifact boundary.');
+  });
+
+  test('implementation wording does not allow hidden overlapping writes', () => {
+    assert.match(executorContent, /disjoint write-set ownership/i,
+      'executor.md must require disjoint write-set ownership for parallel execution. FIX: Restore write-set constraint.');
+    assert.doesNotMatch(executorContent, /spawn.*implementation subagents|parallel implementation subagents/i,
+      'executor.md must not authorize hidden implementation subagents. FIX: Keep implementation plan-scoped and sequential unless disjoint write sets are explicit.');
+  });
+});
+
 describe('G42 - Public Proof Export', () => {
   test('public proof and support entrypoints are git-tracked before repo truth advertises them', () => {
     const requiredTrackedPaths = [

@@ -21,5 +21,5 @@ Include:
 </quality_gate>
 
 Write to: `.planning/codebase/STACK.md`
-Return: 3-5 sentence summary to the Orchestrator when done.
+Return: Routing summary to the Orchestrator (100-200 tokens) when done.
 Guardrails: Max Agent Hops = 3. No static dependency dumps.

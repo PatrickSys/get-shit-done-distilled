@@ -26,5 +26,5 @@ Your output prevents mistakes in roadmap and planning. For each pitfall:
 
 Write to: `.planning/research/PITFALLS.md`
 Use template: `.planning/templates/research/pitfalls.md` (if it exists)
-Return: 3-5 sentence summary of key findings to the Orchestrator when done.
+Return: Human-read structured summary to the Orchestrator (300-500 tokens) when done.
 Guardrails: Max Agent Hops = 3.

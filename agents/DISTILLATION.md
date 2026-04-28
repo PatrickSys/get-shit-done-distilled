@@ -54,7 +54,7 @@ Evidence map from each of the 10 canonical GSDD roles to their GSD sources, with
 - Explicit "Scope" table showing scope × trigger × focus × output location
 - Clear statement: "Same algorithm, different scope. The scope is a context input, not a different role."
 
-**Rationale:** The GSD original had two roles (project and phase researcher) that followed the identical algorithm but with a scope parameter. GSDD merged them into one canonical role taking scope as input, reducing the role count from 11 to 9 (later 10 with approach-explorer in D29) while preserving all leverage. This is the clean merger mentioned in D2.
+**Rationale:** The GSD original had two roles (project and phase researcher) that followed the identical algorithm but with a scope parameter. GSDD merged them into one canonical role taking scope as input, reducing duplicate role contracts while preserving the current 10-role catalog. This is the clean merger mentioned in D2.
 
 ---
 
@@ -362,10 +362,22 @@ Cross-source best practices applied to GSDD role contracts, audited against 6 ex
 
 | Principle | What It Means | Source | GSDD Implementation |
 |-----------|--------------|--------|---------------------|
-| **Context isolation** | Research and heavy reads go in subagents; only compressed summaries enter the main context | Anthropic "Building effective agents" (Dec 2024): orchestrator-worker pattern — sub-agents do deep technical work and return condensed summaries | Approach explorer research subagents return ~1000-token summaries; plan-checker runs in fresh context |
+| **Context isolation** | Research and heavy reads go in subagents; only compressed summaries enter the main context | Anthropic "Building effective agents" (Dec 2024): orchestrator-worker pattern — sub-agents do deep technical work and return condensed summaries | Approach explorer research subagents return 500-800 token agent-mediated summaries; plan-checker runs in fresh context |
 | **JIT context loading** | Never say "read everything." Specify what to extract from each file | LangChain "Context Engineering for Agents" (2025): Select step of Write/Select/Compress/Isolate — load only the specific content needed, not full files | `<input_contract>` with extraction guidance: "From SPEC.md read ONLY locked decisions" |
 | **Intermediate persistence** | For long interactions, write confirmed state to disk incrementally | Anthropic BEA: agent memory outside context window. LangChain CE: Write pattern — confirmed state persisted to disk | Approach explorer writes decisions to disk as they're confirmed during conversation |
 | **Progressive disclosure** | Don't front-load all context; let agents discover incrementally | LangChain CE: Compress/Isolate patterns — agents assemble understanding incrementally rather than loading everything upfront | Gray areas presented individually; research loaded per area on demand |
+
+### Subagent Return Tiers
+
+Use the smallest return that preserves the downstream decision. Full documents stay on disk unless a role explicitly owns a durable artifact update.
+
+| Tier | Use When | Return Size |
+|------|----------|-------------|
+| Routing summary | The orchestrator only needs a signal, category, or next-step recommendation | 100-200 tokens |
+| Human-read summary | The user will read the summary directly to understand options or findings | 300-500 tokens |
+| Agent-mediated discussion | The orchestrator must discuss findings with the user and answer follow-up questions without re-querying the subagent | 500-800 tokens |
+
+This replaces the prior mixed guidance around sentence-count summaries, single-tier token budgets, and larger undifferentiated summaries. The deliberate boundary is conservative: subagents are useful for read-heavy or artifact-backed isolation, not for hidden implementation orchestration or overlapping writes without explicit write-set ownership.
 
 ### Prompt Structure (medium leverage)
 
@@ -381,7 +393,7 @@ Cross-source best practices applied to GSDD role contracts, audited against 6 ex
 
 | Principle | What It Means | Source | GSDD Implementation |
 |-----------|--------------|--------|---------------------|
-| **Authority language: intentional leverage** | Anthropic Claude warns "CRITICAL:" can overtrigger on newer models. GSDD decision: **keep CRITICAL: for mandatory initial-read** — a genuine compliance-critical instruction where skipping causes cascading failures. Emphasis markers work when rare and specific (signal-to-noise principle: one CRITICAL: in a role contract is a load-bearing gate; ten would be noise). Use normal language for algorithm steps, scope guidance, and quality rules. | Anthropic Claude prompting docs (overtriggering caution) + technical writing signal-to-noise principle. GSDD applies the caution selectively: only compliance-critical context gates use CRITICAL: | `CRITICAL: Mandatory initial read` kept in all 7 roles. `NEVER` kept for security (mapper secret protection). Normal language used for algorithm steps, scope guidance, and quality rules |
+| **Authority language: intentional leverage** | Anthropic Claude warns "CRITICAL:" can overtrigger on newer models. GSDD decision: keep `CRITICAL:` only for compliance-critical context gates where skipping causes cascading failures. Emphasis markers work when rare and specific (signal-to-noise principle: one CRITICAL: in a role contract is a load-bearing gate; ten would be noise). Use normal language for algorithm steps, scope guidance, and quality rules. | Anthropic Claude prompting docs (overtriggering caution) + technical writing signal-to-noise principle. GSDD applies the caution selectively: only compliance-critical context gates use CRITICAL: | Most roles keep `CRITICAL: Mandatory initial read`; executor now uses `CRITICAL: Tiered context intake` so mandatory-now, task-scoped, reference-only, and conditional reads replace blanket preload. `NEVER` kept for security (mapper secret protection). Normal language used for algorithm steps, scope guidance, and quality rules |
 | **Tell what to do, not just what not to do** | Anti-patterns alone are insufficient; pair with positive instructions | Anthropic Claude: "Tell Claude what to do instead of what not to do" | Every role has both `<anti_patterns>` AND positive algorithm/process sections |
 | **Context for instructions** | Explain WHY a rule exists so the agent can generalize | Anthropic Claude: "Providing context or motivation behind your instructions helps Claude better understand your goals" | Research quality rules explain WHY: "Training data is a hypothesis. Verify before asserting." |
 
@@ -417,5 +429,5 @@ When sources conflict, these resolutions apply:
 |----------|------------|-----|
 | Authority language ("YOU MUST" vs. normal) | Keep CRITICAL: for mandatory initial-read (compliance-critical). Use normal language elsewhere | Emphasis markers work when rare and specific (signal-to-noise). Anthropic's overtriggering concern applies to general guidance; a single CRITICAL: for a mandatory context gate is a load-bearing instruction, not noise |
 | Example count (2 vs. 3-5) | Target 3+ for conversational agents; inline format examples are sufficient for structured output agents | Anthropic's 3-5 recommendation is general; interactive roles benefit more than output-only roles |
-| Subagent return size (200 vs. 1000-2000 tokens) | Use 300-500 tokens | Anthropic's 1000-2000 is upper bound; 200 was too tight for structured approach summaries with trade-offs |
+| Subagent return size (200 vs. 1000-2000 tokens) | Use the three-tier return model: 100-200 for routing, 300-500 for human-read summaries, and 500-800 for agent-mediated discussion | Anthropic's 1000-2000 is an upper bound; 200 is too tight for structured approach summaries with trade-offs, while returning full raw research defeats context isolation |
 | "Don't invent alternatives" vs. "try fallback strategies" | Keep "don't invent" for approach research; use fallbacks for information retrieval | These solve different problems: manufacturing fake options is worse than acknowledging one viable path |

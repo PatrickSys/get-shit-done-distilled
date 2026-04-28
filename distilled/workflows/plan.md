@@ -436,14 +436,14 @@ Run the approach explorer.
 
 ### Running the Approach Explorer
 **Primary path — inline conversation with research subagents:**
-The conversation with the user runs inline in the main context. For each technical gray area, a read-only research subagent is spawned to isolate heavy codebase and documentation reads, returning only compressed summaries.
+The conversation with the user runs inline in the main context. For each technical gray area, a read-only research subagent is spawned to isolate heavy codebase and documentation reads, returning only compressed summaries while full detail stays out of the orchestrator context.
 
 1. Load context: read ONLY locked decisions from `.planning/SPEC.md` and the target phase goal/requirements from `.planning/ROADMAP.md`.
 
 2. Identify 3-4 domain-specific gray areas. Classify each as **taste** (preference, no research needed), **technical** (trade-offs, research first), or **hybrid** (both).
 
 3. For each **technical or hybrid** gray area, spawn a read-only research subagent.
-   Use the prompt template from `.planning/templates/roles/approach-explorer.md` (`<research_subagent_prompt>` section), substituting the gray area name, classification, phase context, and relevant codebase files. Each subagent returns a structured summary under 1000 tokens.
+   Use the prompt template from `.planning/templates/roles/approach-explorer.md` (`<research_subagent_prompt>` section), substituting the gray area name, classification, phase context, and relevant codebase files. Each subagent returns a structured summary and does not write implementation artifacts.
 
 4. Present each gray area to the user individually:
    - For taste areas: ask directly
@@ -488,7 +488,7 @@ The approach explorer's full role contract is at `.planning/templates/roles/appr
 
 <plan_check_orchestration>
 ### How Plan Checking Works
-After the planner produces a draft plan, an independent checker reviews it in fresh context. The checker does not inherit the planner's hidden reasoning; it treats the plan as an untrusted draft.
+After the planner produces a draft plan, an independent checker reviews it in fresh context. The checker does not inherit the planner's hidden reasoning; it treats the plan as an untrusted draft and returns a structured summary of findings rather than editing the plan directly.
 
 ### What The Checker Verifies
 1. `requirement_coverage` - every phase requirement is covered by at least one concrete task

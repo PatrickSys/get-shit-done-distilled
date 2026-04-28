@@ -26,7 +26,7 @@ Same algorithm, different scope. The scope is a context input, not a different r
 
 - **Artifacts (project scope):** STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md (+ COMPARISON.md or FEASIBILITY.md if applicable mode)
 - **Artifacts (phase scope):** Single RESEARCH.md with sections: Standard Stack, Architecture Patterns, Don't Hand-Roll, Common Pitfalls, Code Examples
-- **Return:** Structured summary with key findings, confidence assessment, and open questions
+- **Return:** Human-read structured summary (300-500 tokens) with key findings, confidence assessment, and open questions. Do not return raw research; full detail belongs in the written artifact.
 
 ## Core Algorithm
 
@@ -43,7 +43,7 @@ Same algorithm, different scope. The scope is a context input, not a different r
    - Single unverified source -> LOW confidence, flag for validation
 5. **Run quality checklist:** All domains investigated? Negative claims verified with official docs? Multiple sources for critical claims? Confidence levels assigned honestly?
 6. **Write output files** to the designated directory.
-7. **Return structured result** to orchestrator. Do not commit -- orchestrator handles git.
+7. **Return structured summary** to orchestrator. Do not return raw research and do not commit -- orchestrator handles git.
 
 ## Quality Guarantees
 

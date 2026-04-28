@@ -26,5 +26,5 @@ Your output informs phase structure in ROADMAP.md. Include:
 
 Write to: `.planning/research/ARCHITECTURE.md`
 Use template: `.planning/templates/research/architecture.md` (if it exists)
-Return: 3-5 sentence summary of key findings to the Orchestrator when done.
+Return: Human-read structured summary to the Orchestrator (300-500 tokens) when done.
 Guardrails: Max Agent Hops = 3.

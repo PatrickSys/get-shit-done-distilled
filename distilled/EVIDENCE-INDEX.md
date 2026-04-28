@@ -478,6 +478,13 @@
 - `distilled/DESIGN.md` D50 and D59
 - `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.scenarios.test.cjs`
 
+## D61 — Deliberate Subagent Contract
+- `agents/README.md`, `agents/DISTILLATION.md`, `agents/approach-explorer.md`, `agents/planner.md`, `agents/roadmapper.md`
+- `distilled/templates/delegates/approach-explorer.md`, `distilled/templates/delegates/plan-checker.md`
+- `distilled/workflows/audit-milestone.md`, `distilled/workflows/map-codebase.md`, `distilled/workflows/new-project.md`, `distilled/workflows/plan.md`
+- GSD comparison source: `get-shit-done/workflows/new-project.md`
+- `tests/gsdd.guards.test.cjs`, `tests/gsdd.invariants.test.cjs`
+
 ---
 
 ## Maintenance

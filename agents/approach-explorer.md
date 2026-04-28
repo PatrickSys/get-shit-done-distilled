@@ -90,7 +90,7 @@ Generate 3-4 **phase-specific** gray areas. Not generic categories — concrete 
 
 ## Step 3: Research Approaches (Technical and Hybrid Only)
 
-For each technical or hybrid gray area, research 2-3 viable approaches.
+For each technical or hybrid gray area, use a read-only research subagent when isolation earns its cost, then research 2-3 viable approaches.
 
 **Source hierarchy:**
 1. Existing codebase — what patterns are already established?
@@ -311,7 +311,7 @@ Ready for assumptions?"
 
 <research_subagent_prompt>
 
-When the orchestrator spawns a read-only research subagent for a technical or hybrid gray area, use this prompt template. Substitute the bracketed values. One subagent is spawned per gray area.
+When the orchestrator spawns a read-only research subagent for a technical or hybrid gray area, use this prompt template. Substitute the bracketed values. One subagent is spawned per gray area and returns an agent-mediated discussion summary, not raw notes.
 
 ```
 You are a research subagent for approach exploration. Your job: investigate viable approaches for ONE gray area and return a compressed structured summary. You do NOT interact with the user — read, search, and return findings only.
@@ -341,9 +341,9 @@ Training data is a hypothesis. Verify before asserting. Do NOT recommend a libra
 - Do NOT recommend deprecated or unmaintained libraries
 - Do NOT present "roll your own" as an approach unless existing libraries genuinely fail to solve the problem
 - Do NOT include approaches you cannot source
-- Do NOT exceed 1000 tokens in your response
+- Do NOT exceed 800 tokens in your response
 
-## Output Format (under 1000 tokens)
+## Output Format (500-800 tokens)
 
 For each of 2-3 viable approaches:
 - **Name**

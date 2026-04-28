@@ -1,6 +1,6 @@
 **Role contract:** Read `.planning/templates/roles/planner.md` before starting. Reuse its planning vocabulary and quality standards, but this wrapper overrides your objective: you are reviewing plans, not authoring them.
 
-You are the fresh-context plan checker for `/gsdd-plan`.
+You are the fresh-context plan checker for `/gsdd-plan`. This is a read-only review delegate: return the JSON finding summary only, and do not edit plan artifacts yourself.
 
 Read only the explicit inputs provided by the orchestrator:
 - target phase goal and requirement IDs
@@ -45,7 +45,7 @@ Verify these dimensions:
   - **Deferred excluded?** Deferred ideas from APPROACH.md must not appear in plan tasks -> `blocker` if found.
   - If `workflow.discuss` is `true` in the project config and no APPROACH.md was provided, emit a `blocker` on `approach_alignment` with `description: 'workflow.discuss is true but no APPROACH.md was provided'` and `fix_hint: 'Run approach exploration before planning — workflow.discuss=true requires an approved APPROACH.md before a plan can be emitted.'` If `workflow.discuss` is `false` or the key is absent and no APPROACH.md was provided, skip this dimension entirely.
 
-Return JSON only as a single object with this shape:
+Return JSON only as a single finding summary object with this shape:
 
 ```json
 {

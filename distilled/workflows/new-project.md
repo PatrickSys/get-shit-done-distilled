@@ -232,7 +232,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Project goal: [user's stated goal]. Milestone context: [greenfield|subsequent]. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/researcher-stack.md` for full task instructions. Apply the project goal and milestone context provided above.
 Output: `.planning/research/STACK.md`
-Return: 3-5 sentence summary to Orchestrator; full findings stay in the output artifact.
+Return: Human-read structured summary to Orchestrator (300-500 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3.
 </delegate>
 
@@ -242,7 +242,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Project goal: [user's stated goal]. Milestone context: [greenfield|subsequent]. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/researcher-features.md` for full task instructions. Apply the project goal and milestone context provided above.
 Output: `.planning/research/FEATURES.md`
-Return: 3-5 sentence summary to Orchestrator; full findings stay in the output artifact.
+Return: Human-read structured summary to Orchestrator (300-500 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3.
 </delegate>
 
@@ -252,7 +252,7 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Project goal: [user's stated goal]. Milestone context: [greenfield|subsequent]. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/researcher-architecture.md` for full task instructions. Apply the project goal and milestone context provided above.
 Output: `.planning/research/ARCHITECTURE.md`
-Return: 3-5 sentence summary to Orchestrator; full findings stay in the output artifact.
+Return: Human-read structured summary to Orchestrator (300-500 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3.
 </delegate>
 
@@ -262,14 +262,14 @@ Parallel: (use parallelization value from .planning/config.json)
 Context: Project goal: [user's stated goal]. Milestone context: [greenfield|subsequent]. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/researcher-pitfalls.md` for full task instructions. Apply the project goal and milestone context provided above.
 Output: `.planning/research/PITFALLS.md`
-Return: 3-5 sentence summary to Orchestrator; full findings stay in the output artifact.
+Return: Human-read structured summary to Orchestrator (300-500 tokens); full findings stay in the output artifact.
 Guardrails: Max Agent Hops = 3.
 </delegate>
 
 **After all 4 researchers complete**, synthesize based on `researchDepth`:
 
 **If `researchDepth: "fast"`:** Synthesize inline.
-You hold 4 x 3-5 sentence summaries. Write `.planning/research/SUMMARY.md` directly using `.planning/templates/research/summary.md`. Cross-reference the summaries. Do NOT spawn another agent.
+You hold 4 human-read structured summaries. Write `.planning/research/SUMMARY.md` directly using `.planning/templates/research/summary.md`. Cross-reference the summaries. Do NOT spawn another agent.
 
 **If `researchDepth: "balanced"` or `"deep"`:** Spawn synthesizer to read the full research files.
 
@@ -279,11 +279,11 @@ Parallel: false
 Context: Researcher summaries returned above. DO NOT share conversation history.
 Instruction: Read `.planning/templates/delegates/researcher-synthesizer.md` for full task instructions.
 Output: `.planning/research/SUMMARY.md`
-Return: 5-7 bullet key findings to Orchestrator; full synthesis stays in the output artifact.
+Return: Agent-mediated structured summary to Orchestrator (500-800 tokens); full synthesis stays in the output artifact.
 Guardrails: Max Agent Hops = 2. Do not do new research — synthesize only.
 </delegate>
 
-*Why the split:* The synthesizer reads the 4 full research files and cross-references specific data points (build order constraints, pitfall-to-phase mappings, feature-architecture conflicts) that 3-5 sentence summaries omit. This depth matters for `balanced`/`deep` runs where the roadmapper needs rich "Implications for Roadmap." For `fast` runs, orchestrator inline synthesis is the acceptable trade-off.
+*Why the split:* The synthesizer reads the 4 full research files and cross-references specific data points (build order constraints, pitfall-to-phase mappings, feature-architecture conflicts) that returned summaries omit. This depth matters for `balanced`/`deep` runs where the roadmapper needs rich "Implications for Roadmap." For `fast` runs, orchestrator inline synthesis is the acceptable trade-off.
 
 Display key findings before moving to spec creation.
 
@@ -345,7 +345,7 @@ Do NOT proceed to roadmap creation until the developer explicitly approves.
 
 <roadmap_creation>
 After `SPEC.md` is approved, you must create `ROADMAP.md`.
-Since you are an Orchestrator with fresh context, you DO NOT need to spawn a subagent for this—write it yourself directly, retaining full thoroughness.
+Since you are an Orchestrator with fresh context, you DO NOT need to spawn a subagent for this; write it yourself directly, retaining full thoroughness. Research and synthesis delegation above are artifact-backed inputs; roadmap creation remains direct and sequential.
 
 Break `SPEC.md` requirements into executable phases:
 

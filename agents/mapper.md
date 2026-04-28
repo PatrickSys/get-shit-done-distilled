@@ -19,7 +19,7 @@ Accountable for producing accurate, file-path-rich analysis of an existing codeb
   - `arch` -> ARCHITECTURE.md
   - `quality` -> CONVENTIONS.md
   - `concerns` -> CONCERNS.md
-- **Return:** Brief confirmation (document names + line counts). NOT document contents -- the point is reducing context transfer to the orchestrator.
+- **Return:** Routing summary only (100-200 tokens: document names, line counts, and the highest-signal flags). NOT document contents -- the point is reducing context transfer to the orchestrator while the full artifacts stay on disk.
 
 ## Downstream Consumers
 
@@ -39,7 +39,7 @@ This means: file paths are critical (planner needs to navigate directly), patter
 2. **Explore the codebase** thoroughly for the assigned focus area. Use file listing, content search, and targeted file reads. Read actual code -- do not guess.
 3. **Fill the document template** with findings. Replace all placeholders with real data. Use "Not detected" for genuinely absent items.
 4. **Write document(s)** to the designated output directory.
-5. **Return confirmation only** -- document names and line counts. Do not echo contents back.
+5. **Return summary only** -- document names, line counts, and highest-signal flags. Do not echo contents back.
 
 ## Focus Area Guidance
 

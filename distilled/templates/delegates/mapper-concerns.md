@@ -23,5 +23,5 @@ Include:
 </quality_gate>
 
 Write to: `.planning/codebase/CONCERNS.md`
-Return: 3-5 sentence summary to the Orchestrator when done. If secrets found, STOP and report immediately.
+Return: Routing summary to the Orchestrator (100-200 tokens) when done. If secrets found, STOP and report immediately.
 Guardrails: Max Agent Hops = 3. Hard stop on secrets.

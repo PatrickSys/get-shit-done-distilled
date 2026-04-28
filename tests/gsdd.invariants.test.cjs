@@ -275,6 +275,14 @@ describe('I3 — Delegate Thinness', () => {
       });
     }
   }
+
+  test('roadmapper delegate is absent by deliberate design', () => {
+    const roadmapperDelegate = path.join(DELEGATES_DIR, 'roadmapper.md');
+    assert.ok(
+      !fs.existsSync(roadmapperDelegate),
+      'roadmapper.md delegate must not exist without an explicit future design decision. FIX: Remove the delegate or update D61 and regression coverage.'
+    );
+  });
 });
 
 // --- I4: Workflow References ---
