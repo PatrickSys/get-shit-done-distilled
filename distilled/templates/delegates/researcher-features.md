@@ -26,5 +26,5 @@ Your output feeds SPEC requirements. Categorize explicitly:
 
 Write to: `.planning/research/FEATURES.md`
 Use template: `.planning/templates/research/features.md` (if it exists)
-Return: 3-5 sentence summary of key findings to the Orchestrator when done.
+Return: Human-read structured summary to the Orchestrator (300-500 tokens) when done.
 Guardrails: Max Agent Hops = 3.

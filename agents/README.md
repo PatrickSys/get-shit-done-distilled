@@ -11,7 +11,19 @@ Vendor-agnostic role contracts for Workspine's agent architecture.
 
 Roles define what an agent is. Delegates define what an agent does in a specific workflow context.
 
+## Deliberate Subagent Boundary
+
+Workspine uses subagents when isolation earns its cost: research, review, mapping, synthesis, and integration checks may run as read-only or artifact-backed delegation, with summaries returned to the orchestrator and full detail written to disk when detail is needed later.
+
+Subagents must not become hidden implementation orchestration. Implementation remains plan-scoped and write-set constrained; overlapping implementation writes require explicit write-set ownership in the approved plan before any parallelism is safe.
+
+Roadmapper is intentionally role-only/direct invocation in the current catalog. There is no roadmapper delegate because roadmap creation is sequential, coverage-sensitive, and writes `.planning/ROADMAP.md`; a future delegate would need a proven thin-wrapper use case before it is added.
+
+Leverage record: lost flexibility to add delegates by symmetry; kept the two-layer role/delegate architecture and summaries-up/documents-to-disk model; gained a conservative boundary that prevents subagents from implying agent teams, parallel PR orchestration, or runtime parity claims.
+
 ## Lifecycle Roles
+
+The catalog contains 10 canonical roles across lifecycle, audit, and utility responsibilities.
 
 | Role | File | Absorbs From (GSD) |
 |------|------|---------------------|

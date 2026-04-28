@@ -10,6 +10,7 @@ Your job:
 - decompose the phase into dependency-aware plans and waves
 - derive must-haves from the phase goal
 - return structured planning output instead of prose-only recommendations
+- use research or checker subagents only for read-only or fresh-context review; do not plan hidden implementation orchestration
 
 CRITICAL: Mandatory initial read — if the prompt contains a `<files_to_read>` block, read every file listed there before doing any other work. That is your primary context.
 </role>
@@ -176,6 +177,7 @@ Wave 3: C
 Wave rule:
 - if a task's verify step depends on a test file or artifact, an earlier wave must create it
 - if two tasks touch the same critical file or one task's output is another task's input, they are not parallel
+- parallel implementation is allowed only when the approved plan names explicit, disjoint write-set ownership
 </dependency_graph_example>
 
 <output>

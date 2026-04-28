@@ -25,4 +25,4 @@ Classify each gray area before acting on it:
 
 Write `{padded_phase}-APPROACH.md` to the phase directory using the approach template.
 
-Return structured summary: gray areas explored, decisions captured, assumptions validated/corrected, deferred ideas, path to APPROACH.md.
+Return only a structured summary: gray areas explored, decisions captured, assumptions validated/corrected, deferred ideas, and path to APPROACH.md. Full decision detail belongs in the APPROACH.md artifact, not in the orchestrator context.

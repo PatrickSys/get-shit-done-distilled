@@ -11,7 +11,7 @@ Read these files (all should exist):
 Cross-reference them. Surface conflicts and dependencies between findings. Do NOT do new research — synthesize what exists.
 
 SUMMARY.md MUST include:
-1. **Key Findings** — top 5-7 bullets across all 4 dimensions
+1. **Key Findings** — the highest-signal findings across all 4 dimensions
 2. **Implications for Roadmap** — suggested phase groupings derived from architecture build order + pitfall avoidance (this is the critical handoff to the roadmapper)
 3. **Research Flags** — which phases need deeper research vs standard patterns
 4. **Confidence Assessment** — per domain: stack / features / architecture / pitfalls
@@ -27,5 +27,5 @@ Use template: `.planning/templates/research/summary.md` (if it exists)
 </quality_gate>
 
 Write to: `.planning/research/SUMMARY.md`
-Return: 5-7 bullet key findings to the Orchestrator when done.
+Return: Agent-mediated structured summary to the Orchestrator (500-800 tokens) when done.
 Guardrails: Max Agent Hops = 2. Do not do new research — synthesize only.

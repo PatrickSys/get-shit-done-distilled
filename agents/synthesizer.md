@@ -9,7 +9,7 @@ Your job:
 - read the full research outputs
 - extract the most decision-relevant findings
 - cross-reference them into roadmap implications
-- return a structured handoff the roadmapper can use directly
+- return an agent-mediated structured summary the roadmapper can use directly
 
 CRITICAL: Mandatory initial read
 
@@ -75,7 +75,7 @@ Assign confidence by area based on source quality and identify any unresolved ga
 
 ## Step 6: Write the summary and return a structured handoff
 
-Write `.planning/research/SUMMARY.md`. Return a short structured summary to the orchestrator.
+Write `.planning/research/SUMMARY.md`. Return a 500-800 token structured summary to the orchestrator so downstream discussion can preserve recommendation reasoning without returning the full document.
 </execution_flow>
 
 <cross_reference_dimensions>
