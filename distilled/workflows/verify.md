@@ -128,6 +128,12 @@ Rules:
 Note: this step does NOT replace levels 1–3. An artifact can satisfy the evidence-kind requirement and still fail Level 2 (substantive) or Level 3 (wired). Both checks must run.
 </evidence_contract>
 
+<ui_proof_comparison>
+If the plan defines non-empty `ui_proof_slots`, compare planned UI proof against observed bundles before closure. If the plan records only `no_ui_proof_rationale`, verify the rationale instead of requiring a bundle. Each observed bundle must include top-level `proof_bundle_version`, `scope`, `route_state`, `environment`, `viewport`, `evidence_inputs`, `commands_or_manual_steps`, `observations`, `artifacts`, `privacy`, `result`, and `claim_limits`.
+Classify each slot as exactly one of: `satisfied`, `partial`, `missing`, `waived`, `deferred`, or `not_applicable`. Waiver/deferment narrows the claim; it is not proof. Screenshots, traces, videos, reports, accessibility scans, Gherkin, visual diffs, and manual notes are artifact types or activities mapped onto existing evidence kinds, not new evidence kinds. Artifact count is never proof; each artifact must tie to the slot claim, route/state, observation, artifact path/link, privacy metadata, and claim limit.
+Artifact privacy metadata must include `visibility`, `retention`, `sensitivity`, and `safe_to_publish`; raw screenshots, traces, videos, DOM snapshots, and reports default to local-only and unsafe unless sanitized. Run `gsdd ui-proof validate <path>` or treat `gsdd health` E10 as blocking; add `--claim <...>` when relying on the bundle for public, tracked, delivery, release, or publication proof. Visual taste, accessibility judgment, baseline acceptance, subjective polish/layout quality, and privacy publication require human evidence or explicit waiver; human approval does not replace required `code`, `test`, `runtime`, or `delivery` evidence. Source annotations, AST/cAST findings, semantic search, comments, and Semble-like retrieval are discovery hints only.
+</ui_proof_comparison>
+
 <verification_levels>
 Check every artifact at three levels. A common failure mode is a file that exists but is still a stub.
 ### Level 1: Exists
@@ -423,13 +429,9 @@ Verification is done when all of these are true:
 Report the verification result to the user, then present the next step:
 
 ---
-
 **Completed:** Phase verification — created `.planning/phases/{phase_dir}/{phase_num}-VERIFICATION.md`.
-
 If status is `passed`: **Next step:** `/gsdd-progress` — route to the next phase or milestone audit.
 If status is `gaps_found`: **Next step:** `/gsdd-plan` — re-plan to close the identified gaps.
 If status is `human_needed`: **Next step:** `/gsdd-verify-work`, then rerun `/gsdd-verify` with UAT results.
-
 Consider clearing context before starting the next workflow for best results.
-
 </completion>

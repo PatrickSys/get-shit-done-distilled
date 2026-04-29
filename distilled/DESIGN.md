@@ -72,6 +72,7 @@
 59. [Continuity Authority And Planning-State Drift](#d59---continuity-authority-and-planning-state-drift)
 60. [Release Closeout Contract](#d60---release-closeout-contract)
 61. [Deliberate Subagent Contract](#d61---deliberate-subagent-contract)
+62. [Repo-Native UI Proof Contract](#d62---repo-native-ui-proof-contract)
 
 ---
 
@@ -956,8 +957,9 @@ Implementation lives under `bin/lib/`:
 | E5 | ERROR | `.planning/templates/delegates/` missing or empty |
 | E6 | ERROR | `.planning/templates/research/` missing or empty |
 | E7 | ERROR | `.planning/templates/codebase/` missing or empty |
-| E8 | ERROR | `.planning/templates/` missing critical root files (`spec.md`, `roadmap.md`, `auth-matrix.md`) |
+| E8 | ERROR | `.planning/templates/` missing critical root files (`spec.md`, `roadmap.md`, `auth-matrix.md`, `ui-proof.md`) |
 | E9 | ERROR | `.planning/templates/brownfield-change/` missing or missing critical files (`CHANGE.md`, `HANDOFF.md`, `VERIFICATION.md`) |
+| E10 | ERROR | Known UI proof bundle metadata is unparseable or fails deterministic privacy/claim validation |
 | W1 | WARN | `generation-manifest.json` missing |
 | W2 | WARN | Manifest-tracked installed templates/helpers modified locally (hash mismatch vs manifest) |
 | W3 | WARN | Manifest-tracked installed templates/helpers missing from disk but listed in manifest |
@@ -2810,6 +2812,48 @@ Posture compatibility is part of that closeout contract: `repo_closeout` and `ru
 - Future role, delegate, and workflow wording must distinguish read-only/artifact-backed delegation from implementation write ownership.
 - A roadmapper delegate must not appear by symmetry; it needs a future explicit design decision and regression updates.
 - Generated runtime freshness may propagate this wording, but generated freshness is not runtime parity proof.
+
+---
+
+## D62 - Repo-Native UI Proof Contract
+
+**Decision (2026-04-28):** UI-sensitive work should carry a compact planned proof-slot contract and, when executed, an observed UI proof bundle that references artifacts by path or link while preserving the existing closure evidence kinds: `code`, `test`, `runtime`, `delivery`, and `human`.
+
+**Context:**
+- UI proof targets the recurring failure mode where agents claim a UI works or looks good without rendered proof, matched observations, or explicit human judgment.
+- The contract defines proof slots, proof bundles, comparison statuses, fail-closed agent guardrails, deterministic metadata validation, privacy metadata, and health visibility without adding a browser-provider framework.
+- GSD's archived planner, executor, and verifier roles preserve strong lifecycle discipline, but they do not provide this UI-specific planned-vs-observed proof model. GSDD keeps the lifecycle leverage and adds a repo-native UI proof substrate without adding a browser-provider framework.
+
+**Decision:**
+- Planning must classify UI-sensitive work and require either `ui_proof_slots` or an explicit `no_ui_proof_rationale`.
+- Planned slots record claim, route/state, required evidence kinds, minimum observations, environment/viewport, manual-acceptance requirement, claim limit, and requirement IDs.
+- Observed proof bundles record claim, requirement/slot IDs, route/state, environment, viewport, evidence inputs, commands/manual steps, observations, artifacts, privacy metadata, result, and claim limits.
+- Verification compares planned slots to observed bundles using `satisfied`, `partial`, `missing`, `waived`, `deferred`, and `not_applicable`; waiver and deferral are not proof.
+- UI correctness claims fail closed unless rendered proof is matched exactly to claim, route/state, observation, evidence kind, artifact path or manual step, privacy metadata, result, and claim limit, or an explicit waiver/deferment narrows the claim.
+- Human acceptance may close a narrowed claim and record proof debt, but it must not convert missing or mismatched non-human evidence into `satisfied` proof.
+- Screenshots, traces, videos, reports, accessibility scans, Gherkin, and visual diffs are artifact types or activities mapped onto the five existing evidence kinds, not new evidence kinds.
+- Source annotations, AST/cAST findings, semantic search hits, comments, and Semble-like retrieval may discover proof obligations, but they are discovery hints only and do not satisfy proof slots.
+- Visual taste, accessibility judgment, baseline acceptance, subjective polish/layout quality, and privacy publication require human evidence or explicit waiver, and human approval does not replace required `code`, `test`, `runtime`, or `delivery` evidence.
+- Deterministic metadata enforcement keeps the evidence and comparison-status vocabularies unchanged: artifact entries require `visibility`, `retention`, `sensitivity`, and `safe_to_publish`; raw screenshots, traces, videos, DOM snapshots, and reports default to `local_only` plus `safe_to_publish: false`; `bin/lib/ui-proof.mjs` validates required bundle/observation fields, structured command/manual-step entries, fixed evidence kinds, claim/result statuses, comparison statuses, claim limits, privacy metadata, safe artifact references, and public/tracked/delivery proof claims backed by local-only, unsafe, unsanitized, or privacy-contradictory artifacts.
+- `gsdd health` reports invalid known UI proof bundles as E10 using the same validator, staying read-only and metadata-only.
+
+**Leverage:**
+- Lost: UI-sensitive work now carries a small proof-contract burden, and invalid proof metadata can degrade/break health before agents can claim rendered UI outcomes.
+- Kept: repo-native markdown artifacts, optional project tooling, fixed closure evidence kinds, generated-surface freshness, and the plan/execute/verify separation.
+- Gained: exact claim-to-proof traceability, strict comparison statuses, privacy and claim-limit metadata, fail-closed overclaim guardrails, deterministic metadata validation, and health-visible protection against unsafe public proof claims.
+
+**Evidence:**
+- `distilled/templates/ui-proof.md`
+- `distilled/workflows/plan.md`, `distilled/workflows/execute.md`, `distilled/workflows/quick.md`, `distilled/workflows/verify.md`
+- `agents/planner.md`, `agents/executor.md`, `agents/verifier.md`, `distilled/templates/delegates/plan-checker.md`
+- `bin/lib/templates.mjs`, `bin/lib/ui-proof.mjs`, `bin/lib/health.mjs`, `bin/lib/rendering.mjs`
+- `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.health.test.cjs`, `tests/gsdd.init.test.cjs`
+- GSD comparison: the upstream planner, executor, and verifier role patterns preserve lifecycle rigor, but they do not define UI proof slots or planned-vs-observed UI proof bundles.
+
+**Consequences:**
+- Future UI-related phases must not add new evidence kinds by treating artifact types as proof categories.
+- Future dogfood or runtime validation must not upgrade artifact counts or human waivers into proof.
+- Generated runtime surfaces and local templates must stay freshness-checkable through `gsdd update --templates` and health diagnostics.
 
 ---
 

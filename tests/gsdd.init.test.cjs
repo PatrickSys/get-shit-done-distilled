@@ -130,6 +130,8 @@ describe('gsdd init and update', () => {
     assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'delegates', 'plan-checker.md')));
     assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'auth-matrix.md')),
       'auth-matrix.md template must be distributed during init');
+    assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'ui-proof.md')),
+      'ui-proof.md template must be distributed during init');
     for (const file of ['CHANGE.md', 'HANDOFF.md', 'VERIFICATION.md']) {
       assert.ok(fs.existsSync(path.join(tmpDir, '.planning', 'templates', 'brownfield-change', file)),
         `brownfield-change/${file} template must be distributed during init`);
@@ -154,6 +156,8 @@ describe('gsdd init and update', () => {
     const launcher = fs.readFileSync(path.join(tmpDir, '.planning', 'bin', 'gsdd.mjs'), 'utf-8');
     assert.match(launcher, /bootstrapHelperWorkspace\(import\.meta\.url\)/);
     assert.match(launcher, /import \{ cmdFileOp \} from '\.\/lib\/file-ops\.mjs';/);
+    assert.match(launcher, /import \{ cmdUiProof \} from '\.\/lib\/ui-proof\.mjs';/);
+    assert.match(launcher, /'ui-proof': cmdUiProof/);
     assert.doesNotMatch(launcher, /npm(?:\.cmd)?'.*exec.*--package=/s);
     assert.doesNotMatch(launcher, new RegExp(tmpDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.doesNotMatch(launcher, /Repos[\\/].+get-shit-done-distilled/i);

@@ -34,6 +34,10 @@ async function importRuntimeFreshnessModule() {
   return import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'runtime-freshness.mjs')).href}?t=${Date.now()}-${Math.random()}`);
 }
 
+async function importUiProofModule() {
+  return import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'ui-proof.mjs')).href}?t=${Date.now()}-${Math.random()}`);
+}
+
 async function importSessionFingerprintModule() {
   return import(`${pathToFileURL(path.join(__dirname, '..', 'bin', 'lib', 'session-fingerprint.mjs')).href}?t=${Date.now()}-${Math.random()}`);
 }
@@ -1403,6 +1407,47 @@ describe('Phase 30 lifecycle-preflight helper', () => {
     assert.ok(output.blockers.some((blocker) => blocker.code === 'roadmap_phase_status_mismatch'));
   });
 
+  test('allows audit-milestone preflight when active milestone uses level-two heading', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'ROADMAP.md'),
+      [
+        '# Roadmap',
+        '',
+        '## Milestones',
+        '',
+        '- 🚧 **v1.7 Agentic Engineering Hardening** — Phases 50-54 (in progress)',
+        '',
+        '## Phases',
+        '',
+        '## v1.7 Agentic Engineering Hardening',
+        '',
+        '- [x] **Phase 30: Deterministic Lifecycle Gates** — [ENGINE-02]',
+        '',
+      ].join('\n')
+    );
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'SPEC.md'), '- [x] **[ENGINE-02]**: lifecycle gates\n');
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '30-deterministic-lifecycle-gates', '30-PLAN.md'),
+      '# plan\n'
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '30-deterministic-lifecycle-gates', '30-SUMMARY.md'),
+      '# summary\n'
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '.planning', 'phases', '30-deterministic-lifecycle-gates', '30-VERIFICATION.md'),
+      '# verification\n'
+    );
+
+    const result = await runCliAsMain(tmpDir, ['lifecycle-preflight', 'audit-milestone']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.allowed, true);
+    assert.strictEqual(output.lifecycle.currentMilestone.version, 'v1.7');
+    assert.strictEqual(output.lifecycle.currentMilestone.title, 'Agentic Engineering Hardening');
+  });
+
   test('blocks complete-milestone preflight when roadmap overview/detail status mismatches', async () => {
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'ROADMAP.md'),
@@ -2327,6 +2372,356 @@ describe('Phase 31 evidence-gated closure helpers', () => {
       }
     );
     assert.strictEqual(progressResult.closureEvidence, null);
+  });
+});
+
+describe('Phase 57 UI proof validation helper', () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = createGsddTempProject();
+    fs.mkdirSync(path.join(tmpDir, '.planning'), { recursive: true });
+  });
+
+  afterEach(() => {
+    cleanup(tmpDir);
+  });
+
+  function validBundle(overrides = {}) {
+    return {
+      proof_bundle_version: 1,
+      scope: {
+        work_item: 'quick-001-example-ui',
+        requirement_ids: ['quick-001'],
+        slot_ids: ['quick-001-ui-01'],
+        claim: 'Local reviewer can inspect the changed UI proof metadata.',
+      },
+      route_state: { route: '/example', state: 'synthetic user' },
+      environment: { app_url: 'http://localhost:3000', data_state: 'synthetic' },
+      viewport: { width: 1280, height: 720 },
+      evidence_inputs: { kinds: ['test', 'runtime'], tools_used: ['manual'] },
+      commands_or_manual_steps: [{ manual_step: 'Open /example and inspect the changed state.', result: 'passed' }],
+      observations: [{
+        observation: 'Changed state is visible.',
+        claim: 'Local reviewer can inspect the changed UI proof metadata.',
+        route_state: { route: '/example', state: 'synthetic user' },
+        evidence_kind: 'runtime',
+        artifact_refs: ['artifacts/report.html'],
+        privacy: { data_classification: 'synthetic', raw_artifacts_safe_to_publish: false, retention: 'temporary_review' },
+        result: 'passed',
+        claim_limit: 'Does not prove unrelated UI states.',
+      }],
+      artifacts: [{
+        path: 'artifacts/report.html',
+        type: 'report',
+        visibility: 'local_only',
+        retention: 'temporary_review',
+        sensitivity: 'synthetic',
+        safe_to_publish: false,
+      }],
+      privacy: {
+        data_classification: 'synthetic',
+        redactions: [],
+        raw_artifacts_safe_to_publish: false,
+        retention: 'Keep raw artifacts only while needed for review.',
+      },
+      result: { claim_status: 'passed', comparison_status_by_slot: { 'quick-001-ui-01': 'satisfied' } },
+      claim_limits: ['Does not prove unrelated UI states.'],
+      ...overrides,
+    };
+  }
+
+  test('valid local-only proof metadata passes without browser tooling or dependencies', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle());
+    assert.strictEqual(result.valid, true, JSON.stringify(result.errors));
+  });
+
+  test('fenced JSON in markdown parses but YAML-only bundles fail', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    const fenced = mod.parseUiProofBundleContent(`# UI proof\n\n\`\`\`json\n${JSON.stringify(bundle)}\n\`\`\`\n`, 'UI-PROOF.md');
+    assert.deepStrictEqual(fenced.errors, []);
+    assert.strictEqual(fenced.bundle.scope.work_item, 'quick-001-example-ui');
+
+    const yamlOnly = mod.parseUiProofBundleContent('proof_bundle_version: 1\nscope:\n  claim: nope\n', 'UI-PROOF.md');
+    assert.strictEqual(yamlOnly.bundle, null);
+    assert.ok(yamlOnly.errors.some((error) => error.code === 'unparseable_bundle'));
+  });
+
+  test('missing fields invalid statuses unsupported evidence kinds and missing claim limits fail', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle({
+      evidence_inputs: { kinds: ['screenshot'] },
+      result: { comparison_status_by_slot: { 'quick-001-ui-01': 'looks_good' } },
+      claim_limits: [],
+    });
+    delete bundle.scope.work_item;
+    delete bundle.artifacts[0].safe_to_publish;
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.path === 'scope.work_item'));
+    assert.ok(result.errors.some((error) => error.code === 'unsupported_evidence_kind'));
+    assert.ok(result.errors.some((error) => error.code === 'invalid_comparison_status'));
+    assert.ok(result.errors.some((error) => error.code === 'missing_claim_limits'));
+    assert.ok(result.errors.some((error) => error.path === 'artifacts[0].safe_to_publish'));
+  });
+
+  test('empty required arrays and mismatched comparison slots fail', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    bundle.scope.requirement_ids = [];
+    bundle.commands_or_manual_steps = [];
+    bundle.observations = [];
+    bundle.result.comparison_status_by_slot = { 'quick-001-ui-99': 'satisfied' };
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.path === 'scope.requirement_ids'));
+    assert.ok(result.errors.some((error) => error.path === 'commands_or_manual_steps'));
+    assert.ok(result.errors.some((error) => error.path === 'observations'));
+    assert.ok(result.errors.some((error) => error.code === 'missing_comparison_status'));
+    assert.ok(result.errors.some((error) => error.code === 'unknown_comparison_slot'));
+  });
+
+  test('commands and manual steps must be structured with a result', async () => {
+    const mod = await importUiProofModule();
+    const stringStep = validBundle({ commands_or_manual_steps: ['looks good'] });
+    const missingAction = validBundle({ commands_or_manual_steps: [{ result: 'passed' }] });
+    const missingResult = validBundle({ commands_or_manual_steps: [{ manual_step: 'Open /example.' }] });
+    const invalidResult = validBundle({ commands_or_manual_steps: [{ command: 'npm test', result: 'ok' }] });
+
+    assert.ok(mod.validateUiProofBundle(stringStep).errors.some((error) => error.code === 'invalid_proof_step'));
+    assert.ok(mod.validateUiProofBundle(missingAction).errors.some((error) => error.code === 'missing_proof_step_action'));
+    assert.ok(mod.validateUiProofBundle(missingResult).errors.some((error) => error.code === 'missing_proof_step_result'));
+    assert.ok(mod.validateUiProofBundle(invalidResult).errors.some((error) => error.code === 'invalid_proof_step_result'));
+  });
+
+  test('observation artifact references must resolve to declared artifacts', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    bundle.observations[0].artifact_refs = ['missing/report.html'];
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unknown_artifact_ref'));
+  });
+
+  test('artifact references must stay workspace-relative or use http URLs', async () => {
+    const mod = await importUiProofModule();
+    const traversal = validBundle();
+    traversal.artifacts[0].path = '../../outside/report.html';
+    traversal.observations[0].artifact_refs = ['../../outside/report.html'];
+    const fileUrl = validBundle();
+    fileUrl.artifacts[0].url = 'file:///Users/example/private/report.html';
+    delete fileUrl.artifacts[0].path;
+    fileUrl.observations[0].artifact_refs = ['file:///Users/example/private/report.html'];
+
+    assert.ok(mod.validateUiProofBundle(traversal).errors.some((error) => error.code === 'invalid_artifact_ref_location'));
+    assert.ok(mod.validateUiProofBundle(fileUrl).errors.some((error) => error.code === 'invalid_artifact_ref_location'));
+  });
+
+  test('observations must include scoped support metadata', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    delete bundle.observations[0].claim;
+    delete bundle.observations[0].artifact_refs;
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.path === 'observations[0].claim'));
+    assert.ok(result.errors.some((error) => error.path === 'observations[0].artifact_refs'));
+  });
+
+  test('non-object observations fail instead of being skipped', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({ observations: ['looks good'] }));
+
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'invalid_observation'));
+  });
+
+  test('observation privacy and result status are schema-checked', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    bundle.observations[0].privacy = {
+      data_classification: 'synthetic',
+      raw_artifacts_safe_to_publish: 'no',
+    };
+    bundle.observations[0].result = 'looks_good';
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.path === 'observations[0].privacy.retention'));
+    assert.ok(result.errors.some((error) => error.code === 'invalid_raw_artifacts_safe_to_publish'));
+    assert.ok(result.errors.some((error) => error.code === 'invalid_observation_result'));
+  });
+
+  test('result claim status is required and enum-validated', async () => {
+    const mod = await importUiProofModule();
+    const missingStatus = validBundle({ result: { comparison_status_by_slot: { 'quick-001-ui-01': 'satisfied' } } });
+    const invalidStatus = validBundle({ result: { claim_status: 'looks_good', comparison_status_by_slot: { 'quick-001-ui-01': 'satisfied' } } });
+
+    const missingResult = mod.validateUiProofBundle(missingStatus);
+    assert.strictEqual(missingResult.valid, false);
+    assert.ok(missingResult.errors.some((error) => error.code === 'missing_claim_status'));
+
+    const invalidResult = mod.validateUiProofBundle(invalidStatus);
+    assert.strictEqual(invalidResult.valid, false);
+    assert.ok(invalidResult.errors.some((error) => error.code === 'invalid_claim_status'));
+  });
+
+  test('public tracked and delivery claims cannot rely on local-only unsafe raw artifacts', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({ proof_claim: 'public' }));
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_proof_claim'));
+  });
+
+  test('delivery evidence kind does not imply a delivery proof claim', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({
+      evidence_inputs: { kinds: ['test', 'runtime', 'delivery'], tools_used: ['manual'] },
+    }));
+
+    assert.strictEqual(result.valid, true, JSON.stringify(result.errors));
+    assert.ok(!result.errors.some((error) => error.code === 'unsafe_public_proof_claim'));
+  });
+
+  test('negative claim limits do not imply public claim enforcement', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({
+      claim_limits: [
+        'Does not prove public release, production delivery, tracked publication, or external support.',
+      ],
+    }));
+
+    assert.strictEqual(result.valid, true, JSON.stringify(result.errors));
+    assert.ok(!result.errors.some((error) => error.code === 'unsafe_public_proof_claim'));
+  });
+
+  test('explicit claim context still enforces public claim artifact safety', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({
+      claim_context: { proof_use: 'release' },
+    }));
+
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_proof_claim'));
+  });
+
+  test('plural proof claims still enforce public claim artifact safety', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({ proof_claims: ['tracked'] }));
+
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_proof_claim'));
+  });
+
+  test('persisted proof claims reject unsupported claim uses', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({ proof_claim: 'published' }));
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsupported_claim_use'));
+  });
+
+  test('raw artifact path inference cannot be bypassed with custom type', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      path: 'artifacts/shot.png',
+      type: 'custom',
+      visibility: 'repo_tracked',
+      safe_to_publish: false,
+    };
+    bundle.observations[0].artifact_refs = ['artifacts/shot.png'];
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_raw_artifact'));
+  });
+
+  test('public proof claims require matching sanitized privacy metadata', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle({ proof_claim: 'public' });
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      visibility: 'public',
+      sensitivity: 'sanitized',
+      safe_to_publish: true,
+    };
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_proof_privacy'));
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_observation_privacy'));
+  });
+
+  test('public raw artifact claims require sanitized artifact sensitivity', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle({ proof_claim: 'public' });
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      visibility: 'public',
+      sensitivity: 'secret',
+      safe_to_publish: true,
+    };
+    bundle.privacy.raw_artifacts_safe_to_publish = true;
+    bundle.observations[0].privacy.raw_artifacts_safe_to_publish = true;
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_artifact_sensitivity'));
+  });
+
+  test('explicitly safe-to-publish proof metadata can support public claims', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle({ proof_claim: 'public' });
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      visibility: 'public',
+      sensitivity: 'sanitized',
+      safe_to_publish: true,
+    };
+    bundle.privacy.raw_artifacts_safe_to_publish = true;
+    bundle.observations[0].privacy.raw_artifacts_safe_to_publish = true;
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, true, JSON.stringify(result.errors));
+  });
+
+  test('ui-proof validate command validates bundle files directly', async () => {
+    await runCliAsMain(tmpDir, ['init', '--auto', '--tools', 'agents']);
+    const bundlePath = path.join(tmpDir, '.planning', 'ui-proof.json');
+    fs.writeFileSync(bundlePath, JSON.stringify(validBundle(), null, 2));
+
+    const result = await runCliAsMain(tmpDir, ['ui-proof', 'validate', '.planning/ui-proof.json']);
+    assert.strictEqual(result.exitCode, 0, result.output);
+    const parsed = JSON.parse(result.output);
+    assert.strictEqual(parsed.valid, true);
+  });
+
+  test('ui-proof validate rejects unsupported claim flags', async () => {
+    await runCliAsMain(tmpDir, ['init', '--auto', '--tools', 'agents']);
+    const bundlePath = path.join(tmpDir, '.planning', 'ui-proof.json');
+    fs.writeFileSync(bundlePath, JSON.stringify(validBundle(), null, 2));
+
+    const result = await runCliAsMain(tmpDir, ['ui-proof', 'validate', '.planning/ui-proof.json', '--claim', 'published']);
+    assert.strictEqual(result.exitCode, 1);
+    assert.match(result.output, /Unsupported UI proof claim use: published/);
+  });
+
+  test('ui-proof validate claim flag still enforces public claim artifact safety', async () => {
+    await runCliAsMain(tmpDir, ['init', '--auto', '--tools', 'agents']);
+    const bundlePath = path.join(tmpDir, '.planning', 'ui-proof.json');
+    fs.writeFileSync(bundlePath, JSON.stringify(validBundle(), null, 2));
+
+    const result = await runCliAsMain(tmpDir, ['ui-proof', 'validate', '.planning/ui-proof.json', '--claim', 'release']);
+    assert.strictEqual(result.exitCode, 1);
+    const parsed = JSON.parse(result.output);
+    assert.ok(parsed.errors.some((error) => error.code === 'unsafe_public_proof_claim'));
   });
 });
 

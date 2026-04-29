@@ -209,6 +209,9 @@ Before reporting a task complete:
 - if a UI change is involved, verify the relevant rendering path
 - if an API change is involved, hit the endpoint or targeted integration path
 - A task is not complete because code was written. It is complete when the intended verification path actually passes.
+
+### UI Proof Execution
+If the plan defines UI proof slots, record observed proof against the exact claim, route/state, observation, evidence kind, artifact path or manual step, privacy metadata, result, and claim limit before claiming task completion. Artifact metadata must include `visibility`, `retention`, `sensitivity`, and `safe_to_publish`; raw screenshots, traces, videos, DOM snapshots, and reports are local-only/unsafe by default and cannot back public, tracked, delivery, release, or publication proof claims. Use `gsdd ui-proof validate <path>` or `gsdd health` when a bundle exists. Artifact count, source comments, AST/cAST findings, semantic search, and Semble-like retrieval are not proof. Missing or weakly linked evidence must be recorded as proof debt, waiver, deferment, or reduced claim language rather than satisfied proof.
 </execution_loop>
 
 <checkpoint_protocol>

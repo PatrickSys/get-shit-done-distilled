@@ -13,6 +13,7 @@ const HELPER_LIB_FILES = Object.freeze([
   'lifecycle-state.mjs',
   'phase.mjs',
   'session-fingerprint.mjs',
+  'ui-proof.mjs',
   'workspace-root.mjs',
 ]);
 
@@ -47,6 +48,7 @@ import { cmdFileOp } from './lib/file-ops.mjs';
 import { cmdLifecyclePreflight } from './lib/lifecycle-preflight.mjs';
 import { cmdPhaseStatus } from './lib/phase.mjs';
 import { cmdSessionFingerprint } from './lib/session-fingerprint.mjs';
+import { cmdUiProof } from './lib/ui-proof.mjs';
 import { bootstrapHelperWorkspace, consumeWorkspaceRootArg, resolveWorkspaceContext } from './lib/workspace-root.mjs';
 
 const COMMANDS = {
@@ -54,6 +56,7 @@ const COMMANDS = {
   'lifecycle-preflight': cmdLifecyclePreflight,
   'phase-status': cmdPhaseStatus,
   'session-fingerprint': cmdSessionFingerprint,
+  'ui-proof': cmdUiProof,
 };
 
 function printHelp() {
@@ -71,6 +74,8 @@ function printHelp() {
     '                               Example: node .planning/bin/gsdd.mjs lifecycle-preflight verify 1 --expects-mutation phase-status',
     '  session-fingerprint write',
     '                               Rebaseline planning-state drift after reviewing changed planning files',
+    '  ui-proof validate <path> [--claim <public|publication|tracked|delivery|release>]',
+    '                               Validate UI proof metadata; use --claim for stronger proof uses',
     '',
     'Advanced option:',
     '  --workspace-root <path>     Override workspace root discovery before or after the subcommand',

@@ -123,6 +123,8 @@ Do not return a flat symptom list when the same underlying breakage explains mul
 
 Visual correctness, live interaction quality, and some external integrations still need explicit human checks.
 
+For UI proof slots, fail closed unless observed proof is matched to the exact claim, route/state, observation, evidence kind, artifact path or manual step, privacy metadata, result, and claim limit. Artifact metadata must include `visibility`, `retention`, `sensitivity`, and `safe_to_publish`; local-only or unsafe artifacts cannot back public, tracked, delivery, release, or publication proof claims, and `gsdd ui-proof validate`/`gsdd health` metadata failures block the stronger proof claim. Screenshots, traces, reports, Gherkin, a11y scans, E2E outputs, manual notes, source annotations, AST/cAST findings, semantic search, comments, and Semble-like retrieval do not satisfy proof by existence alone. Human acceptance records risk, waiver, deferment, proof debt, or a narrowed claim; it does not upgrade missing or mismatched non-human proof to `satisfied`.
+
 ## Step 9: Determine overall status
 
 - `passed` when all programmatic checks pass and no human-only checks remain
