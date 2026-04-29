@@ -187,6 +187,8 @@ Commands:
   lifecycle-preflight <surface> [phase]
                               Inspect deterministic lifecycle gate results for a workflow surface
   session-fingerprint write    Rebaseline planning-state drift after reviewing changed planning files
+  ui-proof validate <path> [--claim <public|publication|tracked|delivery|release>]
+                              Validate UI proof metadata; use --claim for stronger proof uses
   help                        Show this summary
 
 Platforms (for --tools):
@@ -257,6 +259,7 @@ Advanced/internal helpers (kept available, but not the primary first-run user st
   lifecycle-preflight       Inspect deterministic lifecycle gate results for a workflow surface
   session-fingerprint       Rebaseline the local planning-state fingerprint after review
   phase-status              Update ROADMAP.md phase status through the local helper surface
+  ui-proof                  Validate UI proof metadata; use --claim for stronger proof uses
   file-op                   Deterministic workspace-confined file copy/delete/text mutation
 `;
 }

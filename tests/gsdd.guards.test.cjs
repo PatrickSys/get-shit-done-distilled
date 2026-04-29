@@ -3463,6 +3463,86 @@ describe('G53 - Deliberate Subagent Contract', () => {
   });
 });
 
+describe('G55 - UI Proof Contract', () => {
+  const template = fs.readFileSync(path.join(ROOT, 'distilled', 'templates', 'ui-proof.md'), 'utf-8');
+  const planContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'plan.md'), 'utf-8');
+  const executeContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'execute.md'), 'utf-8');
+  const quickContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'quick.md'), 'utf-8');
+  const verifyContent = fs.readFileSync(path.join(ROOT, 'distilled', 'workflows', 'verify.md'), 'utf-8');
+  const plannerRole = fs.readFileSync(path.join(ROOT, 'agents', 'planner.md'), 'utf-8');
+  const executorRole = fs.readFileSync(path.join(ROOT, 'agents', 'executor.md'), 'utf-8');
+  const verifierRole = fs.readFileSync(path.join(ROOT, 'agents', 'verifier.md'), 'utf-8');
+  const planChecker = fs.readFileSync(path.join(ROOT, 'distilled', 'templates', 'delegates', 'plan-checker.md'), 'utf-8');
+
+  test('template preserves planned slot and observed bundle fields', () => {
+    for (const token of [
+      'ui_proof_slots',
+      'no_ui_proof_rationale',
+      'claim',
+      'route_state',
+      'required_evidence_kinds',
+      'minimum_observations',
+      'environment',
+      'viewport',
+      'manual_acceptance_required',
+      'claim_limit',
+      'requirement_ids',
+      'slot_ids',
+      'evidence_inputs',
+      'commands_or_manual_steps',
+      'observations',
+      'artifacts',
+      'privacy',
+      'result',
+      'claim_status',
+      'claim_limits',
+    ]) {
+      assert.match(template, new RegExp(token), `ui-proof.md must include ${token}. FIX: Restore the locked UI proof schema field.`);
+    }
+    assert.match(template, /```json/, 'ui-proof.md must use fenced JSON for observed proof bundle validation. FIX: Keep JSON canonical.');
+  });
+
+  test('template defines comparison statuses and unchanged evidence kinds', () => {
+    assert.match(template, /code`, `test`, `runtime`, `delivery`, and `human`/, 'ui-proof.md must preserve the five stable evidence kinds.');
+    for (const status of ['satisfied', 'partial', 'missing', 'waived', 'deferred', 'not_applicable']) {
+      assert.match(template, new RegExp('`' + status + '`'), `ui-proof.md must define comparison status ${status}.`);
+    }
+    assert.match(template, /not new evidence kinds/i, 'UI artifacts must not become new evidence kinds.');
+  });
+
+  test('workflow and role sources preserve UI proof planning execution and verification contracts', () => {
+    assert.match(planContent, /<ui_proof_planning>/, 'plan.md must include UI proof planning contract.');
+    assert.match(planContent, /ui_proof_slots[\s\S]*no_ui_proof_rationale/, 'plan.md must require slots or no-UI-proof rationale.');
+    assert.match(plannerRole, /<ui_proof_planning>/, 'planner role must include UI proof planning guidance.');
+    assert.match(executeContent, /UI Proof Execution/, 'execute.md must include UI proof execution guidance.');
+    assert.match(executorRole, /UI Proof Execution/, 'executor role must include UI proof execution guidance.');
+    assert.match(quickContent, /ui_proof_slots/, 'quick.md must preserve proportional UI proof slots.');
+    assert.match(verifyContent, /<ui_proof_comparison>/, 'verify.md must include planned-vs-observed UI proof comparison.');
+    assert.match(verifierRole, /For UI proof slots, fail closed/i, 'verifier role must fail closed on weak UI proof.');
+  });
+
+  test('guardrails reject agent-only proof, artifact theater, and unsafe public claims', () => {
+    const combined = [template, planContent, executeContent, quickContent, verifyContent, plannerRole, executorRole, verifierRole, planChecker].join('\n');
+    for (const phrase of [
+      /visual taste/i,
+      /accessibility judgment/i,
+      /baseline acceptance/i,
+      /subjective polish\/layout quality/i,
+      /privacy publication/i,
+      /does not replace required `code`, `test`, `runtime`, or `delivery` evidence/i,
+      /agent-only `looks good` closure/i,
+      /artifact-count proof|Artifact count is never proof/i,
+      /visibility[\s\S]*retention[\s\S]*sensitivity[\s\S]*safe_to_publish/,
+      /observation privacy fields|observation privacy metadata|privacy metadata/i,
+      /`passed`, `failed`, `partial`, `waived`, `deferred`, or `not_applicable`/,
+      /local-only or `safe_to_publish: false` artifacts|local-only or unsafe artifacts/i,
+      /Do not install Playwright, Cypress, Cucumber, Storybook, browser MCP, CI, or visual-regression tooling by default|do not scaffold Playwright, Cypress, Cucumber, Storybook, CI, browser MCP, or visual-regression tooling by default/i,
+    ]) {
+      assert.match(combined, phrase, `UI proof contract must preserve guardrail ${phrase}.`);
+    }
+  });
+});
+
 describe('G42 - Public Proof Export', () => {
   test('public proof and support entrypoints are git-tracked before repo truth advertises them', () => {
     const requiredTrackedPaths = [

@@ -34,6 +34,8 @@ Verify these dimensions:
 - `anti_regression_capture`: known prior failures, compatibility risks, and behavior that must not regress are represented in tasks or verification.
 - `escalation_integrity`: tasks include checkpoints or escalation when evidence, permissions, user decisions, or risky ambiguity are required.
 - `closure_honesty`: the plan's done criteria and evidence limits support only claims that execution can actually prove.
+- `closure_honesty`: for UI proof, reject agent-only `looks good` closure, artifact-count proof, unsupported evidence kinds, and human acceptance that converts missing/mismatched non-human evidence into `satisfied` proof. Waiver, deferment, proof debt, or narrowed-claim language is acceptable only when the stronger UI claim is not treated as proven.
+- `closure_honesty`: for UI proof privacy, require artifact `visibility`, `retention`, `sensitivity`, and `safe_to_publish`, require `gsdd ui-proof validate` or `gsdd health` when bundle metadata exists, and reject public/tracked/delivery/publication proof claims backed by local-only or `safe_to_publish: false` artifacts.
 - `high_leverage_review`: high-leverage surfaces have a second-pass review or equivalent contradiction/staleness check before completion.
 - `approach_alignment`: when APPROACH.md is provided, verify that plan tasks implement the chosen approaches from the user's decisions. Check:
   - **Alignment proof valid?** When `workflow.discuss` is `true`, APPROACH.md must record `alignment_status: user_confirmed` or `alignment_status: approved_skip`. Missing alignment proof, unknown status, or agent-discretion-only proof -> `blocker` with `fix_hint` telling the planner to revise APPROACH.md through real user alignment or an explicit user-approved skip.

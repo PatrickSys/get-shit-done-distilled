@@ -135,6 +135,10 @@ Also verify milestone truth is not self-contradictory across the planning surfac
 If any of these are missing or contradictory, STOP. Report the exact missing contract field or contradiction. Do not improvise a stronger phase contract from chat context alone.
 </phase_contract_gate>
 
+<ui_proof_planning>
+For UI-sensitive work, include compact `ui_proof_slots` with `slot_id`, optional `requirement_id`, `claim`, `route_state`, fixed evidence kinds (`code`, `test`, `runtime`, `delivery`, `human`), `minimum_observations`, `environment`, `viewport`, `manual_acceptance_required`, and `claim_limit`; otherwise set `no_ui_proof_rationale`.
+Do not create slots for backend-only, CLI-only, docs-only, or refactor-only work unless the plan claims a visible UI outcome. Evidence must later match claim, route/state, observation, artifact path, evidence kind, privacy metadata, result, and claim limit; local-only or unsafe artifacts cannot support public, publication, tracked, delivery, or release proof claims. Human approval does not replace required `code`, `test`, `runtime`, or `delivery` evidence.
+</ui_proof_planning>
 <goal_backward_planning>
 Plan backward from success criteria.
 
@@ -192,6 +196,8 @@ anti_regression_targets:
   - Existing session middleware behavior remains unchanged for already-supported routes.
 known_unknowns:
   - Exact copy wording for auth errors may still need product confirmation.
+ui_proof_slots: []
+no_ui_proof_rationale: Not UI-sensitive; scoped work does not claim a visible UI outcome.
 high_leverage_surfaces: []
 second_pass_required: false
 closure_claim_limit: Do not claim phase completion until verification satisfies the evidence contract for the scoped truths.
@@ -221,6 +227,7 @@ Schema rules:
 - `files-modified` should list the files this plan is expected to touch
 - `must_haves` must trace back to roadmap success criteria
 - `non_goals`, `hard_boundaries`, `escalation_triggers`, and `closure_claim_limit` must not be empty
+- include `ui_proof_slots` for UI-sensitive work or `no_ui_proof_rationale` otherwise
 - `leverage.lost`, `leverage.kept`, and `leverage.gained` must all be explicit
 - `second_pass_required: true` if `high_leverage_surfaces` is non-empty
 - `parallelism_budget.max_concurrent_plans` must stay `1` unless the plan proves disjoint write ownership
@@ -607,7 +614,7 @@ Planning is done when all of these are true:
 - [ ] Plan self-check passed
 - [ ] Success criteria from `ROADMAP.md` are represented as must-haves
 - [ ] Goal-backward derivation from criteria to artifacts to key links to tasks is explicit
-- [ ] Every plan has frontmatter with `phase`, `plan`, `type`, `wave`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `non_goals`, `hard_boundaries`, `escalation_triggers`, `approval_gates`, `anti_regression_targets`, `closure_claim_limit`, `parallelism_budget`, `leverage`, and `must_haves`
+- [ ] Every plan has frontmatter with `phase`, `plan`, `type`, `wave`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `non_goals`, `hard_boundaries`, `escalation_triggers`, `approval_gates`, `anti_regression_targets`, `ui_proof_slots` or `no_ui_proof_rationale`, `closure_claim_limit`, `parallelism_budget`, `leverage`, and `must_haves`
 - [ ] Every plan frontmatter records `runtime` and `assurance`
 - [ ] Every plan records checker outcome in a structured `<checks>` block
 - [ ] Every task has XML structure with `id`, `type`, `files`, `action`, `verify`, and `done`
@@ -620,18 +627,12 @@ Planning is done when all of these are true:
 
 <completion>
 Report to the user what was accomplished, then present the next step:
-
 ---
 **Completed:** Phase planning — created `.planning/phases/{phase_dir}/{plan_id}-PLAN.md`.
 **Planning stops here:** `gsdd-plan` ends after the plan artifact is written. Do not start implementation in this same run, and do not treat imperative handoff text as execution authorization.
 Installed generated runtime surfaces are trusted through rendering, not reviewer memory: `npx -y gsdd-cli health` compares any local generated skill/adapter surfaces against current render output, and `npx -y gsdd-cli update` regenerates them when they drift. Bare `gsdd health` / `gsdd update` are equivalent only when globally installed.
-
 **Next workflow:** `/gsdd-execute` — start execution in a separate run when the user explicitly wants implementation to begin
-
-Also available:
-- `/gsdd-plan` — create additional plans for the same phase (if multi-wave)
-- `/gsdd-progress` — check overall project status
-
+Also available: `/gsdd-plan` for another wave, or `/gsdd-progress` for overall status.
 Consider clearing context before starting the next workflow for best results.
 ---
 </completion>

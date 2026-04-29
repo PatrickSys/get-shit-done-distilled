@@ -346,6 +346,7 @@ Workflows are agent skills or commands, not plain shell utilities. How you invok
 | `npx -y gsdd-cli init [--tools <platform>]` | Set up `.planning/`, generate skills/adapters |
 | `npx -y gsdd-cli update [--tools <platform>] [--templates]` | Regenerate skills/adapters and refresh the repo-local helper runtime; `--templates` refreshes `.planning/templates/` and role contracts |
 | `npx -y gsdd-cli health [--json]` | Check workspace integrity and generated-surface freshness (healthy/degraded/broken) |
+| `npx -y gsdd-cli ui-proof validate <path> [--claim <public\|publication\|tracked\|delivery\|release>]` | Validate UI proof bundle metadata without requiring browser tooling; use `--claim` only when validating that stronger proof use |
 | `npx -y gsdd-cli file-op <copy\|delete\|regex-sub>` | Run deterministic workspace-confined file copy, delete, and regex substitution |
 | `npx -y gsdd-cli find-phase [N]` | Show phase info as JSON (for agent consumption) |
 | `npx -y gsdd-cli phase-status <N> <status>` | Update a single ROADMAP phase status through the status-aware helper |

@@ -164,6 +164,11 @@ Before reporting a task complete:
 - if an API change is involved, hit the endpoint or targeted integration path
 - A task is not complete because code was written. It is complete when the intended verification path actually passes.
 
+### UI Proof Execution
+If the plan defines non-empty `ui_proof_slots`, create or update the observed UI proof bundle before claiming completion; required top-level fields are `proof_bundle_version`, `scope`, `route_state`, `environment`, `viewport`, `evidence_inputs`, `commands_or_manual_steps`, `observations`, `artifacts`, `privacy`, `result`, and `claim_limits`.
+Use existing UI tooling when available and cheap; manual/browser proof is acceptable when it records route/state, steps, observations, artifact references, and claim limits. Do not install Playwright, Cypress, Cucumber, Storybook, browser MCP, CI, or visual-regression tooling by default. Screenshots, traces, videos, reports, accessibility scans, Gherkin, visual diffs, and manual notes map onto existing evidence kinds, not new evidence kinds; reference raw artifacts by path/link instead of storing them inline.
+Each artifact entry must include `visibility`, `retention`, `sensitivity`, and `safe_to_publish`; raw screenshots, traces, videos, DOM snapshots, and reports default to `local_only` and `safe_to_publish: false` unless explicitly sanitized. Use `gsdd ui-proof validate <path>` when bundle metadata exists, adding `--claim <...>` only when relying on the bundle for public, tracked, delivery, release, or publication proof. Visual taste, accessibility judgment, baseline acceptance, subjective polish/layout quality, and privacy publication decisions require human evidence or explicit waiver; artifact count, source comments, AST/cAST findings, semantic search, and Semble-like retrieval are not proof. If evidence does not match the slot claim, route/state, observation, artifact path/manual step, privacy metadata, result, and claim limit, record proof debt, waiver, deferment, or reduced claim language rather than `satisfied` proof.
+
 ### Git Guidance
 
 ```bash
@@ -440,20 +445,14 @@ Execution is done when all of these are true:
 </success_criteria>
 
 <completion>
-Report to the user what was accomplished, then present the next step:
-
+Report what was accomplished, then present the next step:
 ---
 **Completed:** Plan execution — created `.planning/phases/{phase_dir}/{plan_id}-SUMMARY.md`.
-
 **Next step:** Check `.planning/config.json` → `workflow.verifier`:
 - If `true`: run `/gsdd-verify` — verify that the phase goal was achieved
 - If `false` (or key missing): run `/gsdd-progress` — check status and route to the next phase
 
-Also available:
-- `/gsdd-plan` — plan the next wave (if more plans remain in this phase)
-- `/gsdd-quick` — handle a sub-hour task outside the phase cycle
-- `/gsdd-pause` — save context for later if stopping work
-
+Also available: `/gsdd-plan` for the next wave, `/gsdd-quick` for sub-hour work, or `/gsdd-pause` to save context.
 Consider clearing context before starting the next workflow for best results.
 ---
 </completion>

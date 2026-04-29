@@ -23,7 +23,7 @@ export function installProjectTemplates({ planningDir, distilledDir, agentsDir }
           console.log(`  - WARN: missing expected template subdir: ${subdir}/`);
         }
       }
-      const expectedRootFiles = ['spec.md', 'roadmap.md', 'auth-matrix.md'];
+      const expectedRootFiles = ['spec.md', 'roadmap.md', 'auth-matrix.md', 'ui-proof.md'];
       for (const file of expectedRootFiles) {
         if (!existsSync(join(localTemplatesDir, file))) {
           console.log(`  - WARN: missing expected root template file: ${file}`);

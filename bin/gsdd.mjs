@@ -19,6 +19,7 @@ import { cmdFileOp } from './lib/file-ops.mjs';
 import { createCmdHealth } from './lib/health.mjs';
 import { cmdLifecyclePreflight } from './lib/lifecycle-preflight.mjs';
 import { cmdSessionFingerprint } from './lib/session-fingerprint.mjs';
+import { cmdUiProof } from './lib/ui-proof.mjs';
 import { resolveWorkspaceContext } from './lib/workspace-root.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -107,6 +108,7 @@ const COMMANDS = {
   'file-op': cmdFileOp,
   'lifecycle-preflight': cmdLifecyclePreflight,
   'session-fingerprint': cmdSessionFingerprint,
+  'ui-proof': cmdUiProof,
   'find-phase': cmdFindPhase,
   'phase-status': cmdPhaseStatus,
   verify: cmdVerify,
@@ -132,8 +134,5 @@ async function runCli(cliCommand = command, ...cliArgs) {
   await COMMANDS[cliCommand](...normalizedArgs);
 }
 
-if (IS_MAIN) {
-  await runCli();
-}
-
-export { cmdHelp, cmdInit, cmdUpdate, cmdModels, cmdHealth, cmdFileOp, cmdLifecyclePreflight, cmdSessionFingerprint, cmdFindPhase, cmdPhaseStatus, cmdVerify, cmdScaffold, runCli, FRAMEWORK_VERSION, createCliContext };
+if (IS_MAIN) await runCli();
+export { cmdHelp, cmdInit, cmdUpdate, cmdModels, cmdHealth, cmdFileOp, cmdLifecyclePreflight, cmdSessionFingerprint, cmdUiProof, cmdFindPhase, cmdPhaseStatus, cmdVerify, cmdScaffold, runCli, FRAMEWORK_VERSION, createCliContext };

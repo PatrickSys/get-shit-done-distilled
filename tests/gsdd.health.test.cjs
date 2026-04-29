@@ -47,6 +47,7 @@ function writeAlignedTruthFixtures() {
 | E7 | ERROR | x |
 | E8 | ERROR | x |
 | E9 | ERROR | x |
+| E10 | ERROR | x |
 | W1 | WARN | x |
 | W2 | WARN | x |
 | W3 | WARN | x |
@@ -144,6 +145,50 @@ function writeForkHonestAlignmentFixtures() {
     '- [ ] **Phase 27: Release Packaging Audit** — [PACK-01]',
     '',
   ].join('\n'));
+}
+
+function validUiProofBundle(overrides = {}) {
+  return {
+    proof_bundle_version: 1,
+    scope: {
+      work_item: 'quick-001-example-ui',
+      requirement_ids: ['quick-001'],
+      slot_ids: ['quick-001-ui-01'],
+      claim: 'Local reviewer can inspect changed UI proof metadata.',
+    },
+    route_state: { route: '/example', state: 'synthetic user' },
+    environment: { app_url: 'http://localhost:3000', data_state: 'synthetic' },
+    viewport: { width: 1280, height: 720 },
+    evidence_inputs: { kinds: ['test', 'runtime'], tools_used: ['manual'] },
+    commands_or_manual_steps: [{ manual_step: 'Open /example.', result: 'passed' }],
+    observations: [{
+      observation: 'Changed state is visible.',
+      claim: 'Local reviewer can inspect the changed UI proof metadata.',
+      route_state: { route: '/example', state: 'synthetic user' },
+      evidence_kind: 'runtime',
+      artifact_refs: ['artifacts/report.html'],
+      privacy: { data_classification: 'synthetic', raw_artifacts_safe_to_publish: false, retention: 'temporary_review' },
+      result: 'passed',
+      claim_limit: 'Does not prove unrelated UI states.',
+    }],
+    artifacts: [{
+      path: 'artifacts/report.html',
+      type: 'report',
+      visibility: 'local_only',
+      retention: 'temporary_review',
+      sensitivity: 'synthetic',
+      safe_to_publish: false,
+    }],
+    privacy: {
+      data_classification: 'synthetic',
+      redactions: [],
+      raw_artifacts_safe_to_publish: false,
+      retention: 'Keep raw artifacts only while needed for review.',
+    },
+    result: { claim_status: 'passed', comparison_status_by_slot: { 'quick-001-ui-01': 'satisfied' } },
+    claim_limits: ['Does not prove unrelated UI states.'],
+    ...overrides,
+  };
 }
 
 describe('Health — pre-init guard', () => {
@@ -290,6 +335,52 @@ describe('Health — ERROR: missing research/codebase/root templates', () => {
     const result = await runCliAsMain(tmpDir, ['health', '--json']);
     const json = JSON.parse(result.output);
     assert.ok(json.errors.some((e) => e.id === 'E8' && e.message.includes('spec.md')));
+  });
+
+  test('ui-proof root template removed → E8', async () => {
+    await initWorkspace();
+    fs.rmSync(path.join(tmpDir, '.planning', 'templates', 'ui-proof.md'), { force: true });
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+    assert.ok(json.errors.some((e) => e.id === 'E8' && e.message.includes('ui-proof.md')));
+  });
+});
+
+describe('Health — ERROR: invalid UI proof bundle metadata', () => {
+  test('invalid known UI proof bundle → E10 without mutating files', async () => {
+    await initWorkspace();
+    const bundlePath = path.join(tmpDir, '.planning', 'ui-proof.json');
+    const invalidBundle = validUiProofBundle({ proof_claim: 'public' });
+    fs.writeFileSync(bundlePath, JSON.stringify(invalidBundle, null, 2));
+    const before = fs.readFileSync(bundlePath, 'utf-8');
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.strictEqual(json.status, 'broken');
+    assert.ok(json.errors.some((e) => e.id === 'E10' && e.message.includes('unsafe_public_proof_claim')));
+    assert.strictEqual(fs.readFileSync(bundlePath, 'utf-8'), before, 'health must not mutate UI proof bundles');
+  });
+
+  test('invalid nested brownfield UI proof bundle → E10', async () => {
+    await initWorkspace();
+    writeFile('.planning/brownfield-change/change-001/UI-PROOF.md', '```json\n{"proof_bundle_version":1}\n```\n');
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.strictEqual(result.exitCode, 1);
+    assert.ok(json.errors.some((e) => e.id === 'E10' && e.message.includes('brownfield-change/change-001/UI-PROOF.md')));
+  });
+
+  test('valid local-only known UI proof bundle → no E10', async () => {
+    await initWorkspace();
+    fs.writeFileSync(path.join(tmpDir, '.planning', 'ui-proof.json'), JSON.stringify(validUiProofBundle(), null, 2));
+
+    const result = await runCliAsMain(tmpDir, ['health', '--json']);
+    const json = JSON.parse(result.output);
+
+    assert.ok(!json.errors.some((e) => e.id === 'E10'));
   });
 });
 

@@ -485,6 +485,13 @@
 - GSD comparison source: `get-shit-done/workflows/new-project.md`
 - `tests/gsdd.guards.test.cjs`, `tests/gsdd.invariants.test.cjs`
 
+## D62 — Repo-Native UI Proof Contract
+- `distilled/templates/ui-proof.md`
+- `distilled/workflows/plan.md`, `distilled/workflows/execute.md`, `distilled/workflows/quick.md`, `distilled/workflows/verify.md`
+- `agents/planner.md`, `agents/executor.md`, `agents/verifier.md`, `distilled/templates/delegates/plan-checker.md`
+- `bin/lib/templates.mjs`, `bin/lib/ui-proof.mjs`, `bin/lib/health.mjs`, `bin/lib/rendering.mjs`
+- `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.health.test.cjs`, `tests/gsdd.init.test.cjs`
+
 ---
 
 ## Maintenance

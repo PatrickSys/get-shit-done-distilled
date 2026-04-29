@@ -153,6 +153,14 @@ Any checkpoint must be justified by the task itself, not by planner caution or h
 Any plan containing `checkpoint:*` must set `autonomous: false`.
 </task_contract>
 
+<ui_proof_planning>
+For UI-sensitive work, plan proof slots that can later be matched exactly to claim, route/state, observation, evidence kind, artifact path or manual step, privacy metadata, result, and claim limit. Use only the stable evidence kinds `code`, `test`, `runtime`, `delivery`, and `human`.
+
+Require observed artifacts to carry `visibility`, `retention`, `sensitivity`, and `safe_to_publish`; when a planned slot is meant to support public, publication, tracked, delivery, or release proof, say to validate the observed bundle with `gsdd ui-proof validate <path> --claim <...>`. `gsdd ui-proof validate`/`gsdd health` must catch invalid bundle metadata when present.
+
+Do not let source annotations, AST/cAST findings, semantic search, comments, or Semble-like retrieval satisfy proof slots; they are discovery hints only. Human acceptance can narrow or waive a claim and record proof debt, but it must not turn missing or mismatched non-human evidence into `satisfied` proof.
+</ui_proof_planning>
+
 <dependency_graph_example>
 Example dependency graph:
 
@@ -184,7 +192,7 @@ Wave rule:
 Write one or more `PLAN.md` files to the phase directory.
 
 Keep the current GSDD schema exactly:
-- frontmatter keys: `phase`, `plan`, `type`, `wave`, `runtime`, `assurance`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `non_goals`, `hard_boundaries`, `escalation_triggers`, `approval_gates`, `anti_regression_targets`, `known_unknowns`, `high_leverage_surfaces`, `second_pass_required`, `closure_claim_limit`, `parallelism_budget`, `leverage`, `must_haves`
+- frontmatter keys: `phase`, `plan`, `type`, `wave`, `runtime`, `assurance`, `depends_on`, `files-modified`, `autonomous`, `requirements`, `non_goals`, `hard_boundaries`, `escalation_triggers`, `approval_gates`, `anti_regression_targets`, `known_unknowns`, `ui_proof_slots`, `no_ui_proof_rationale`, `high_leverage_surfaces`, `second_pass_required`, `closure_claim_limit`, `parallelism_budget`, `leverage`, `must_haves`
 - typed tasks with `files`, `action`, `verify`, and `done`
 
 Typed frontmatter example:
@@ -215,6 +223,8 @@ anti_regression_targets:
   - Existing session middleware behavior remains unchanged for already-supported routes.
 known_unknowns:
   - Exact copy wording for auth errors may still need product confirmation.
+ui_proof_slots: []
+no_ui_proof_rationale: Not UI-sensitive; scoped work does not claim a visible UI outcome.
 high_leverage_surfaces: []
 second_pass_required: false
 closure_claim_limit: Do not claim phase completion until verification satisfies the evidence contract for the scoped truths.
