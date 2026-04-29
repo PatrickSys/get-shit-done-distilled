@@ -2485,6 +2485,19 @@ describe('Phase 57 UI proof validation helper', () => {
     assert.ok(result.errors.some((error) => error.code === 'unknown_comparison_slot'));
   });
 
+  test('commands and manual steps must be structured with a result', async () => {
+    const mod = await importUiProofModule();
+    const stringStep = validBundle({ commands_or_manual_steps: ['looks good'] });
+    const missingAction = validBundle({ commands_or_manual_steps: [{ result: 'passed' }] });
+    const missingResult = validBundle({ commands_or_manual_steps: [{ manual_step: 'Open /example.' }] });
+    const invalidResult = validBundle({ commands_or_manual_steps: [{ command: 'npm test', result: 'ok' }] });
+
+    assert.ok(mod.validateUiProofBundle(stringStep).errors.some((error) => error.code === 'invalid_proof_step'));
+    assert.ok(mod.validateUiProofBundle(missingAction).errors.some((error) => error.code === 'missing_proof_step_action'));
+    assert.ok(mod.validateUiProofBundle(missingResult).errors.some((error) => error.code === 'missing_proof_step_result'));
+    assert.ok(mod.validateUiProofBundle(invalidResult).errors.some((error) => error.code === 'invalid_proof_step_result'));
+  });
+
   test('observation artifact references must resolve to declared artifacts', async () => {
     const mod = await importUiProofModule();
     const bundle = validBundle();
@@ -2493,6 +2506,20 @@ describe('Phase 57 UI proof validation helper', () => {
     const result = mod.validateUiProofBundle(bundle);
     assert.strictEqual(result.valid, false);
     assert.ok(result.errors.some((error) => error.code === 'unknown_artifact_ref'));
+  });
+
+  test('artifact references must stay workspace-relative or use http URLs', async () => {
+    const mod = await importUiProofModule();
+    const traversal = validBundle();
+    traversal.artifacts[0].path = '../../outside/report.html';
+    traversal.observations[0].artifact_refs = ['../../outside/report.html'];
+    const fileUrl = validBundle();
+    fileUrl.artifacts[0].url = 'file:///Users/example/private/report.html';
+    delete fileUrl.artifacts[0].path;
+    fileUrl.observations[0].artifact_refs = ['file:///Users/example/private/report.html'];
+
+    assert.ok(mod.validateUiProofBundle(traversal).errors.some((error) => error.code === 'invalid_artifact_ref_location'));
+    assert.ok(mod.validateUiProofBundle(fileUrl).errors.some((error) => error.code === 'invalid_artifact_ref_location'));
   });
 
   test('observations must include scoped support metadata', async () => {
@@ -2505,6 +2532,14 @@ describe('Phase 57 UI proof validation helper', () => {
     assert.strictEqual(result.valid, false);
     assert.ok(result.errors.some((error) => error.path === 'observations[0].claim'));
     assert.ok(result.errors.some((error) => error.path === 'observations[0].artifact_refs'));
+  });
+
+  test('non-object observations fail instead of being skipped', async () => {
+    const mod = await importUiProofModule();
+    const result = mod.validateUiProofBundle(validBundle({ observations: ['looks good'] }));
+
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'invalid_observation'));
   });
 
   test('observation privacy and result status are schema-checked', async () => {
@@ -2591,6 +2626,56 @@ describe('Phase 57 UI proof validation helper', () => {
     assert.ok(result.errors.some((error) => error.code === 'unsupported_claim_use'));
   });
 
+  test('raw artifact path inference cannot be bypassed with custom type', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle();
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      path: 'artifacts/shot.png',
+      type: 'custom',
+      visibility: 'repo_tracked',
+      safe_to_publish: false,
+    };
+    bundle.observations[0].artifact_refs = ['artifacts/shot.png'];
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_raw_artifact'));
+  });
+
+  test('public proof claims require matching sanitized privacy metadata', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle({ proof_claim: 'public' });
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      visibility: 'public',
+      sensitivity: 'sanitized',
+      safe_to_publish: true,
+    };
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_proof_privacy'));
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_observation_privacy'));
+  });
+
+  test('public raw artifact claims require sanitized artifact sensitivity', async () => {
+    const mod = await importUiProofModule();
+    const bundle = validBundle({ proof_claim: 'public' });
+    bundle.artifacts[0] = {
+      ...bundle.artifacts[0],
+      visibility: 'public',
+      sensitivity: 'secret',
+      safe_to_publish: true,
+    };
+    bundle.privacy.raw_artifacts_safe_to_publish = true;
+    bundle.observations[0].privacy.raw_artifacts_safe_to_publish = true;
+
+    const result = mod.validateUiProofBundle(bundle);
+    assert.strictEqual(result.valid, false);
+    assert.ok(result.errors.some((error) => error.code === 'unsafe_public_artifact_sensitivity'));
+  });
+
   test('explicitly safe-to-publish proof metadata can support public claims', async () => {
     const mod = await importUiProofModule();
     const bundle = validBundle({ proof_claim: 'public' });
@@ -2600,6 +2685,8 @@ describe('Phase 57 UI proof validation helper', () => {
       sensitivity: 'sanitized',
       safe_to_publish: true,
     };
+    bundle.privacy.raw_artifacts_safe_to_publish = true;
+    bundle.observations[0].privacy.raw_artifacts_safe_to_publish = true;
 
     const result = mod.validateUiProofBundle(bundle);
     assert.strictEqual(result.valid, true, JSON.stringify(result.errors));

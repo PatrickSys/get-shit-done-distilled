@@ -72,7 +72,6 @@ function normalizeArray(value) {
 
 function artifactType(artifact) {
   const explicit = typeof artifact.type === 'string' ? artifact.type.toLowerCase() : '';
-  if (explicit) return explicit;
   const artifactPath = typeof artifact.path === 'string' ? artifact.path.toLowerCase() : '';
   if (/screenshot|\.png$|\.jpe?g$|\.webp$/.test(artifactPath)) return 'screenshot';
   if (/trace|\.zip$/.test(artifactPath)) return 'trace';
@@ -125,10 +124,31 @@ function validateObservationPrivacy(privacy, path, errors) {
   }
 }
 
+function validateCommandsOrManualSteps(bundle, errors) {
+  for (const [index, step] of normalizeArray(bundle?.commands_or_manual_steps).entries()) {
+    const stepPath = `commands_or_manual_steps[${index}]`;
+    if (!isPlainObject(step)) {
+      addError(errors, 'invalid_proof_step', stepPath, 'UI proof command/manual step entry must be an object.', 'Record a command or manual_step plus its result.');
+      continue;
+    }
+    if (!hasValue(step.command) && !hasValue(step.manual_step)) {
+      addError(errors, 'missing_proof_step_action', stepPath, 'UI proof command/manual step must include command or manual_step.', 'Record the exact command or manual step used to generate the observation.');
+    }
+    if (!hasValue(step.result)) {
+      addError(errors, 'missing_proof_step_result', `${stepPath}.result`, 'UI proof command/manual step must include result.', `Record result using: ${CLAIM_STATUSES.join(', ')}.`);
+    } else if (!CLAIM_STATUSES.includes(step.result)) {
+      addError(errors, 'invalid_proof_step_result', `${stepPath}.result`, `Invalid UI proof command/manual step result: ${step.result}`, `Use only: ${CLAIM_STATUSES.join(', ')}.`);
+    }
+  }
+}
+
 function validateObservations(bundle, errors) {
   for (const [index, observation] of normalizeArray(bundle?.observations).entries()) {
-    if (!isPlainObject(observation)) continue;
     const observationPath = `observations[${index}]`;
+    if (!isPlainObject(observation)) {
+      addError(errors, 'invalid_observation', observationPath, 'UI proof observation entry must be an object.', 'Record observation metadata with claim, route_state, evidence_kind, artifact_refs, privacy, result, and claim_limit.');
+      continue;
+    }
     for (const field of REQUIRED_OBSERVATION_FIELDS) requireField(observation, field, observationPath, errors);
     if (hasValue(observation.evidence_kind) && !EVIDENCE_KINDS.includes(observation.evidence_kind)) {
       addError(errors, 'unsupported_evidence_kind', `${observationPath}.evidence_kind`, `Unsupported UI proof observation evidence kind: ${observation.evidence_kind}`, `Use only: ${EVIDENCE_KINDS.join(', ')}.`);
@@ -198,6 +218,22 @@ function artifactReference(artifact) {
   return null;
 }
 
+function validateArtifactReferenceSafety(ref, path, errors) {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(ref)) {
+    if (!/^https?:\/\//i.test(ref)) {
+      addError(errors, 'invalid_artifact_ref_location', path, `UI proof artifact reference uses an unsupported URL scheme: ${ref}`, 'Use a workspace-relative path or an http(s) URL; do not reference local file URLs.');
+    }
+    return;
+  }
+  if (ref.startsWith('//') || isAbsolute(ref) || ref.split(/[\\/]+/).includes('..')) {
+    addError(errors, 'invalid_artifact_ref_location', path, `UI proof artifact reference must stay workspace-relative: ${ref}`, 'Use a relative path under the workspace, or an http(s) URL for external sanitized evidence.');
+  }
+}
+
+function isSanitizedSensitivity(value) {
+  return typeof value === 'string' && /(^|[_\s-])(sanitized|public_safe|public-safe)($|[_\s-])/.test(value.toLowerCase());
+}
+
 function validateArtifacts(bundle, errors, publicClaim) {
   const artifacts = normalizeArray(bundle?.artifacts);
   if (artifacts.length === 0) {
@@ -216,6 +252,7 @@ function validateArtifacts(bundle, errors, publicClaim) {
     if (!ref) {
       addError(errors, 'missing_artifact_ref', artifactPath, 'UI proof artifact must include path or url.', 'Reference raw UI artifacts by path or URL; do not inline them.');
     } else {
+      validateArtifactReferenceSafety(ref, artifactPath, errors);
       artifactRefs.add(ref);
     }
     for (const field of REQUIRED_ARTIFACT_FIELDS) {
@@ -233,12 +270,28 @@ function validateArtifacts(bundle, errors, publicClaim) {
     if (publicClaim && (artifact.visibility === 'local_only' || artifact.safe_to_publish !== true)) {
       addError(errors, 'unsafe_public_proof_claim', artifactPath, 'Public/tracked/delivery UI proof claims cannot rely on local-only or unsafe artifacts.', 'Use local-only claim language, or provide sanitized artifacts with safe_to_publish: true and non-local visibility.');
     }
+    if (publicClaim && isRawUiArtifact(artifact) && !isSanitizedSensitivity(artifact.sensitivity)) {
+      addError(errors, 'unsafe_public_artifact_sensitivity', `${artifactPath}.sensitivity`, 'Public/tracked/delivery raw UI proof artifacts must be classified sanitized.', 'Set sensitivity to a sanitized/public-safe classification after explicit review, or narrow the proof claim.');
+    }
   }
   return artifactRefs;
 }
 
-function validatePrivacy(bundle, errors) {
+function validatePrivacy(bundle, errors, publicClaim) {
   validateObservationPrivacy(bundle.privacy, 'privacy', errors);
+  if (publicClaim && bundle.privacy?.raw_artifacts_safe_to_publish !== true) {
+    addError(errors, 'unsafe_public_proof_privacy', 'privacy.raw_artifacts_safe_to_publish', 'Public/tracked/delivery UI proof claims require bundle privacy metadata to classify raw artifacts safe to publish.', 'Use local-only claim language, or set raw_artifacts_safe_to_publish: true after sanitized/public-safe review.');
+  }
+}
+
+function validatePublicObservationPrivacy(bundle, errors, publicClaim) {
+  if (!publicClaim) return;
+  for (const [index, observation] of normalizeArray(bundle?.observations).entries()) {
+    if (!isPlainObject(observation)) continue;
+    if (observation.privacy?.raw_artifacts_safe_to_publish !== true) {
+      addError(errors, 'unsafe_public_observation_privacy', `observations[${index}].privacy.raw_artifacts_safe_to_publish`, 'Public/tracked/delivery UI proof claims require observation privacy metadata to classify raw artifacts safe to publish.', 'Use local-only claim language, or set raw_artifacts_safe_to_publish: true after sanitized/public-safe review.');
+    }
+  }
 }
 
 function validateObservationArtifactRefs(bundle, artifactRefs, errors) {
@@ -263,14 +316,17 @@ export function validateUiProofBundle(bundle, options = {}) {
 
   for (const field of REQUIRED_BUNDLE_FIELDS) requireField(bundle, field, '', errors);
   for (const field of REQUIRED_SCOPE_FIELDS) requireField(bundle.scope, field, 'scope', errors);
+  const publicClaim = hasPublicClaim(bundle, options);
   validateClaimUses(bundle, options, errors);
   validateEvidenceKinds(bundle, errors);
+  validateCommandsOrManualSteps(bundle, errors);
   validateObservations(bundle, errors);
   validateResult(bundle, errors);
   validateComparisonStatuses(bundle, errors);
   validateClaimLimits(bundle, errors);
-  validatePrivacy(bundle, errors);
-  const artifactRefs = validateArtifacts(bundle, errors, hasPublicClaim(bundle, options));
+  validatePrivacy(bundle, errors, publicClaim);
+  validatePublicObservationPrivacy(bundle, errors, publicClaim);
+  const artifactRefs = validateArtifacts(bundle, errors, publicClaim);
   validateObservationArtifactRefs(bundle, artifactRefs, errors);
 
   return { valid: errors.length === 0, errors, warnings };
