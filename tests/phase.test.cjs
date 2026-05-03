@@ -3026,6 +3026,87 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
     assert.ok(result.slots[0].issues.some((issue) => issue.code === 'missing_supporting_observation_evidence_kind'));
   });
 
+  test('slot comparison ignores unrelated observations but preserves original supporting indices', async () => {
+    const mod = await importUiProofModule();
+    const [slot] = plannedSlots();
+    const unrelatedFailedObservation = {
+      ...dogfoodBundle().observations[0],
+      claim: 'Different planned claim for another slot.',
+      observation: 'This unrelated observation failed and must not make the current slot partial.',
+      result: 'failed',
+    };
+
+    const unrelatedFailure = dogfoodBundle({
+      observations: [unrelatedFailedObservation, ...dogfoodBundle().observations],
+    });
+    const unrelatedFailureResult = mod.compareUiProofSlots([slot], [unrelatedFailure]);
+    assert.strictEqual(unrelatedFailureResult.status, 'satisfied', JSON.stringify(unrelatedFailureResult));
+
+    const routeMismatch = dogfoodBundle({
+      observations: [unrelatedFailedObservation, {
+        ...dogfoodBundle().observations[0],
+        route_state: '/wrong dogfood route',
+      }],
+    });
+    const routeResult = mod.compareUiProofSlots([{ ...slot, required_evidence_kinds: ['code'] }], [routeMismatch]);
+    assert.ok(routeResult.slots[0].issues.some((issue) => issue.code === 'observation_route_state_mismatch' && issue.path === 'observations[1].route_state'));
+  });
+
+  test('minimum observations must come from observations supporting the planned slot', async () => {
+    const mod = await importUiProofModule();
+    const [slot] = plannedSlots();
+    const unrelatedMinimumObservation = {
+      ...dogfoodBundle().observations[0],
+      claim: 'Different planned claim for another slot.',
+      observation: 'Only this unrelated observation mentions the expected unique text.',
+    };
+    const bundle = dogfoodBundle({ observations: [...dogfoodBundle().observations, unrelatedMinimumObservation] });
+
+    const result = mod.compareUiProofSlots([{ ...slot, minimum_observations: ['expected unique text'] }], [bundle]);
+
+    assert.strictEqual(result.slots[0].status, 'partial');
+    assert.ok(result.slots[0].issues.some((issue) => issue.code === 'missing_minimum_observation'));
+  });
+
+  test('manual acceptance requirement needs explicit passed human observation', async () => {
+    const mod = await importUiProofModule();
+    const [slot] = plannedSlots();
+
+    const result = mod.compareUiProofSlots([{ ...slot, manual_acceptance_required: true }], [dogfoodBundle()]);
+
+    assert.strictEqual(result.slots[0].status, 'partial');
+    assert.ok(result.slots[0].issues.some((issue) => issue.code === 'missing_manual_acceptance_evidence'));
+    assert.ok(result.slots[0].issues.some((issue) => issue.code === 'missing_manual_acceptance_observation'));
+  });
+
+  test('manual acceptance requirement can be satisfied by explicit passed human evidence', async () => {
+    const mod = await importUiProofModule();
+    const [slot] = plannedSlots();
+    const manualObservation = {
+      ...dogfoodBundle().observations[0],
+      observation: 'Human reviewer accepted the scoped synthetic UI proof boundary.',
+      evidence_kind: 'human',
+    };
+    const bundle = dogfoodBundle({
+      evidence_inputs: { kinds: ['code', 'test', 'runtime', 'human'], tools_used: ['node:test', 'manual review'] },
+      observations: [...dogfoodBundle().observations, manualObservation],
+    });
+
+    const result = mod.compareUiProofSlots([{ ...slot, required_evidence_kinds: ['code', 'test', 'runtime', 'human'], manual_acceptance_required: true }], [bundle]);
+
+    assert.strictEqual(result.status, 'satisfied', JSON.stringify(result));
+  });
+
+  test('explicitly supplied invalid observed bundles fail closed even when another bundle satisfies the slot', async () => {
+    const mod = await importUiProofModule();
+    const [slot] = plannedSlots();
+
+    const result = mod.compareUiProofSlots([slot], [dogfoodBundle(), { source: 'invalid-observed.json', bundle: {}, validation: { valid: false, errors: [{ code: 'invalid_bundle' }], warnings: [] } }]);
+
+    assert.strictEqual(result.status, 'partial');
+    assert.ok(result.errors.some((error) => error.code === 'invalid_observed_bundle' && error.path === 'invalid-observed.json'));
+  });
+
   test('generated UI-bearing fixture validates through CLI and compares as narrow local proof', async () => {
     await runCliAsMain(tmpDir, ['init', '--auto', '--tools', 'agents']);
     const { htmlPath, scriptPath } = writeDogfoodFixture();
@@ -3061,6 +3142,27 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
     assert.strictEqual(output.planned, '.planning/phases/58-dogfood-ui-proof-loop/ui-proof-slots.json');
     assert.deepStrictEqual(output.observed, ['.planning/phases/58-dogfood-ui-proof-loop/proof-bundle.json']);
     assert.deepStrictEqual(output.slots.map((slot) => [slot.slot_id, slot.status]), [['ui-58-valid-scoped-proof', 'satisfied']]);
+  });
+
+  test('Phase 59 ui-proof compare command fails closed when any supplied observed proof is invalid', async () => {
+    await runCliAsMain(tmpDir, ['init', '--auto', '--tools', 'agents']);
+    writePlannedSlots();
+    writeDogfoodFixture();
+    const invalidPath = path.join(tmpDir, '.planning', 'phases', '58-dogfood-ui-proof-loop', 'invalid-proof-bundle.json');
+    fs.writeFileSync(invalidPath, JSON.stringify({ proof_bundle_version: 1 }, null, 2));
+
+    const result = await runCliAsMain(tmpDir, [
+      'ui-proof',
+      'compare',
+      '.planning/phases/58-dogfood-ui-proof-loop/ui-proof-slots.json',
+      '.planning/phases/58-dogfood-ui-proof-loop/proof-bundle.json',
+      '.planning/phases/58-dogfood-ui-proof-loop/invalid-proof-bundle.json',
+    ]);
+    assert.strictEqual(result.exitCode, 1, result.output);
+
+    const output = JSON.parse(result.output);
+    assert.strictEqual(output.status, 'partial');
+    assert.ok(output.errors.some((error) => error.code === 'invalid_observed_bundle'));
   });
 
   test('Phase 59 ui-proof compare command fails closed when observed proof is missing', async () => {

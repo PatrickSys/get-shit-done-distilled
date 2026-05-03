@@ -449,12 +449,12 @@ function compareSlotToBundle(slot, slotIdValue, observed) {
     });
   }
 
-  const supportingObservations = hasValue(slot?.claim)
-    ? observations.filter((observation) => observation?.claim === slot.claim)
-    : observations;
+  const supportingObservations = observations
+    .map((observation, index) => ({ observation, index }))
+    .filter(({ observation }) => !hasValue(slot?.claim) || observation?.claim === slot.claim);
 
   if (hasValue(slot?.route_state || slot?.routeState)) {
-    for (const [index, observation] of supportingObservations.entries()) {
+    for (const { observation, index } of supportingObservations) {
       if (!valuesMatch(slot?.route_state || slot?.routeState, observation?.route_state)) {
         issues.push({
           code: 'observation_route_state_mismatch',
@@ -467,8 +467,8 @@ function compareSlotToBundle(slot, slotIdValue, observed) {
 
   const passedSupportingKinds = new Set(
     supportingObservations
-      .filter((observation) => observation?.result === 'passed')
-      .map((observation) => observation?.evidence_kind)
+      .filter(({ observation }) => observation?.result === 'passed')
+      .map(({ observation }) => observation?.evidence_kind)
       .filter(Boolean)
   );
   const missingSupportingKinds = requiredKinds.filter((kind) => !passedSupportingKinds.has(kind));
@@ -490,7 +490,25 @@ function compareSlotToBundle(slot, slotIdValue, observed) {
     }
   }
 
-  for (const [index, observation] of observations.entries()) {
+  const manualAcceptanceRequired = slot?.manual_acceptance_required === true || slot?.manualAcceptanceRequired === true;
+  if (manualAcceptanceRequired) {
+    if (!observedKinds.includes('human')) {
+      issues.push({
+        code: 'missing_manual_acceptance_evidence',
+        path: 'evidence_inputs.kinds',
+        message: `Observed UI proof for slot ${slotIdValue} is missing required human evidence for manual acceptance.`,
+      });
+    }
+    if (!passedSupportingKinds.has('human')) {
+      issues.push({
+        code: 'missing_manual_acceptance_observation',
+        path: 'observations[].evidence_kind',
+        message: `Observed UI proof for slot ${slotIdValue} lacks a passed human observation for manual acceptance.`,
+      });
+    }
+  }
+
+  for (const { observation, index } of supportingObservations) {
     if (observation?.result !== 'passed') {
       issues.push({
         code: 'unsatisfied_observation_result',
@@ -501,7 +519,7 @@ function compareSlotToBundle(slot, slotIdValue, observed) {
   }
 
   for (const expected of normalizeArray(slot?.minimum_observations || slot?.minimumObservations)) {
-    if (!includesObservation(observations, expected)) {
+    if (!includesObservation(supportingObservations.map(({ observation }) => observation), expected)) {
       issues.push({
         code: 'missing_minimum_observation',
         path: 'observations',
@@ -529,6 +547,18 @@ export function compareUiProofSlots(plannedSlots, observedBundles) {
   const slots = normalizeArray(plannedSlots);
   const bundles = normalizeArray(observedBundles).map(normalizeObservedBundle);
   const results = [];
+  const errors = [];
+
+  for (const observed of bundles) {
+    if (!observed.validation.valid) {
+      errors.push({
+        code: 'invalid_observed_bundle',
+        path: observed.source,
+        message: `Observed UI proof bundle ${observed.source} failed metadata validation.`,
+        details: observed.validation.errors,
+      });
+    }
+  }
 
   for (const [index, slot] of slots.entries()) {
     const slotIdValue = slotId(slot, index);
@@ -557,7 +587,9 @@ export function compareUiProofSlots(plannedSlots, observedBundles) {
   }
 
   const statuses = results.map((result) => result.status);
-  const status = statuses.length === 0
+  const status = errors.length > 0
+    ? 'partial'
+    : statuses.length === 0
     ? 'not_applicable'
     : statuses.every((value) => value === 'satisfied')
       ? 'satisfied'
@@ -565,7 +597,7 @@ export function compareUiProofSlots(plannedSlots, observedBundles) {
         ? 'missing'
         : 'partial';
 
-  return { status, slots: results };
+  return { status, slots: results, errors };
 }
 
 export function validateUiProofBundle(bundle, options = {}) {
