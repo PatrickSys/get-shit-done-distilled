@@ -1,3 +1,10 @@
+# [0.21.0](https://github.com/PatrickSys/workspine/compare/v0.20.0...v0.21.0) (2026-05-03)
+
+
+### Features
+
+* add UI proof comparison command ([24d1e9d](https://github.com/PatrickSys/workspine/commit/24d1e9da8f5901693f9fe197b7e8c123d26643af))
+
 # [0.20.0](https://github.com/PatrickSys/workspine/compare/v0.19.3...v0.20.0) (2026-04-29)
 
 
