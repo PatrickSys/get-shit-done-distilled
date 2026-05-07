@@ -153,7 +153,7 @@ export function createCmdHealth(ctx) {
           id: 'E10',
           severity: 'ERROR',
           message: `${relativePath} has invalid UI proof metadata (${validation.errors.map((entry) => entry.code).join(', ')})`,
-          fix: 'Run `gsdd ui-proof validate <path>` and add required privacy metadata, claim limits, fixed evidence kinds, observation artifact references, and safe-to-publish handling.',
+          fix: 'Run `gsdd ui-proof validate <path>` and add required privacy metadata, claim limits, fixed evidence kinds, concise tool provenance, failure classification when failed or partial, observation artifact references, and safe-to-publish handling.',
         });
       }
     }
