@@ -491,6 +491,8 @@
 - `agents/planner.md`, `agents/executor.md`, `agents/verifier.md`, `distilled/templates/delegates/plan-checker.md`
 - `bin/lib/templates.mjs`, `bin/lib/ui-proof.mjs`, `bin/lib/health.mjs`, `bin/lib/rendering.mjs`
 - `tests/phase.test.cjs`, `tests/gsdd.guards.test.cjs`, `tests/gsdd.health.test.cjs`, `tests/gsdd.init.test.cjs`
+- OneShot QC/browser policy: https://github.com/oneshot-repo/OneShot/tree/main/skills
+- External browser/spec/agent docs: Vercel agent-browser skill/snapshot docs, Playwright trace/screenshot/MCP tracing docs, Chrome DevTools for agents/MCP docs, OpenSpec docs, LeanSpec first-principles docs, OpenAI Codex docs, Anthropic Agent Skills docs, GitHub Copilot customization docs
 
 ---
 

@@ -10,6 +10,8 @@ const ARTIFACT_VISIBILITIES = Object.freeze(['local_only', 'repo_tracked', 'publ
 const RAW_ARTIFACT_TYPES = Object.freeze(['screenshot', 'trace', 'video', 'dom_snapshot', 'dom-snapshot', 'dom', 'report']);
 const PUBLIC_CLAIM_USES = Object.freeze(['public', 'publication', 'tracked', 'delivery', 'release']);
 const CLAIM_USES = Object.freeze([...PUBLIC_CLAIM_USES, 'local', 'local_only']);
+const FAILURE_CLASSIFICATIONS = Object.freeze(['product_bug', 'missing_infra', 'flaky_harness', 'ambiguous_spec']);
+const TOOL_ID_PATTERN = /^[a-z0-9][a-z0-9_.:-]*$/;
 const REQUIRED_BUNDLE_FIELDS = Object.freeze([
   'proof_bundle_version',
   'scope',
@@ -172,12 +174,46 @@ function validateEvidenceKinds(bundle, errors) {
   }
 }
 
+function validateToolsUsed(bundle, errors) {
+  const tools = normalizeArray(bundle?.evidence_inputs?.tools_used);
+  if (tools.length === 0) {
+    addError(errors, 'missing_tools_used', 'evidence_inputs.tools_used', 'Missing UI proof tool provenance.', 'Record concise tool IDs such as browser, playwright, manual, or project-specific command IDs.');
+    return;
+  }
+  for (const [index, tool] of tools.entries()) {
+    if (!TOOL_ID_PATTERN.test(tool)) {
+      addError(errors, 'invalid_tool_id', `evidence_inputs.tools_used[${index}]`, `Invalid UI proof tool identifier: ${tool}`, 'Use a concise lowercase identifier without spaces, for example browser, playwright, manual, or gsdd-ui-proof-validate.');
+    }
+  }
+}
+
 function validateResult(bundle, errors) {
   if (!isPlainObject(bundle?.result)) return;
   if (!hasValue(bundle.result.claim_status)) {
     addError(errors, 'missing_claim_status', 'result.claim_status', 'Missing UI proof result claim status.', `Record claim_status using: ${CLAIM_STATUSES.join(', ')}.`);
   } else if (!CLAIM_STATUSES.includes(bundle.result.claim_status)) {
     addError(errors, 'invalid_claim_status', 'result.claim_status', `Invalid UI proof claim status: ${bundle.result.claim_status}`, `Use only: ${CLAIM_STATUSES.join(', ')}.`);
+  }
+}
+
+function validateFailureClassification(bundle, errors) {
+  const statuses = [
+    bundle?.result?.claim_status,
+    ...normalizeArray(bundle?.observations).map((observation) => isPlainObject(observation) ? observation.result : null),
+    ...normalizeArray(bundle?.commands_or_manual_steps).map((step) => isPlainObject(step) ? step.result : null),
+  ].filter(Boolean);
+  const failedOrPartial = statuses.some((status) => status === 'failed' || status === 'partial');
+  const classifications = normalizeArray(bundle?.result?.failure_classification || bundle?.result?.failure_classifications);
+
+  if (failedOrPartial && classifications.length === 0) {
+    addError(errors, 'missing_failure_classification', 'result.failure_classification', 'Failed or partial UI proof must classify why it failed.', `Use one of: ${FAILURE_CLASSIFICATIONS.join(', ')}.`);
+    return;
+  }
+
+  for (const [index, classification] of classifications.entries()) {
+    if (!FAILURE_CLASSIFICATIONS.includes(classification)) {
+      addError(errors, 'invalid_failure_classification', `result.failure_classification[${index}]`, `Invalid UI proof failure classification: ${classification}`, `Use only: ${FAILURE_CLASSIFICATIONS.join(', ')}.`);
+    }
   }
 }
 
@@ -614,9 +650,11 @@ export function validateUiProofBundle(bundle, options = {}) {
   const publicClaim = hasPublicClaim(bundle, options);
   validateClaimUses(bundle, options, errors);
   validateEvidenceKinds(bundle, errors);
+  validateToolsUsed(bundle, errors);
   validateCommandsOrManualSteps(bundle, errors);
   validateObservations(bundle, errors);
   validateResult(bundle, errors);
+  validateFailureClassification(bundle, errors);
   validateComparisonStatuses(bundle, errors);
   validateClaimLimits(bundle, errors);
   validatePrivacy(bundle, errors, publicClaim);

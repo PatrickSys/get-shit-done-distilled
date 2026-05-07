@@ -2532,6 +2532,51 @@ describe('Phase 57 UI proof validation helper', () => {
     assert.ok(result.errors.some((error) => error.path === 'artifacts[0].safe_to_publish'));
   });
 
+  test('tool provenance must use concise tool identifiers', async () => {
+    const mod = await importUiProofModule();
+    const missingTools = validBundle({ evidence_inputs: { kinds: ['test', 'runtime'] } });
+    const verboseTool = validBundle({ evidence_inputs: { kinds: ['test', 'runtime'], tools_used: ['manual review'] } });
+
+    assert.ok(mod.validateUiProofBundle(missingTools).errors.some((error) => error.code === 'missing_tools_used'));
+    assert.ok(mod.validateUiProofBundle(verboseTool).errors.some((error) => error.code === 'invalid_tool_id'));
+  });
+
+  test('failed or partial UI proof must classify the failure cause', async () => {
+    const mod = await importUiProofModule();
+    const unclassifiedFailure = validBundle({
+      commands_or_manual_steps: [{ manual_step: 'Open /example.', result: 'failed' }],
+      observations: [{
+        observation: 'Changed state is broken.',
+        claim: 'Local reviewer can inspect the changed UI proof metadata.',
+        route_state: { route: '/example', state: 'synthetic user' },
+        evidence_kind: 'runtime',
+        artifact_refs: ['artifacts/report.html'],
+        privacy: { data_classification: 'synthetic', raw_artifacts_safe_to_publish: false, retention: 'temporary_review' },
+        result: 'failed',
+        claim_limit: 'Does not prove unrelated UI states.',
+      }],
+      result: { claim_status: 'failed', comparison_status_by_slot: { 'quick-001-ui-01': 'partial' } },
+    });
+    const invalidClassification = validBundle({
+      result: {
+        claim_status: 'partial',
+        comparison_status_by_slot: { 'quick-001-ui-01': 'partial' },
+        failure_classification: 'looks_bad',
+      },
+    });
+    const classifiedFailure = validBundle({
+      result: {
+        claim_status: 'failed',
+        comparison_status_by_slot: { 'quick-001-ui-01': 'partial' },
+        failure_classification: 'product_bug',
+      },
+    });
+
+    assert.ok(mod.validateUiProofBundle(unclassifiedFailure).errors.some((error) => error.code === 'missing_failure_classification'));
+    assert.ok(mod.validateUiProofBundle(invalidClassification).errors.some((error) => error.code === 'invalid_failure_classification'));
+    assert.ok(!mod.validateUiProofBundle(classifiedFailure).errors.some((error) => error.code === 'missing_failure_classification'));
+  });
+
   test('empty required arrays and mismatched comparison slots fail', async () => {
     const mod = await importUiProofModule();
     const bundle = validBundle();
@@ -2845,7 +2890,7 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
       route_state: '/dogfood route with synthetic fixture state',
       environment: { app_url: 'file://synthetic-dogfood-fixture', data_state: 'synthetic' },
       viewport: { width: 1280, height: 720 },
-      evidence_inputs: { kinds: ['code', 'test', 'runtime'], tools_used: ['node:test', 'gsdd ui-proof validate'] },
+      evidence_inputs: { kinds: ['code', 'test', 'runtime'], tools_used: ['node:test', 'gsdd-ui-proof-validate'] },
       commands_or_manual_steps: [{ command: 'node bin/gsdd.mjs ui-proof validate .planning/phases/58-dogfood-ui-proof-loop/proof-bundle.json', result: 'passed' }],
       observations: [{
         observation: 'Generated fixture includes actual UI-bearing source for the route/state.',
@@ -2963,7 +3008,7 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
         claim: 'Human approval cannot bypass missing required non-human evidence for visual, taste, accessibility, or privacy-sensitive UI proof.',
       },
       route_state: '/dogfood route with synthetic fixture state and subjective review metadata',
-      evidence_inputs: { kinds: ['human'], tools_used: ['manual review'] },
+      evidence_inputs: { kinds: ['human'], tools_used: ['manual-review'] },
       observations: [{
         observation: 'Human/manual acceptance is represented as human evidence or waiver/deferment metadata.',
         claim: 'Human approval recorded for subjective review only.',
@@ -3038,6 +3083,10 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
 
     const unrelatedFailure = dogfoodBundle({
       observations: [unrelatedFailedObservation, ...dogfoodBundle().observations],
+      result: {
+        ...dogfoodBundle().result,
+        failure_classification: 'product_bug',
+      },
     });
     const unrelatedFailureResult = mod.compareUiProofSlots([slot], [unrelatedFailure]);
     assert.strictEqual(unrelatedFailureResult.status, 'satisfied', JSON.stringify(unrelatedFailureResult));
@@ -3047,6 +3096,10 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
         ...dogfoodBundle().observations[0],
         route_state: '/wrong dogfood route',
       }],
+      result: {
+        ...dogfoodBundle().result,
+        failure_classification: 'product_bug',
+      },
     });
     const routeResult = mod.compareUiProofSlots([{ ...slot, required_evidence_kinds: ['code'] }], [routeMismatch]);
     assert.ok(routeResult.slots[0].issues.some((issue) => issue.code === 'observation_route_state_mismatch' && issue.path === 'observations[1].route_state'));
@@ -3088,7 +3141,7 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
       evidence_kind: 'human',
     };
     const bundle = dogfoodBundle({
-      evidence_inputs: { kinds: ['code', 'test', 'runtime', 'human'], tools_used: ['node:test', 'manual review'] },
+      evidence_inputs: { kinds: ['code', 'test', 'runtime', 'human'], tools_used: ['node:test', 'manual-review'] },
       observations: [...dogfoodBundle().observations, manualObservation],
     });
 
@@ -3193,7 +3246,7 @@ describe('Phase 58 dogfood and Phase 59 UI proof product comparison', () => {
     const humanOnly = dogfoodBundle({
       scope: { ...dogfoodBundle().scope, slot_ids: ['ui-58-human-bypass-blocked'] },
       route_state: '/dogfood route with synthetic fixture state and subjective review metadata',
-      evidence_inputs: { kinds: ['human'], tools_used: ['manual review'] },
+      evidence_inputs: { kinds: ['human'], tools_used: ['manual-review'] },
       observations: [{
         observation: 'Human/manual acceptance is represented as human evidence or waiver/deferment metadata.',
         claim: 'Human approval recorded for subjective review only.',
